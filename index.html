@@ -279,7 +279,7 @@
         </div>
     </div>
 
-    <audio id="mainAudio" crossorigin="anonymous" preload="auto"></audio>
+    <audio id="mainAudio" preload="auto"></audio>
 
     <script>
         const audio = document.getElementById('mainAudio');
@@ -287,7 +287,6 @@
         let isPlaying = false;
         let currentToken = null;
 
-        // Данные для демо-режима
         const DEMO_TRACK = {
             id: 'demo-water-energy',
             title: 'Энергия воды',
@@ -301,7 +300,6 @@
             const token = urlParams.get('token');
             const container = document.getElementById('app-content');
 
-            // Если токена нет, показываем демо-трек без возможности скачивания
             if (!token) {
                 renderTracks([DEMO_TRACK], false);
                 return;
@@ -323,7 +321,6 @@
                     return;
                 }
 
-                // Рендерим треки пользователя, скачивание разрешено
                 renderTracks(data.tracks, true);
 
             } catch (error) {
@@ -331,12 +328,16 @@
             }
         });
 
-        // Функция отрисовки карточек с проверкой на показ кнопки скачивания
         function renderTracks(tracks, allowDownload) {
             const container = document.getElementById('app-content');
             let html = '';
             
             tracks.forEach(track => {
+                let displayDuration = track.duration;
+                if (displayDuration === 15 || displayDuration === '15') {
+                    displayDuration = '15:00';
+                }
+                
                 html += `
                 <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
                     <div class="card-top">
@@ -346,7 +347,7 @@
                         </button>
                         <div class="track-info">
                             <div class="track-title">${track.title}</div>
-                            <div class="track-meta">${track.type}${track.duration ? ' · ' + track.duration : ''}</div>
+                            <div class="track-meta">${track.type}${displayDuration ? ' · ' + displayDuration : ''}</div>
                         </div>
                         ${allowDownload ? `
                         <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать практику">
@@ -358,7 +359,7 @@
                         <div class="progress-bar-wrap" onclick="seekTrack(event, this)">
                             <div class="progress-fill"></div>
                         </div>
-                        <span class="time total-time">${track.duration || '0:00'}</span>
+                        <span class="time total-time">${displayDuration || '0:00'}</span>
                     </div>
                 </div>`;
             });
