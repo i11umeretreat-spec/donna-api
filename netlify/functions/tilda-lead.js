@@ -95,7 +95,7 @@ exports.handler = async (event) => {
     // Отправляем письмо
     try {
         await resend.emails.send({
-            from: 'Ekaterina Donna <hello@ekaterina-donnat.com>',
+            from: 'Ekaterina Donna <onboarding@resend.dev>',
             to: email,
             subject: 'Твоя первая практика от Екатерины Донна',
             html: buildEmail(playerUrl),
