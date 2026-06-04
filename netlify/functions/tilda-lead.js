@@ -14,7 +14,7 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const PROMO_TRACK_URL = 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3';
-const PLAYER_BASE = 'https://app.ekaterina-donna.com';
+const PLAYER_BASE = 'https://app.ekaterina-donnat.com';
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -251,7 +251,8 @@ function buildEmail(playerUrl) {
                         <td align="center">
                             <p style="margin:0;font-size:10px;font-weight:300;
                                       color:rgba(248,250,252,0.2);letter-spacing:0.1em;">
-                                ekaterina-donna.com
+                                ekaterina-donnat
+                                .com
                             </p>
                         </td>
                     </tr>
