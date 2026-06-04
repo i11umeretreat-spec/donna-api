@@ -36,7 +36,7 @@ const PROMO_TRACK = {
     id: 'water_energy',
     title: 'Энергия воды',
     type: 'Ознакомительная практика',
-    duration: '15:00',
+    duration: '21:00',
     streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3'
 };
 
