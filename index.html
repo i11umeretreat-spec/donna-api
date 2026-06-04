@@ -148,7 +148,6 @@
             color: rgba(248, 250, 252, 0.5);
         }
 
-        /* Кнопка скачивания - круглая иконка как у Gemini */
         .download-btn {
             width: 40px;
             height: 40px;
@@ -183,7 +182,6 @@
             fill: currentColor;
         }
 
-        /* Спиннер внутри кнопки при загрузке */
         .download-btn .spin {
             width: 14px;
             height: 14px;
@@ -277,7 +275,7 @@
     <div id="app-content" class="tracks-container">
         <div class="system-message">
             <div class="loader"></div>
-            Загружаем вашу личную библиотеку...
+            Подготавливаем пространство...
         </div>
     </div>
 
@@ -289,13 +287,23 @@
         let isPlaying = false;
         let currentToken = null;
 
+        // Данные для демо-режима
+        const DEMO_TRACK = {
+            id: 'demo-water-energy',
+            title: 'Энергия воды',
+            type: 'Ознакомительная практика',
+            streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3',
+            duration: '15:00'
+        };
+
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             const container = document.getElementById('app-content');
 
+            // Если токена нет, показываем демо-трек без возможности скачивания
             if (!token) {
-                container.innerHTML = '<div class="system-message">Токен доступа не найден.<br>Используйте персональную ссылку из письма после оплаты.</div>';
+                renderTracks([DEMO_TRACK], false);
                 return;
             }
 
@@ -306,7 +314,7 @@
                 const data = await response.json();
 
                 if (!response.ok || !data.valid) {
-                    container.innerHTML = '<div class="system-message">Персональная ссылка недействительна.<br>Проверьте письмо от Екатерины Донна.</div>';
+                    container.innerHTML = '<div class="system-message">Срок действия ключа истёк или он неверен.<br>Пожалуйста, проверьте ваше письмо.</div>';
                     return;
                 }
 
@@ -315,39 +323,48 @@
                     return;
                 }
 
-                let html = '';
-                data.tracks.forEach(track => {
-                    html += `
-                    <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
-                        <div class="card-top">
-                            <button class="play-btn" onclick="togglePlay(this.closest('.player-card'))">
-                                <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                            </button>
-                            <div class="track-info">
-                                <div class="track-title">${track.title}</div>
-                                <div class="track-meta">${track.type}${track.duration ? ' · ' + track.duration : ''}</div>
-                            </div>
-                            <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать практику">
-                                <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                            </button>
-                        </div>
-                        <div class="progress-area">
-                            <span class="time current-time">0:00</span>
-                            <div class="progress-bar-wrap" onclick="seekTrack(event, this)">
-                                <div class="progress-fill"></div>
-                            </div>
-                            <span class="time total-time">${track.duration || '0:00'}</span>
-                        </div>
-                    </div>`;
-                });
-
-                container.innerHTML = html;
+                // Рендерим треки пользователя, скачивание разрешено
+                renderTracks(data.tracks, true);
 
             } catch (error) {
                 container.innerHTML = '<div class="system-message">Ошибка соединения с сервером.<br>Пожалуйста, обновите страницу.</div>';
             }
         });
+
+        // Функция отрисовки карточек с проверкой на показ кнопки скачивания
+        function renderTracks(tracks, allowDownload) {
+            const container = document.getElementById('app-content');
+            let html = '';
+            
+            tracks.forEach(track => {
+                html += `
+                <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
+                    <div class="card-top">
+                        <button class="play-btn" onclick="togglePlay(this.closest('.player-card'))">
+                            <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                            <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <div class="track-info">
+                            <div class="track-title">${track.title}</div>
+                            <div class="track-meta">${track.type}${track.duration ? ' · ' + track.duration : ''}</div>
+                        </div>
+                        ${allowDownload ? `
+                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать практику">
+                            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                        </button>` : ''}
+                    </div>
+                    <div class="progress-area">
+                        <span class="time current-time">0:00</span>
+                        <div class="progress-bar-wrap" onclick="seekTrack(event, this)">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span class="time total-time">${track.duration || '0:00'}</span>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+        }
 
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds === Infinity) return '0:00';
@@ -422,7 +439,6 @@
             audio.currentTime = pos * audio.duration;
         }
 
-        // Скачивание - свежий подписанный URL по каждому клику
         async function downloadTrack(btn, trackId) {
             if (btn.classList.contains('loading')) return;
 
