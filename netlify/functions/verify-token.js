@@ -32,9 +32,19 @@ const TRACK_META = {
     'track-10': { title: 'Крокодил: обнуление тревоги', type: 'Метафорический сеанс гипноза', duration: null },
 };
 
+const PROMO_TRACK = {
+    id: 'water_energy',
+    title: 'Энергия воды',
+    type: 'Ознакомительная практика',
+    duration: '15:00',
+    streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3'
+};
+
 exports.handler = async (event) => {
+    console.log('Verify token function started');
+    
     const headers = {
-        'Access-Control-Allow-Origin': 'https://app.ekaterina-donna.com',
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -44,46 +54,75 @@ exports.handler = async (event) => {
     }
 
     const token = event.queryStringParameters?.token;
+    console.log('Token received:', token);
 
     if (!token) {
+        console.log('Error: No token provided');
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'No token provided' }) };
     }
 
-    const { data: purchase, error } = await supabase
+    console.log('Checking purchases table...');
+    const { data: purchase } = await supabase
         .from('purchases')
         .select('track_ids, email, created_at')
         .eq('token', token)
         .single();
 
-    if (error || !purchase) {
-        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid or expired token' }) };
+    if (purchase) {
+        console.log('Found in purchases for email:', purchase.email);
+        try {
+            const tracks = await Promise.all(
+                purchase.track_ids.map(async (id) => {
+                    const command = new GetObjectCommand({
+                        Bucket: BUCKET,
+                        Key: `tracks/full/${id}.mp3`
+                    });
+                    const streamUrl = await getSignedUrl(r2, command, { expiresIn: STREAM_EXPIRY });
+                    return {
+                        id,
+                        ...TRACK_META[id],
+                        streamUrl
+                    };
+                })
+            );
+            
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    valid: true,
+                    email: purchase.email,
+                    tracks,
+                    purchasedAt: purchase.created_at,
+                }),
+            };
+        } catch (err) {
+            console.error('S3 signing error:', err);
+            return { statusCode: 500, headers, body: JSON.stringify({ error: 'Storage error' }) };
+        }
     }
 
-    const tracks = await Promise.all(
-        purchase.track_ids.map(async (id) => {
-            const command = new GetObjectCommand({
-                Bucket: BUCKET,
-                Key: `tracks/full/${id}.mp3`
-            });
-            
-            const streamUrl = await getSignedUrl(r2, command, { expiresIn: STREAM_EXPIRY });
+    console.log('Not a buyer, checking donna_guests table...');
+    const { data: guest } = await supabase
+        .from('donna_guests')
+        .select('email, promo_track, created_at')
+        .eq('token', token)
+        .single();
 
-            return {
-                id,
-                ...TRACK_META[id],
-                streamUrl
-            };
-        })
-    );
+    if (guest) {
+        console.log('Found in guests for email:', guest.email);
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                valid: true,
+                email: guest.email,
+                tracks: [PROMO_TRACK],
+                purchasedAt: guest.created_at,
+            }),
+        };
+    }
 
-    return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-            valid: true,
-            email: purchase.email,
-            tracks,
-            purchasedAt: purchase.created_at,
-        }),
-    };
+    console.log('Token not found anywhere');
+    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid or expired token' }) };
 };
