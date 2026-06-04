@@ -279,7 +279,7 @@
         </div>
     </div>
 
-    <audio id="mainAudio" preload="auto"></audio>
+    <audio id="mainAudio" crossorigin="anonymous" preload="auto"></audio>
 
     <script>
         const audio = document.getElementById('mainAudio');
@@ -292,7 +292,7 @@
             title: 'Энергия воды',
             type: 'Ознакомительная практика',
             streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3',
-            duration: '15:00'
+            duration: '21:00'
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -334,8 +334,8 @@
             
             tracks.forEach(track => {
                 let displayDuration = track.duration;
-                if (displayDuration === 15 || displayDuration === '15') {
-                    displayDuration = '15:00';
+                if (displayDuration === 15 || displayDuration === '15' || displayDuration === 21 || displayDuration === '21') {
+                    displayDuration = '21:00';
                 }
                 
                 html += `
@@ -350,7 +350,7 @@
                             <div class="track-meta">${track.type}${displayDuration ? ' · ' + displayDuration : ''}</div>
                         </div>
                         ${allowDownload ? `
-                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать практику">
+                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать招聘практику">
                             <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                         </button>` : ''}
                     </div>
@@ -388,12 +388,15 @@
                 
                 if (url) {
                     audio.src = url;
-                    audio.load();
                 }
                 
                 audio.play().then(() => {
                     isPlaying = true;
-                }).catch(e => console.error('Play error:', e));
+                }).catch(e => {
+                    console.error('Play error:', e);
+                    audio.load();
+                    audio.play().then(() => { isPlaying = true; });
+                });
 
             } else {
                 if (isPlaying) {
