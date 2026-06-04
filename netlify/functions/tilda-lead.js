@@ -21,6 +21,16 @@ exports.handler = async (event) => {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
+    // Проверяем на тестовый пинг от Тильды при сохранении вебхука
+    const isTestPing = event.body && (event.body.includes('test=') || event.body.includes('"test"'));
+    if (isTestPing) {
+        console.log('Tilda test connection handshake');
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ success: true, message: 'Handshake OK' })
+        };
+    }
+
     // Tilda шлёт данные как form-urlencoded или JSON
     let email;
     try {
@@ -85,7 +95,7 @@ exports.handler = async (event) => {
     // Отправляем письмо
     try {
         await resend.emails.send({
-            from: 'Ekaterina Donna <hello@ekaterina-donna.com>',
+            from: 'Ekaterina Donna <hello@ekaterina-donnat.com>',
             to: email,
             subject: 'Твоя первая практика от Екатерины Донна',
             html: buildEmail(playerUrl),
@@ -120,7 +130,6 @@ function buildEmail(playerUrl) {
                 <table width="520" cellpadding="0" cellspacing="0" border="0"
                        style="max-width:520px;width:100%;">
 
-                    <!-- Лого -->
                     <tr>
                         <td align="center" style="padding-bottom:36px;">
                             <img src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
@@ -129,7 +138,6 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Верхний разделитель -->
                     <tr>
                         <td style="padding-bottom:36px;">
                             <table width="100%" cellpadding="0" cellspacing="0">
@@ -140,7 +148,6 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Заголовок -->
                     <tr>
                         <td align="center" style="padding-bottom:8px;">
                             <p style="margin:0;font-size:10px;letter-spacing:0.25em;
@@ -159,7 +166,6 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Текст письма -->
                     <tr>
                         <td style="background:rgba(23,27,54,0.6);border:1px solid rgba(212,175,55,0.12);
                                    border-radius:16px;padding:36px 32px;margin-bottom:32px;">
@@ -177,7 +183,6 @@ function buildEmail(playerUrl) {
                                 Прямо сейчас у тебя есть возможность отпустить контроль.
                             </p>
 
-                            <!-- Разделитель -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                                 <tr>
                                     <td style="height:1px;background:rgba(212,175,55,0.12);font-size:0;">&nbsp;</td>
@@ -211,7 +216,6 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Кнопка -->
                     <tr>
                         <td align="center" style="padding:36px 0 24px;">
                             <a href="${playerUrl}"
@@ -224,7 +228,6 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Подсказка -->
                     <tr>
                         <td align="center" style="padding-bottom:40px;">
                             <p style="margin:0;font-size:11px;font-weight:300;
@@ -235,7 +238,6 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Нижний разделитель -->
                     <tr>
                         <td style="padding-bottom:28px;">
                             <table width="100%" cellpadding="0" cellspacing="0">
@@ -246,13 +248,11 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
-                    <!-- Футер -->
                     <tr>
                         <td align="center">
                             <p style="margin:0;font-size:10px;font-weight:300;
                                       color:rgba(248,250,252,0.2);letter-spacing:0.1em;">
-                                ekaterina-donnat
-                                .com
+                                ekaterina-donnat.com
                             </p>
                         </td>
                     </tr>
