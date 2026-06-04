@@ -212,11 +212,20 @@
         
         .progress-bar-wrap {
             flex: 1;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress-track {
+            width: 100%;
             height: 4px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 2px;
             position: relative;
-            cursor: pointer;
+            pointer-events: none;
         }
         
         .progress-fill {
@@ -279,7 +288,7 @@
         </div>
     </div>
 
-    <audio id="mainAudio" crossorigin="anonymous" preload="auto"></audio>
+    <audio id="mainAudio" playsinline preload="metadata"></audio>
 
     <script>
         const audio = document.getElementById('mainAudio');
@@ -288,7 +297,7 @@
         let currentToken = null;
 
         const DEMO_TRACK = {
-            id: 'demo-water-energy',
+            id: 'water_energy',
             title: 'Энергия воды',
             type: 'Ознакомительная практика',
             streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3',
@@ -350,14 +359,16 @@
                             <div class="track-meta">${track.type}${displayDuration ? ' · ' + displayDuration : ''}</div>
                         </div>
                         ${allowDownload ? `
-                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать招聘практику">
+                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать практику">
                             <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                         </button>` : ''}
                     </div>
                     <div class="progress-area">
                         <span class="time current-time">0:00</span>
-                        <div class="progress-bar-wrap" onclick="seekTrack(event, this)">
-                            <div class="progress-fill"></div>
+                        <div class="progress-bar-wrap" onmousedown="seekTrack(event, this)" ontouchstart="seekTrack(event, this)">
+                            <div class="progress-track">
+                                <div class="progress-fill"></div>
+                            </div>
                         </div>
                         <span class="time total-time">${displayDuration || '0:00'}</span>
                     </div>
@@ -386,17 +397,17 @@
                 currentCard = card;
                 currentCard.classList.add('active');
                 
-                if (url) {
+                if (url && audio.src !== url) {
                     audio.src = url;
+                    audio.load();
                 }
                 
-                audio.play().then(() => {
-                    isPlaying = true;
-                }).catch(e => {
-                    console.error('Play error:', e);
-                    audio.load();
-                    audio.play().then(() => { isPlaying = true; });
-                });
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        isPlaying = true;
+                    }).catch(e => console.error('Play error:', e));
+                }
 
             } else {
                 if (isPlaying) {
@@ -438,8 +449,17 @@
         function seekTrack(e, wrap) {
             const card = wrap.closest('.player-card');
             if (card !== currentCard || !audio.duration || audio.duration === Infinity) return;
+            
             const rect = wrap.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
+            let clientX = e.clientX;
+            
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+            }
+            
+            let pos = (clientX - rect.left) / rect.width;
+            pos = Math.max(0, Math.min(1, pos));
+            
             audio.currentTime = pos * audio.duration;
         }
 
