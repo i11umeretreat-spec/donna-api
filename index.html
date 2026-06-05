@@ -492,10 +492,8 @@
                 currentCard = card;
                 currentCard.classList.add('active');
                 
-                if (url && audio.src !== url) {
-                    audio.src = url;
-                }
-                
+                audio.src = url;
+                audio.load();
                 audio.play().then(() => {
                     isPlaying = true;
                 }).catch(e => console.error('Play error:', e));
