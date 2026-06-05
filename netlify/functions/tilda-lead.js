@@ -14,7 +14,7 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY_KATYA);
 
 const PROMO_TRACK_URL = 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3';
-const PLAYER_BASE = 'https://app.ekaterina-donna.com';
+const PLAYER_BASE = 'https://app.ekaterina-donnat.com';
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
@@ -85,7 +85,7 @@ exports.handler = async (event) => {
     // Отправляем письмо
     try {
         await resend.emails.send({
-            from: 'Ekaterina Donna <hello@ekaterina-donna.com>',
+            from: 'Ekaterina Donna <hello@ekaterina-donnat.com>',
             to: email,
             subject: 'Баланс стихий - твоя первая практика от Екатерины Донна',
             html: buildEmail(playerUrl),
