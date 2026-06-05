@@ -11,7 +11,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY_KATYA);
 
 const PROMO_TRACK_URL = 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3';
 const PLAYER_BASE = 'https://app.ekaterina-donna.com';
