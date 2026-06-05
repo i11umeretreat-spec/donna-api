@@ -121,12 +121,12 @@ exports.handler = async (event) => {
 };
 
 async function sendEmail(email, token, product) {
-    const playerUrl = `https://app.ekaterina-donna.com?token=${token}`;
+    const playerUrl = `https://app.ekaterina-donnat.com?token=${token}`;
 
     const { Resend } = require('resend');
     const resend = new Resend(process.env.RESEND_API_KEY_KATYA);
     await resend.emails.send({
-        from: 'Ekaterina Donna <hello@ekaterina-donna.com>',
+        from: 'Ekaterina Donna <hello@ekaterina-donnat.com>',
         to: email,
         subject: `Твоя практика готова — ${product.name}`,
         html: buildEmail(playerUrl, product),
@@ -188,7 +188,7 @@ function buildEmail(playerUrl, product) {
         ` : ''}
 
         <p style="color:rgba(248,250,252,0.2);font-size:11px;margin-top:48px;">
-            ekaterina-donna.com
+            ekaterina-donnat.com
         </p>
     </div>
 </body>
