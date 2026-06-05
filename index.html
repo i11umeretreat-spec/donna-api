@@ -265,6 +265,7 @@
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Апсейл - только для гостей */
         .upsell-card {
             background: rgba(23, 27, 54, 0.4);
             backdrop-filter: blur(12px);
@@ -370,10 +371,11 @@
         let isPlaying = false;
         let currentToken = null;
 
+        // Гостевой демо-трек
         const DEMO_TRACK = {
             id: 'water_energy',
-            title: 'Энергия воды',
-            type: 'Ознакомительная практика',
+            title: 'Баланс стихий',
+            type: 'Сеанс самогипноза · Энергетическое наполнение',
             streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3',
             duration: '21:00'
         };
@@ -383,25 +385,8 @@
             const token = urlParams.get('token');
             const container = document.getElementById('app-content');
 
-            if (token === 'the_lineup_mode') {
-                currentToken = token;
-                
-                const devTracks = [DEMO_TRACK];
-                for(let i = 2; i <= 16; i++) {
-                    devTracks.push({
-                        id: 'dev_track_' + i,
-                        title: 'Секретная практика ' + i,
-                        type: 'Глубинное погружение',
-                        streamUrl: DEMO_TRACK.streamUrl,
-                        duration: '45:00'
-                    });
-                }
-                
-                renderTracks(devTracks, true, false);
-                return;
-            }
-
             if (!token) {
+                // Гость без токена - показываем демо + апсейл
                 renderTracks([DEMO_TRACK], false, true);
                 return;
             }
@@ -418,10 +403,12 @@
                 }
 
                 if (!data.tracks || data.tracks.length === 0) {
+                    // Гостевой токен из формы - только демо + апсейл
                     renderTracks([DEMO_TRACK], false, true);
                     return;
                 }
 
+                // Платный клиент - треки без апсейла
                 renderTracks(data.tracks, true, false);
 
             } catch (error) {
@@ -464,6 +451,7 @@
                 </div>`;
             });
 
+            // Апсейл только для гостей
             if (showUpsell) {
                 html += `
                 <div class="upsell-card">
@@ -549,6 +537,7 @@
             }
         });
 
+        // Seek - мышь и touch для iOS
         let isSeeking = false;
 
         function seek(e, wrap) {
@@ -580,6 +569,7 @@
             document.addEventListener('touchend', onEnd);
         }
 
+        // Скачивание - через <a download> для корректной работы на iOS
         async function downloadTrack(btn, trackId) {
             if (btn.classList.contains('loading')) return;
             btn.classList.add('loading');
@@ -595,6 +585,7 @@
                 const data = await res.json();
                 if (!res.ok || !data.url) throw new Error('No URL');
 
+                // <a download> вместо window.location.href - корректно на iOS
                 const a = document.createElement('a');
                 a.href = data.url;
                 a.download = '';
