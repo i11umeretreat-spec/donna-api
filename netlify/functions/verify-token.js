@@ -1,3 +1,7 @@
+// netlify/functions/verify-token.js
+// Проверяет токен и возвращает подписанные URL для каждого купленного трека
+// Все ссылки живут 6 часов - достаточно для сессии прослушивания
+
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
@@ -17,7 +21,8 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const STREAM_EXPIRY = 60 * 60 * 6;
+const STREAM_EXPIRY = 60 * 60 * 6;   // 6 часов - для стриминга в плеере
+const DOWNLOAD_EXPIRY = 60 * 60 * 24; // 24 часа - для скачивания
 
 const TRACK_META = {
     'track-01': { title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза', duration: null },
@@ -32,19 +37,27 @@ const TRACK_META = {
     'track-10': { title: 'Крокодил: обнуление тревоги', type: 'Метафорический сеанс гипноза', duration: null },
 };
 
-const PROMO_TRACK = {
-    id: 'water_energy',
-    title: 'Энергия воды',
-    type: 'Ознакомительная практика',
-    duration: '21:00',
-    streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3'
-};
+async function generateSignedUrl(trackId, type, expiry) {
+    const key = type === 'stream'
+        ? `tracks/full/${trackId}.mp3`
+        : `tracks/full/${trackId}.mp3`;
+
+    const params = { Bucket: BUCKET, Key: key };
+
+    // Для скачивания добавляем disposition чтобы браузер скачал а не открыл
+    if (type === 'download') {
+        const meta = TRACK_META[trackId];
+        const filename = meta ? `${meta.title}.mp3` : `${trackId}.mp3`;
+        params.ResponseContentDisposition = `attachment; filename="${encodeURIComponent(filename)}"`;
+    }
+
+    const command = new GetObjectCommand(params);
+    return getSignedUrl(r2, command, { expiresIn: expiry });
+}
 
 exports.handler = async (event) => {
-    console.log('Verify token function started');
-    
     const headers = {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -54,75 +67,55 @@ exports.handler = async (event) => {
     }
 
     const token = event.queryStringParameters?.token;
-    console.log('Token received:', token);
 
     if (!token) {
-        console.log('Error: No token provided');
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'No token provided' }) };
+        return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'No token provided' })
+        };
     }
 
-    console.log('Checking purchases table...');
-    const { data: purchase } = await supabase
+    // Проверяем токен
+    const { data: purchase, error } = await supabase
         .from('purchases')
         .select('track_ids, email, created_at')
         .eq('token', token)
         .single();
 
-    if (purchase) {
-        console.log('Found in purchases for email:', purchase.email);
-        try {
-            const tracks = await Promise.all(
-                purchase.track_ids.map(async (id) => {
-                    const command = new GetObjectCommand({
-                        Bucket: BUCKET,
-                        Key: `tracks/full/${id}.mp3`
-                    });
-                    const streamUrl = await getSignedUrl(r2, command, { expiresIn: STREAM_EXPIRY });
-                    return {
-                        id,
-                        ...TRACK_META[id],
-                        streamUrl
-                    };
-                })
-            );
-            
-            return {
-                statusCode: 200,
-                headers,
-                body: JSON.stringify({
-                    valid: true,
-                    email: purchase.email,
-                    tracks,
-                    purchasedAt: purchase.created_at,
-                }),
-            };
-        } catch (err) {
-            console.error('S3 signing error:', err);
-            return { statusCode: 500, headers, body: JSON.stringify({ error: 'Storage error' }) };
-        }
-    }
-
-    console.log('Not a buyer, checking donna_guests table...');
-    const { data: guest } = await supabase
-        .from('donna_guests')
-        .select('email, promo_track, created_at')
-        .eq('token', token)
-        .single();
-
-    if (guest) {
-        console.log('Found in guests for email:', guest.email);
+    if (error || !purchase) {
         return {
-            statusCode: 200,
+            statusCode: 403,
             headers,
-            body: JSON.stringify({
-                valid: true,
-                email: guest.email,
-                tracks: [PROMO_TRACK],
-                purchasedAt: guest.created_at,
-            }),
+            body: JSON.stringify({ error: 'Invalid or expired token' })
         };
     }
 
-    console.log('Token not found anywhere');
-    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid or expired token' }) };
+    // Генерируем подписанные URL для всех купленных треков параллельно
+    const tracks = await Promise.all(
+        purchase.track_ids.map(async (id) => {
+            const [streamUrl, downloadUrl] = await Promise.all([
+                generateSignedUrl(id, 'stream', STREAM_EXPIRY),
+                generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY),
+            ]);
+
+            return {
+                id,
+                ...TRACK_META[id],
+                streamUrl,    // подписанный URL для Audio element в плеере
+                downloadUrl,  // подписанный URL для кнопки скачать
+            };
+        })
+    );
+
+    return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+            valid: true,
+            email: purchase.email,
+            tracks,
+            purchasedAt: purchase.created_at,
+        }),
+    };
 };
