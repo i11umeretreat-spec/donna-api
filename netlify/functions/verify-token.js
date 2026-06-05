@@ -1,6 +1,6 @@
 // netlify/functions/verify-token.js
-// Проверяет токен и возвращает подписанные URL для каждого купленного трека
-// Все ссылки живут 6 часов - достаточно для сессии прослушивания
+// Проверяет токен в ОБЕИХ таблицах: purchases и donna_guests
+// Возвращает подписанные URL для купленных треков или демо для гостей
 
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -21,8 +21,8 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const STREAM_EXPIRY = 60 * 60 * 6;   // 6 часов - для стриминга в плеере
-const DOWNLOAD_EXPIRY = 60 * 60 * 24; // 24 часа - для скачивания
+const STREAM_EXPIRY = 60 * 60 * 6;
+const DOWNLOAD_EXPIRY = 60 * 60 * 24;
 
 const TRACK_META = {
     'track-01': { title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза', duration: null },
@@ -35,16 +35,15 @@ const TRACK_META = {
     'track-08': { title: 'Личные границы', type: 'Гипномедитация', duration: '25:04' },
     'track-09': { title: 'Расслабление по Шульцу', type: 'Самогипноз', duration: '40:32' },
     'track-10': { title: 'Крокодил: обнуление тревоги', type: 'Метафорический сеанс гипноза', duration: null },
+    'track-11': { title: 'Иммунный бустер', type: 'Аудиопрактика', duration: null },
+    'track-12': { title: 'Сброс лишнего веса', type: 'Глубинная перестройка', duration: null },
+    'track-13': { title: 'Три Тотема', type: 'Ресурсный транс', duration: null },
+    'track-14': { title: 'Достижение целей', type: 'Активация целевого мышления', duration: null },
 };
 
 async function generateSignedUrl(trackId, type, expiry) {
-    const key = type === 'stream'
-        ? `tracks/full/${trackId}.mp3`
-        : `tracks/full/${trackId}.mp3`;
+    const params = { Bucket: BUCKET, Key: `tracks/full/${trackId}.mp3` };
 
-    const params = { Bucket: BUCKET, Key: key };
-
-    // Для скачивания добавляем disposition чтобы браузер скачал а не открыл
     if (type === 'download') {
         const meta = TRACK_META[trackId];
         const filename = meta ? `${meta.title}.mp3` : `${trackId}.mp3`;
@@ -69,53 +68,93 @@ exports.handler = async (event) => {
     const token = event.queryStringParameters?.token;
 
     if (!token) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'No token provided' }) };
+    }
+
+    // Lineup Mode - вечный дев-токен, полный доступ
+    const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+    if (token === LINEUP_MODE_TOKEN) {
+        const allTrackIds = Object.keys(TRACK_META);
+        const tracks = await Promise.all(
+            allTrackIds.map(async (id) => {
+                const [streamUrl, downloadUrl] = await Promise.all([
+                    generateSignedUrl(id, 'stream', STREAM_EXPIRY),
+                    generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY),
+                ]);
+                return { id, ...TRACK_META[id], streamUrl, downloadUrl };
+            })
+        );
+
         return {
-            statusCode: 400,
+            statusCode: 200,
             headers,
-            body: JSON.stringify({ error: 'No token provided' })
+            body: JSON.stringify({
+                valid: true,
+                type: 'lineup',
+                email: 'dev@thelineup.design',
+                tracks,
+            }),
         };
     }
 
-    // Проверяем токен
-    const { data: purchase, error } = await supabase
+    // 1. Сначала ищем в таблице покупателей
+    const { data: purchase } = await supabase
         .from('purchases')
         .select('track_ids, email, created_at')
         .eq('token', token)
         .single();
 
-    if (error || !purchase) {
+    if (purchase) {
+        // Платный клиент - генерируем подписанные URL
+        const tracks = await Promise.all(
+            purchase.track_ids.map(async (id) => {
+                const [streamUrl, downloadUrl] = await Promise.all([
+                    generateSignedUrl(id, 'stream', STREAM_EXPIRY),
+                    generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY),
+                ]);
+                return { id, ...TRACK_META[id], streamUrl, downloadUrl };
+            })
+        );
+
         return {
-            statusCode: 403,
+            statusCode: 200,
             headers,
-            body: JSON.stringify({ error: 'Invalid or expired token' })
+            body: JSON.stringify({
+                valid: true,
+                type: 'purchase',
+                email: purchase.email,
+                tracks,
+                purchasedAt: purchase.created_at,
+            }),
         };
     }
 
-    // Генерируем подписанные URL для всех купленных треков параллельно
-    const tracks = await Promise.all(
-        purchase.track_ids.map(async (id) => {
-            const [streamUrl, downloadUrl] = await Promise.all([
-                generateSignedUrl(id, 'stream', STREAM_EXPIRY),
-                generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY),
-            ]);
+    // 2. Не нашли в покупках - ищем в гостях
+    const { data: guest } = await supabase
+        .from('donna_guests')
+        .select('email, promo_track, created_at')
+        .eq('token', token)
+        .single();
 
-            return {
-                id,
-                ...TRACK_META[id],
-                streamUrl,    // подписанный URL для Audio element в плеере
-                downloadUrl,  // подписанный URL для кнопки скачать
-            };
-        })
-    );
+    if (guest) {
+        // Гость - возвращаем пустой список треков, плеер покажет демо + апсейл
+        return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+                valid: true,
+                type: 'guest',
+                email: guest.email,
+                tracks: [],
+                promoTrack: guest.promo_track,
+            }),
+        };
+    }
 
+    // 3. Нигде не нашли
     return {
-        statusCode: 200,
+        statusCode: 403,
         headers,
-        body: JSON.stringify({
-            valid: true,
-            email: purchase.email,
-            tracks,
-            purchasedAt: purchase.created_at,
-        }),
+        body: JSON.stringify({ error: 'Invalid or expired token' }),
     };
 };
