@@ -380,10 +380,38 @@
             duration: '21:00'
         };
 
+        // Lineup Mode - вечный дев-токен, полный доступ ко всем трекам
+        const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+        const R2_BASE = 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev';
+        const ALL_TRACKS = [
+            { id: 'track-01', title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза', streamUrl: `${R2_BASE}/tracks/full/track-01.mp3` },
+            { id: 'track-02', title: 'Очищение от негативных программ', type: 'Сеанс самогипноза', duration: '51:12', streamUrl: `${R2_BASE}/tracks/full/track-02.mp3` },
+            { id: 'track-03', title: 'Роскошь быть собой', type: 'Женская практика', duration: '24:41', streamUrl: `${R2_BASE}/tracks/full/track-03.mp3` },
+            { id: 'track-04', title: 'Укрепление уверенности', type: 'Мягкие нейрокорректоры', duration: '29:57', streamUrl: `${R2_BASE}/tracks/full/track-04.mp3` },
+            { id: 'track-05', title: 'Творец своего счастья', type: 'Сеанс самогипноза', duration: '27:20', streamUrl: `${R2_BASE}/tracks/full/track-05.mp3` },
+            { id: 'track-06', title: 'Против апатии и прокрастинации', type: 'Гипномедитация', duration: '32:41', streamUrl: `${R2_BASE}/tracks/full/track-06.mp3` },
+            { id: 'track-07', title: 'Перезапуск здоровья и молодости', type: 'Сеанс самогипноза', duration: '34:24', streamUrl: `${R2_BASE}/tracks/full/track-07.mp3` },
+            { id: 'track-08', title: 'Личные границы', type: 'Гипномедитация', duration: '25:04', streamUrl: `${R2_BASE}/tracks/full/track-08.mp3` },
+            { id: 'track-09', title: 'Расслабление по Шульцу', type: 'Самогипноз', duration: '40:32', streamUrl: `${R2_BASE}/tracks/full/track-09.mp3` },
+            { id: 'track-10', title: 'Крокодил - обнуление тревоги', type: 'Метафорический гипноз', streamUrl: `${R2_BASE}/tracks/full/track-10.mp3` },
+            { id: 'track-11', title: 'Иммунный бустер', type: 'Аудиопрактика', streamUrl: `${R2_BASE}/tracks/full/track-11.mp3` },
+            { id: 'track-12', title: 'Сброс лишнего веса', type: 'Глубинная перестройка', streamUrl: `${R2_BASE}/tracks/full/track-12.mp3` },
+            { id: 'track-13', title: 'Три Тотема', type: 'Ресурсный транс', streamUrl: `${R2_BASE}/tracks/full/track-13.mp3` },
+            { id: 'track-14', title: 'Достижение целей', type: 'Активация целевого мышления', streamUrl: `${R2_BASE}/tracks/full/track-14.mp3` },
+        ];
+
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
+            let token = urlParams.get('token');
             const container = document.getElementById('app-content');
+
+            // Lineup Mode - все треки без верификации
+            if (token === LINEUP_MODE_TOKEN) {
+                console.log('🏄 Lineup Mode activated — full library');
+                currentToken = token;
+                renderTracks(ALL_TRACKS, true, false);
+                return;
+            }
 
             if (!token) {
                 // Гость без токена - показываем демо + апсейл
