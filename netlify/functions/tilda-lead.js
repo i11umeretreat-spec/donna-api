@@ -14,21 +14,11 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const PROMO_TRACK_URL = 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3';
-const PLAYER_BASE = 'https://app.ekaterina-donnat.com';
+const PLAYER_BASE = 'https://app.ekaterina-donna.com';
 
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
-    }
-
-    // Проверяем на тестовый пинг от Тильды при сохранении вебхука
-    const isTestPing = event.body && (event.body.includes('test=') || event.body.includes('"test"'));
-    if (isTestPing) {
-        console.log('Tilda test connection handshake');
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ success: true, message: 'Handshake OK' })
-        };
     }
 
     // Tilda шлёт данные как form-urlencoded или JSON
@@ -95,9 +85,9 @@ exports.handler = async (event) => {
     // Отправляем письмо
     try {
         await resend.emails.send({
-            from: 'Ekaterina Donna <onboarding@resend.dev>',
+            from: 'Ekaterina Donna <hello@ekaterina-donna.com>',
             to: email,
-            subject: 'Твоя первая практика от Екатерины Донна',
+            subject: 'Баланс стихий - твоя первая практика от Екатерины Донна',
             html: buildEmail(playerUrl),
         });
 
@@ -130,6 +120,7 @@ function buildEmail(playerUrl) {
                 <table width="520" cellpadding="0" cellspacing="0" border="0"
                        style="max-width:520px;width:100%;">
 
+                    <!-- Лого -->
                     <tr>
                         <td align="center" style="padding-bottom:36px;">
                             <img src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
@@ -138,6 +129,7 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
+                    <!-- Верхний разделитель -->
                     <tr>
                         <td style="padding-bottom:36px;">
                             <table width="100%" cellpadding="0" cellspacing="0">
@@ -148,12 +140,13 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
+                    <!-- Заголовок -->
                     <tr>
                         <td align="center" style="padding-bottom:8px;">
                             <p style="margin:0;font-size:10px;letter-spacing:0.25em;
                                       text-transform:uppercase;color:rgba(212,175,55,0.7);
                                       font-weight:300;">
-                                Авторская нейроакустика
+                                Сеанс самогипноза · Энергетическое наполнение
                             </p>
                         </td>
                     </tr>
@@ -161,28 +154,26 @@ function buildEmail(playerUrl) {
                         <td align="center" style="padding-bottom:32px;">
                             <h1 style="margin:0;font-size:28px;font-weight:200;
                                        color:#f0eae1;line-height:1.3;letter-spacing:0.02em;">
-                                Энергия воды
+                                Баланс стихий
                             </h1>
                         </td>
                     </tr>
 
+                    <!-- Текст письма -->
                     <tr>
                         <td style="background:rgba(23,27,54,0.6);border:1px solid rgba(212,175,55,0.12);
                                    border-radius:16px;padding:36px 32px;margin-bottom:32px;">
 
                             <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
                                       color:rgba(248,250,252,0.85);line-height:1.75;">
-                                Привет. Это Катя.
+                                Привет. Это Екатерина.
                             </p>
                             <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
                                       color:rgba(248,250,252,0.85);line-height:1.75;">
                                 Я очень рада, что наши пути пересеклись.
                             </p>
-                            <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
-                                      color:rgba(248,250,252,0.85);line-height:1.75;">
-                                Прямо сейчас у тебя есть возможность отпустить контроль.
-                            </p>
 
+                            <!-- Разделитель -->
                             <table width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
                                 <tr>
                                     <td style="height:1px;background:rgba(212,175,55,0.12);font-size:0;">&nbsp;</td>
@@ -195,27 +186,42 @@ function buildEmail(playerUrl) {
                             </p>
                             <p style="margin:0 0 18px 0;font-size:19px;font-weight:300;
                                       color:#d4af37;line-height:1.3;">
-                                Энергия воды
+                                Баланс стихий
                             </p>
                             <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
                                       color:rgba(248,250,252,0.85);line-height:1.75;">
-                                Она создана для того, чтобы мягко смыть суету дня
-                                и вернуть тебя в твоё тело.
+                                Ты когда-нибудь стоял у воды и чувствовал,
+                                как что-то внутри успокаивается само собой?
+                                Или смотрел на огонь и ощущал, как просыпается сила?
                             </p>
                             <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
                                       color:rgba(248,250,252,0.85);line-height:1.75;">
-                                Тебе не нужно стараться или работать над собой.
-                                Просто найди пятнадцать минут тишины
-                                и надень любимые наушники.
+                                Это не случайность. Это твоё тело вспоминает язык,
+                                который оно знало всегда.
+                            </p>
+                            <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
+                                      color:rgba(248,250,252,0.85);line-height:1.75;">
+                                Шесть стихий - Вода, Огонь, Земля, Воздух, Металл, Дерево -
+                                это шесть разных способов наполнить себя энергией.
+                                В этом сеансе самогипноза ты по очереди входишь в каждую стихию
+                                и забираешь именно то, чего сейчас не хватает.
+                            </p>
+                            <p style="margin:0 0 18px 0;font-size:15px;font-weight:300;
+                                      color:rgba(248,250,252,0.7);line-height:1.75;font-style:italic;">
+                                Можно слушать на природе - у реки, у костра, босиком на траве.
+                                Можно дома - подсознание не знает разницы,
+                                оно работает с образами.
                             </p>
                             <p style="margin:0;font-size:15px;font-weight:300;
                                       color:rgba(248,250,252,0.85);line-height:1.75;">
+                                Одна медитация - шесть источников силы.
                                 Нажимай кнопку ниже, закрывай глаза
                                 и позволь звуку сделать всю работу.
                             </p>
                         </td>
                     </tr>
 
+                    <!-- Кнопка -->
                     <tr>
                         <td align="center" style="padding:36px 0 24px;">
                             <a href="${playerUrl}"
@@ -228,16 +234,18 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
+                    <!-- Подсказка -->
                     <tr>
                         <td align="center" style="padding-bottom:40px;">
                             <p style="margin:0;font-size:11px;font-weight:300;
                                       color:rgba(248,250,252,0.25);line-height:1.6;">
                                 Это твоя персональная ссылка.<br>
-                                Сохрани это письмо — она работает всегда.
+                                Сохрани это письмо - она работает всегда.
                             </p>
                         </td>
                     </tr>
 
+                    <!-- Нижний разделитель -->
                     <tr>
                         <td style="padding-bottom:28px;">
                             <table width="100%" cellpadding="0" cellspacing="0">
@@ -248,6 +256,7 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
+                    <!-- Футер -->
                     <tr>
                         <td align="center">
                             <p style="margin:0;font-size:10px;font-weight:300;
