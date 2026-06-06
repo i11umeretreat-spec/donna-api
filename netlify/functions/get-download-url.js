@@ -36,6 +36,7 @@ const TRACK_FILES = {
     'track-09': 'release/Shults_2.mp3',
     'track-10': 'release/crock.mp3',
     'track-11': 'release/immune_booster.mp3',
+    'track-12': 'release/weight_release.mp3',
 };
 
 exports.handler = async (event) => {
