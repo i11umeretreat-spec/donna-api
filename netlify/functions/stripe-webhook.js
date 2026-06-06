@@ -7,7 +7,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
-const R2_BASE = 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev';
+const R2_BASE = 'https://audio.ekaterina-donnat.com';
 
 // Маппинг Stripe Payment Link ID → треки + журнал
 const PRODUCTS = {
