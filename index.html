@@ -241,7 +241,6 @@
     <header class="app-header">
         <h1 class="app-title">Екатерина Донна</h1>
         <div class="app-subtitle" id="header-subtitle">Глубинная работа с подсознанием</div>
-        <div class="badge">Sound by Audio Laguna</div>
         <div class="lang-toggle">
             <button class="lang-btn active" id="lang-ru" onclick="setLang('ru')">RU</button>
             <button class="lang-btn" id="lang-fr" onclick="setLang('fr')">FR</button>
@@ -338,6 +337,7 @@
             document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
             document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
             document.getElementById('header-subtitle').textContent = t('subtitle');
+            document.querySelector('.app-title').textContent = lang === 'fr' ? 'Ekaterina Donnat' : 'Екатерина Донна';
             document.documentElement.lang = lang;
 
             // Перерендер если уже были треки
