@@ -23,6 +23,21 @@ const r2 = new S3Client({
 const BUCKET = process.env.R2_BUCKET_NAME;
 const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
 
+// Маппинг track-id → реальный путь в R2
+const TRACK_FILES = {
+    'track-01': 'release/money_freedom.mp3',
+    'track-02': 'release/negative_cleansing.mp3',
+    'track-03': 'release/be_yourself.mp3',
+    'track-04': 'release/true_confidence.mp3',
+    'track-05': 'release/happiness_creator.mp3',
+    'track-06': 'release/stop_fighting.mp3',
+    'track-07': 'release/body_reboot.mp3',
+    'track-08': 'release/personal_boundaries.mp3',
+    'track-09': 'release/Shults_2.mp3',
+    'track-10': 'release/crock.mp3',
+    'track-11': 'release/immune_booster.mp3',
+};
+
 exports.handler = async (event) => {
     const headers = {
         'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
@@ -71,10 +86,16 @@ exports.handler = async (event) => {
         }
     }
 
+    // Проверяем что файл существует в маппинге
+    const filePath = TRACK_FILES[trackId];
+    if (!filePath) {
+        return { statusCode: 404, headers, body: 'Track not found' };
+    }
+
     // Генерируем подписанный URL на 24 часа
     const command = new GetObjectCommand({
         Bucket: BUCKET,
-        Key: `tracks/full/${trackId}.mp3`,
+        Key: filePath,
         ResponseContentDisposition: `attachment; filename="${trackId}.mp3"`,
     });
 
