@@ -14,8 +14,7 @@
             background-attachment: fixed;
             color: rgba(248, 250, 252, 0.95);
             font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
+            margin: 0; padding: 0;
             min-height: 100vh;
             color-scheme: dark;
         }
@@ -55,6 +54,39 @@
             letter-spacing: 0.2em;
             color: #d4af37;
             background: rgba(212, 175, 55, 0.05);
+            margin-bottom: 16px;
+        }
+
+        /* Тумблер языка */
+        .lang-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .lang-btn {
+            padding: 6px 14px;
+            font-size: 10px;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            color: rgba(248, 250, 252, 0.4);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .lang-btn.active {
+            color: #d4af37;
+            background: rgba(212, 175, 55, 0.1);
+        }
+
+        .lang-btn:hover:not(.active) {
+            color: rgba(248, 250, 252, 0.7);
         }
         
         .tracks-container {
@@ -91,36 +123,20 @@
         }
         
         .play-btn {
-            width: 54px;
-            height: 54px;
-            min-width: 54px;
+            width: 54px; height: 54px; min-width: 54px;
             border-radius: 50%;
             background: transparent;
             border: 1px solid #d4af37;
             color: #d4af37;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
         }
         
-        .play-btn:hover {
-            background: rgba(212, 175, 55, 0.1);
-            transform: scale(1.05);
-        }
-
-        .player-card.active .play-btn {
-            background: #d4af37;
-            color: #151933;
-        }
+        .play-btn:hover { background: rgba(212, 175, 55, 0.1); transform: scale(1.05); }
+        .player-card.active .play-btn { background: #d4af37; color: #151933; }
         
-        .play-icon, .pause-icon {
-            width: 16px;
-            height: 16px;
-            fill: currentColor;
-        }
-        
+        .play-icon, .pause-icon { width: 16px; height: 16px; fill: currentColor; }
         .play-icon { margin-left: 4px; }
         .pause-icon { display: none; }
         .player-card.active .play-icon { display: none; }
@@ -130,236 +146,112 @@
         
         .track-title {
             font-family: 'Noto Serif Display', serif;
-            font-weight: 300;
-            font-size: 20px;
+            font-weight: 300; font-size: 20px;
             color: rgba(248, 250, 252, 0.95);
-            margin-bottom: 4px;
-            line-height: 1.2;
+            margin-bottom: 4px; line-height: 1.2;
             transition: color 0.3s ease;
         }
 
         .player-card.active .track-title { color: #d4af37; }
         
         .track-meta {
-            font-weight: 200;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
+            font-weight: 200; font-size: 10px;
+            text-transform: uppercase; letter-spacing: 0.15em;
             color: rgba(248, 250, 252, 0.5);
         }
 
         .download-btn {
-            width: 40px;
-            height: 40px;
-            min-width: 40px;
+            width: 40px; height: 40px; min-width: 40px;
             border-radius: 50%;
             border: 1px solid rgba(212, 175, 55, 0.3);
-            color: #d4af37;
-            background: transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-left: auto;
+            color: #d4af37; background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.3s ease; margin-left: auto;
         }
 
-        .download-btn:hover {
-            background: rgba(212, 175, 55, 0.1);
-            border-color: #d4af37;
-            transform: scale(1.05);
-        }
-
-        .download-btn.loading {
-            opacity: 0.4;
-            cursor: wait;
-            transform: none;
-        }
-
+        .download-btn:hover { background: rgba(212, 175, 55, 0.1); border-color: #d4af37; transform: scale(1.05); }
+        .download-btn.loading { opacity: 0.4; cursor: wait; transform: none; }
         .download-btn svg { width: 16px; height: 16px; fill: currentColor; }
-
         .download-btn .spin {
             width: 14px; height: 14px;
             border: 1.5px solid rgba(212, 175, 55, 0.3);
-            border-top-color: #d4af37;
-            border-radius: 50%;
+            border-top-color: #d4af37; border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
         
         .progress-area {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            opacity: 0.4;
-            transition: opacity 0.3s ease;
+            display: flex; align-items: center; gap: 12px;
+            opacity: 0.4; transition: opacity 0.3s ease;
         }
-
         .player-card.active .progress-area { opacity: 1; }
         
-        .time {
-            font-size: 10px;
-            font-weight: 300;
-            color: rgba(248, 250, 252, 0.7);
-            width: 35px;
-            text-align: center;
-        }
+        .time { font-size: 10px; font-weight: 300; color: rgba(248, 250, 252, 0.7); width: 35px; text-align: center; }
         
         .progress-bar-wrap {
-            flex: 1;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            position: relative;
-            cursor: pointer;
+            flex: 1; height: 24px; display: flex; align-items: center;
+            position: relative; cursor: pointer;
         }
-
         .progress-track {
-            width: 100%;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 2px;
-            position: relative;
-            pointer-events: none;
+            width: 100%; height: 4px; background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px; position: relative; pointer-events: none;
         }
-        
         .progress-fill {
-            position: absolute;
-            left: 0; top: 0;
-            height: 100%;
-            background: #d4af37;
-            width: 0%;
-            border-radius: 2px;
+            position: absolute; left: 0; top: 0; height: 100%;
+            background: #d4af37; width: 0%; border-radius: 2px;
             transition: width 0.1s linear;
         }
-
         .progress-fill::after {
-            content: '';
-            position: absolute;
-            right: -4px; top: -3px;
-            width: 10px; height: 10px;
-            background: #fff;
-            border-radius: 50%;
+            content: ''; position: absolute; right: -4px; top: -3px;
+            width: 10px; height: 10px; background: #fff; border-radius: 50%;
             box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-            opacity: 0;
-            transition: opacity 0.2s ease;
+            opacity: 0; transition: opacity 0.2s ease;
         }
-
         .player-card.active .progress-fill::after { opacity: 1; }
 
         .system-message {
-            text-align: center;
-            padding: 40px 20px;
-            color: rgba(248, 250, 252, 0.7);
-            font-weight: 300;
-            line-height: 1.6;
+            text-align: center; padding: 40px 20px;
+            color: rgba(248, 250, 252, 0.7); font-weight: 300; line-height: 1.6;
         }
-
         .loader {
             width: 30px; height: 30px;
             border: 2px solid rgba(212, 175, 55, 0.2);
-            border-top-color: #d4af37;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            border-top-color: #d4af37; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Апсейл - только для гостей */
         .upsell-card {
-            background: rgba(23, 27, 54, 0.4);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 24px;
-            padding: 32px 24px;
-            text-align: center;
-            margin-top: 8px;
+            background: rgba(23, 27, 54, 0.4); backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 24px;
+            padding: 32px 24px; text-align: center; margin-top: 8px;
             animation: fadeIn 0.8s ease forwards;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .upsell-label {
-            font-size: 9px;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: rgba(212, 175, 55, 0.5);
-            margin-bottom: 12px;
-        }
-
-        .upsell-title {
-            font-family: 'Noto Serif Display', serif;
-            font-weight: 300;
-            font-size: 22px;
-            color: #f0eae1;
-            margin-bottom: 12px;
-        }
-
-        .upsell-text {
-            font-weight: 300;
-            font-size: 13px;
-            color: rgba(248, 250, 252, 0.6);
-            margin-bottom: 28px;
-            line-height: 1.7;
-        }
-
-        .btn-primary {
-            display: block;
-            background: #d4af37;
-            color: #151933;
-            padding: 16px 24px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            font-weight: 500;
-            margin-bottom: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary:hover {
-            background: #e5c158;
-            transform: scale(1.02);
-        }
-
-        .btn-secondary {
-            display: block;
-            background: transparent;
-            color: #d4af37;
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            padding: 16px 24px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(212, 175, 55, 0.1);
-            border-color: #d4af37;
-            transform: scale(1.02);
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .upsell-label { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(212, 175, 55, 0.5); margin-bottom: 12px; }
+        .upsell-title { font-family: 'Noto Serif Display', serif; font-weight: 300; font-size: 22px; color: #f0eae1; margin-bottom: 12px; }
+        .upsell-text { font-weight: 300; font-size: 13px; color: rgba(248, 250, 252, 0.6); margin-bottom: 28px; line-height: 1.7; }
+        .btn-primary { display: block; background: #d4af37; color: #151933; padding: 16px 24px; border-radius: 12px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 500; margin-bottom: 12px; transition: all 0.3s ease; }
+        .btn-primary:hover { background: #e5c158; transform: scale(1.02); }
+        .btn-secondary { display: block; background: transparent; color: #d4af37; border: 1px solid rgba(212, 175, 55, 0.3); padding: 16px 24px; border-radius: 12px; text-decoration: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 500; transition: all 0.3s ease; }
+        .btn-secondary:hover { background: rgba(212, 175, 55, 0.1); border-color: #d4af37; transform: scale(1.02); }
     </style>
 </head>
 <body>
 
     <header class="app-header">
         <h1 class="app-title">Екатерина Донна</h1>
-        <div class="app-subtitle">Глубинная работа с подсознанием</div>
+        <div class="app-subtitle" id="header-subtitle">Глубинная работа с подсознанием</div>
         <div class="badge">Sound by Audio Laguna</div>
+        <div class="lang-toggle">
+            <button class="lang-btn active" id="lang-ru" onclick="setLang('ru')">RU</button>
+            <button class="lang-btn" id="lang-fr" onclick="setLang('fr')">FR</button>
+        </div>
     </header>
 
     <div id="app-content" class="tracks-container">
         <div class="system-message">
             <div class="loader"></div>
-            Подготавливаем пространство...
+            <span id="loading-text">Подготавливаем пространство...</span>
         </div>
     </div>
 
@@ -370,32 +262,113 @@
         let currentCard = null;
         let isPlaying = false;
         let currentToken = null;
+        let currentLang = 'ru';
+        let lastRenderArgs = null;
 
-        // Гостевой демо-трек
+        // ── СЛОВАРЬ ──────────────────────────────────────────────────────────
+        const i18n = {
+            ru: {
+                subtitle: 'Глубинная работа с подсознанием',
+                loading: 'Подготавливаем пространство...',
+                errorToken: 'Срок действия ключа истёк или он неверен.<br>Пожалуйста, проверьте ваше письмо.',
+                errorServer: 'Ошибка соединения с сервером.<br>Пожалуйста, обновите страницу.',
+                errorDownload: 'Не удалось подготовить файл. Попробуйте ещё раз.',
+                downloadTitle: 'Скачать практику',
+                upsellLabel: 'Следующий шаг',
+                upsellTitle: 'Глубокое погружение',
+                upsellText: 'Открой для себя полную коллекцию нейропрактик или запишись на личный чек-ап к Екатерине для точечной работы с подсознанием.',
+                upsellBtn1: 'Полная коллекция',
+                upsellBtn2: 'Записаться на чек-ап',
+                tracks: {
+                    'water_energy': { title: 'Баланс стихий', type: 'Сеанс самогипноза · Энергетическое наполнение' },
+                    'track-01': { title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза' },
+                    'track-02': { title: 'Очищение от негативных программ', type: 'Сеанс самогипноза' },
+                    'track-03': { title: 'Роскошь быть собой', type: 'Женская практика' },
+                    'track-04': { title: 'Укрепление уверенности', type: 'Мягкие нейрокорректоры' },
+                    'track-05': { title: 'Творец своего счастья', type: 'Сеанс самогипноза' },
+                    'track-06': { title: 'Против апатии и прокрастинации', type: 'Гипномедитация' },
+                    'track-07': { title: 'Перезапуск здоровья и молодости', type: 'Сеанс самогипноза' },
+                    'track-08': { title: 'Личные границы', type: 'Гипномедитация' },
+                    'track-09': { title: 'Расслабление по Шульцу', type: 'Самогипноз' },
+                    'track-10': { title: 'Крокодил, обнуление тревоги', type: 'Метафорический гипноз' },
+                    'track-11': { title: 'Иммунный бустер', type: 'Аудиопрактика' },
+                    'track-12': { title: 'Сброс лишнего веса', type: 'Глубинная перестройка' },
+                    'track-13': { title: 'Три Тотема', type: 'Ресурсный транс' },
+                    'track-14': { title: 'Достижение целей', type: 'Активация целевого мышления' },
+                },
+            },
+            fr: {
+                subtitle: 'Travail en profondeur avec l\'inconscient',
+                loading: 'Nous préparons votre espace...',
+                errorToken: 'Ce lien n\'est plus actif.<br>Veuillez vérifier votre e-mail.',
+                errorServer: 'Erreur de connexion au serveur.<br>Veuillez rafraîchir la page.',
+                errorDownload: 'Impossible de préparer le fichier. Veuillez réessayer.',
+                downloadTitle: 'Télécharger la pratique',
+                upsellLabel: 'Étape suivante',
+                upsellTitle: 'Plongée en profondeur',
+                upsellText: 'Explorez la collection complète de neuro-pratiques ou réservez un bilan privé avec Ekaterina pour un travail ciblé avec votre inconscient.',
+                upsellBtn1: 'Collection complète',
+                upsellBtn2: 'Réserver un bilan',
+                tracks: {
+                    'water_energy': { title: 'L\'équilibre des éléments', type: 'Séance d\'auto-hypnose · Recharge énergétique' },
+                    'track-01': { title: 'Libération des blocages financiers', type: 'Séance d\'auto-hypnose' },
+                    'track-02': { title: 'Libération des schémas limitants', type: 'Séance d\'auto-hypnose' },
+                    'track-03': { title: 'Le luxe d\'être soi', type: 'Pratique féminine' },
+                    'track-04': { title: 'Renforcement de la confiance en soi', type: 'Neuro-correcteurs doux' },
+                    'track-05': { title: 'Créateur de son propre bonheur', type: 'Séance d\'auto-hypnose' },
+                    'track-06': { title: 'Dépasser l\'apathie et la procrastination', type: 'Hypnoméditation' },
+                    'track-07': { title: 'Renouveau du corps et de la jeunesse', type: 'Séance d\'auto-hypnose' },
+                    'track-08': { title: 'Les frontières personnelles', type: 'Hypnoméditation' },
+                    'track-09': { title: 'Relaxation de Schultz', type: 'Auto-hypnose' },
+                    'track-10': { title: 'Le Crocodile, dissolution de l\'anxiété', type: 'Hypnose métaphorique' },
+                    'track-11': { title: 'Booster immunitaire', type: 'Pratique audio' },
+                    'track-12': { title: 'Libération du poids en excès', type: 'Restructuration profonde' },
+                    'track-13': { title: 'Les Trois Totems', type: 'Transe ressourçante' },
+                    'track-14': { title: 'Réalisation des objectifs', type: 'Activation de la pensée orientée vers le but' },
+                },
+            },
+        };
+
+        function t(key) { return i18n[currentLang][key]; }
+        function tTrack(id) { return i18n[currentLang].tracks[id] || { title: id, type: '' }; }
+
+        // ── ПЕРЕКЛЮЧАТЕЛЬ ЯЗЫКА ──────────────────────────────────────────────
+        function setLang(lang) {
+            currentLang = lang;
+            document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
+            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+            document.getElementById('header-subtitle').textContent = t('subtitle');
+            document.documentElement.lang = lang;
+
+            // Перерендер если уже были треки
+            if (lastRenderArgs) {
+                renderTracks(...lastRenderArgs);
+            }
+        }
+
+        // ── ДЕМО-ТРЕК ────────────────────────────────────────────────────────
         const DEMO_TRACK = {
             id: 'water_energy',
-            title: 'Баланс стихий',
-            type: 'Сеанс самогипноза · Энергетическое наполнение',
             streamUrl: 'https://pub-a1dfcf27afc040398c3bc3e4bf3f6416.r2.dev/promo/water_energy.mp3',
             duration: '21:00'
         };
 
-        // Lineup Mode - вечный дев-токен
+        // ── LINEUP MODE ──────────────────────────────────────────────────────
         const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
 
+        // ── INIT ─────────────────────────────────────────────────────────────
         document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             let token = urlParams.get('token');
             const container = document.getElementById('app-content');
 
-            // Lineup Mode - идём через сервер за подписанными URL
+            // Lineup Mode
             if (token === LINEUP_MODE_TOKEN) {
                 console.log('🏄 Lineup Mode activated');
                 currentToken = token;
             }
 
             if (!token) {
-                // Гость без токена - показываем демо + апсейл
                 renderTracks([DEMO_TRACK], false, true);
                 return;
             }
@@ -407,29 +380,33 @@
                 const data = await response.json();
 
                 if (!response.ok || !data.valid) {
-                    container.innerHTML = '<div class="system-message">Срок действия ключа истёк или он неверен.<br>Пожалуйста, проверьте ваше письмо.</div>';
+                    container.innerHTML = `<div class="system-message">${t('errorToken')}</div>`;
                     return;
                 }
 
                 if (!data.tracks || data.tracks.length === 0) {
-                    // Гостевой токен из формы - только демо + апсейл
                     renderTracks([DEMO_TRACK], false, true);
                     return;
                 }
 
-                // Платный клиент - треки без апсейла
                 renderTracks(data.tracks, true, false);
 
             } catch (error) {
-                container.innerHTML = '<div class="system-message">Ошибка соединения с сервером.<br>Пожалуйста, обновите страницу.</div>';
+                container.innerHTML = `<div class="system-message">${t('errorServer')}</div>`;
             }
         });
 
+        // ── RENDER ───────────────────────────────────────────────────────────
         function renderTracks(tracks, allowDownload, showUpsell) {
+            lastRenderArgs = [tracks, allowDownload, showUpsell];
             const container = document.getElementById('app-content');
-            let html = '';
+
+            // Запоминаем текущий играющий трек
+            const playingId = currentCard ? currentCard.getAttribute('data-track-id') : null;
             
+            let html = '';
             tracks.forEach(track => {
+                const tr = tTrack(track.id);
                 html += `
                 <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
                     <div class="card-top">
@@ -438,11 +415,11 @@
                             <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                         </button>
                         <div class="track-info">
-                            <div class="track-title">${track.title}</div>
-                            <div class="track-meta">${track.type}${track.duration ? ' · ' + track.duration : ''}</div>
+                            <div class="track-title">${tr.title}</div>
+                            <div class="track-meta">${tr.type}${track.duration ? ' · ' + track.duration : ''}</div>
                         </div>
                         ${allowDownload ? `
-                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="Скачать практику">
+                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="${t('downloadTitle')}">
                             <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
                         </button>` : ''}
                     </div>
@@ -460,28 +437,30 @@
                 </div>`;
             });
 
-            // Апсейл только для гостей
             if (showUpsell) {
                 html += `
                 <div class="upsell-card">
-                    <div class="upsell-label">Следующий шаг</div>
-                    <div class="upsell-title">Глубокое погружение</div>
-                    <div class="upsell-text">
-                        Открой для себя полную коллекцию нейропрактик или запишись
-                        на личный чек-ап к Екатерине для точечной работы с подсознанием.
-                    </div>
-                    <a href="https://ekaterina-donnat.com" class="btn-primary" target="_blank">
-                        Полная коллекция
-                    </a>
-                    <a href="https://ekaterina-donnat.com/#checkup" class="btn-secondary" target="_blank">
-                        Записаться на чек-ап
-                    </a>
+                    <div class="upsell-label">${t('upsellLabel')}</div>
+                    <div class="upsell-title">${t('upsellTitle')}</div>
+                    <div class="upsell-text">${t('upsellText')}</div>
+                    <a href="https://ekaterina-donnat.com" class="btn-primary" target="_blank">${t('upsellBtn1')}</a>
+                    <a href="https://ekaterina-donnat.com/#checkup" class="btn-secondary" target="_blank">${t('upsellBtn2')}</a>
                 </div>`;
             }
 
             container.innerHTML = html;
+
+            // Восстанавливаем состояние играющего трека после перерендера
+            if (playingId && isPlaying) {
+                const card = container.querySelector(`[data-track-id="${playingId}"]`);
+                if (card) {
+                    card.classList.add('active');
+                    currentCard = card;
+                }
+            }
         }
 
+        // ── ПЛЕЕР ────────────────────────────────────────────────────────────
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds === Infinity) return '0:00';
             const m = Math.floor(seconds / 60);
@@ -491,7 +470,6 @@
 
         function togglePlay(card) {
             const url = card.getAttribute('data-url');
-            
             if (currentCard !== card) {
                 if (currentCard) {
                     currentCard.classList.remove('active');
@@ -500,13 +478,9 @@
                 }
                 currentCard = card;
                 currentCard.classList.add('active');
-                
                 audio.src = url;
                 audio.load();
-                audio.play().then(() => {
-                    isPlaying = true;
-                }).catch(e => console.error('Play error:', e));
-
+                audio.play().then(() => { isPlaying = true; }).catch(e => console.error('Play error:', e));
             } else {
                 if (isPlaying) {
                     audio.pause();
@@ -544,7 +518,7 @@
             }
         });
 
-        // Seek - мышь и touch для iOS
+        // ── SEEK ─────────────────────────────────────────────────────────────
         let isSeeking = false;
 
         function seek(e, wrap) {
@@ -560,7 +534,6 @@
             e.preventDefault();
             isSeeking = true;
             seek(e, wrap);
-
             const onMove = (ev) => { if (isSeeking) seek(ev, wrap); };
             const onEnd = () => {
                 isSeeking = false;
@@ -569,30 +542,25 @@
                 document.removeEventListener('touchmove', onMove);
                 document.removeEventListener('touchend', onEnd);
             };
-
             document.addEventListener('mousemove', onMove);
             document.addEventListener('mouseup', onEnd);
             document.addEventListener('touchmove', onMove, { passive: false });
             document.addEventListener('touchend', onEnd);
         }
 
-        // Скачивание - через <a download> для корректной работы на iOS
+        // ── СКАЧИВАНИЕ ───────────────────────────────────────────────────────
         async function downloadTrack(btn, trackId) {
             if (btn.classList.contains('loading')) return;
             btn.classList.add('loading');
             btn.innerHTML = '<div class="spin"></div>';
-
             try {
                 const res = await fetch('/.netlify/functions/get-download-url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ token: currentToken, trackId }),
                 });
-
                 const data = await res.json();
                 if (!res.ok || !data.url) throw new Error('No URL');
-
-                // <a download> вместо window.location.href - корректно на iOS
                 const a = document.createElement('a');
                 a.href = data.url;
                 a.download = '';
@@ -600,10 +568,9 @@
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-
             } catch (err) {
                 console.error('Download error:', err);
-                alert('Не удалось подготовить файл. Попробуйте ещё раз.');
+                alert(t('errorDownload'));
             } finally {
                 btn.classList.remove('loading');
                 btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
