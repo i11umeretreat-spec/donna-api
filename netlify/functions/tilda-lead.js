@@ -236,7 +236,7 @@ function buildEmail(playerUrl) {
 
                     <!-- Подсказка -->
                     <tr>
-                        <td align="center" style="padding-bottom:40px;">
+                        <td align="center" style="padding-bottom:32px;">
                             <p style="margin:0;font-size:11px;font-weight:300;
                                       color:rgba(248,250,252,0.25);line-height:1.6;">
                                 Это твоя персональная ссылка.<br>
@@ -245,9 +245,66 @@ function buildEmail(playerUrl) {
                         </td>
                     </tr>
 
+                    <!-- Апсейл блок -->
+                    <tr>
+                        <td style="padding-bottom:32px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="height:1px;background:rgba(212,175,55,0.12);font-size:0;">&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background:rgba(23,27,54,0.6);border:1px solid rgba(212,175,55,0.1);
+                                   border-radius:12px;padding:28px 24px;">
+                            <p style="margin:0 0 12px 0;font-size:10px;letter-spacing:0.2em;
+                                      text-transform:uppercase;color:rgba(212,175,55,0.6);">
+                                Когда будешь готова идти глубже
+                            </p>
+                            <p style="margin:0 0 16px 0;font-size:14px;font-weight:300;
+                                      color:rgba(248,250,252,0.75);line-height:1.7;">
+                                Эта практика сняла симптом — напряжение сегодняшнего дня.
+                                Но если тревога, усталость или ощущение потери себя возвращаются снова и снова —
+                                это не симптом, а паттерн. Его нельзя снять одной практикой.
+                            </p>
+                            <p style="margin:0 0 20px 0;font-size:14px;font-weight:300;
+                                      color:rgba(248,250,252,0.75);line-height:1.7;">
+                                Ступени работают глубже. Они перестраивают реакцию нервной системы —
+                                так чтобы эти состояния перестали быть твоим фоном.
+                            </p>
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td width="48%" style="padding-right:6px;">
+                                        <a href="https://ekaterina-donnat.com/#steps"
+                                           style="display:block;text-align:center;
+                                                  border:1px solid rgba(212,175,55,0.3);
+                                                  color:#d4af37;padding:12px 8px;border-radius:8px;
+                                                  text-decoration:none;font-size:10px;
+                                                  letter-spacing:0.15em;text-transform:uppercase;">
+                                            Выбрать ступень
+                                        </a>
+                                    </td>
+                                    <td width="4%"></td>
+                                    <td width="48%" style="padding-left:6px;">
+                                        <a href="https://buy.stripe.com/4gMcN4aB10XOeSj4eMasg0c"
+                                           style="display:block;text-align:center;
+                                                  background:#d4af37;color:#0f1123;
+                                                  padding:12px 8px;border-radius:8px;
+                                                  text-decoration:none;font-size:10px;
+                                                  letter-spacing:0.15em;text-transform:uppercase;
+                                                  font-weight:500;">
+                                            Полный альбом 350€
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
                     <!-- Нижний разделитель -->
                     <tr>
-                        <td style="padding-bottom:28px;">
+                        <td style="padding:28px 0;">
                             <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
                                     <td style="height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,55,0.25),transparent);font-size:0;">&nbsp;</td>
