@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Баланс стихий — Екатерина Донна</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Manrope:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0D0E1A;
+      --surface: rgba(255,255,255,0.05);
+      --border: rgba(160,165,220,0.12);
+      --text: #EEEDF8;
+      --muted: #8A8AAE;
+      --accent: #C8A84B;
+      --accent-dim: rgba(200,168,75,0.15);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Manrope', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* ─── BACKGROUND ─── */
+    .bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .bg-placeholder {
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at 30% 40%, #161830 0%, #0D0E1A 60%);
+    }
+
+    /* когда будет фото Екатерины - заменить .bg-placeholder на:
+    .bg-photo {
+      width: 100%; height: 100%;
+      background: url('URL_ФОТО') center/cover no-repeat;
+      filter: blur(40px) brightness(0.3) saturate(0.6);
+      transform: scale(1.1);
+    } */
+
+    .bg-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(13,14,26,0.3) 0%,
+        rgba(13,14,26,0.1) 30%,
+        rgba(13,14,26,0.6) 70%,
+        rgba(13,14,26,0.95) 100%
+      );
+    }
+
+    /* ─── LAYOUT ─── */
+    .screen {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 28px;
+    }
+
+    /* ─── HEADER ─── */
+    .header {
+      padding: 48px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 14px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .site-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .site-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+    /* ─── CENTER ─── */
+    .center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .track-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+
+    .track-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(32px, 8vw, 48px);
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .track-author {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 48px;
+    }
+
+    /* ─── WAVEFORM ─── */
+    .waveform {
+      width: 100%;
+      height: 48px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .wave-bar {
+      width: 3px;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s, height 0.1s;
+      flex-shrink: 0;
+    }
+
+    .wave-bar.played { background: var(--accent); }
+    .wave-bar.active { background: var(--accent); }
+
+    /* ─── PROGRESS ─── */
+    .progress-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .time {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      flex-shrink: 0;
+      width: 36px;
+    }
+
+    .time-end { text-align: right; }
+
+    .progress-track {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.5s linear;
+      pointer-events: none;
+    }
+
+    .progress-thumb {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      left: 0%;
+      transition: left 0.5s linear;
+      pointer-events: none;
+    }
+
+    /* ─── CONTROLS ─── */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 56px;
+    }
+
+    .btn-skip {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+
+    .btn-skip:hover { color: var(--text); }
+
+    .btn-play {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 1px solid var(--accent);
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--accent);
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-play:hover { background: rgba(200,168,75,0.25); }
+    .btn-play:active { transform: scale(0.96); }
+
+    /* ─── PURCHASE CTA ─── */
+    .purchase {
+      width: 100%;
+      margin-bottom: 32px;
+    }
+
+    .purchase-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 17px;
+      border-radius: 3px;
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      transition: opacity 0.3s, background 0.3s, border-color 0.3s;
+      cursor: pointer;
+      border: none;
+    }
+
+    .purchase-btn.locked {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .purchase-btn.unlocked {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: var(--bg);
+      opacity: 1;
+      pointer-events: all;
+      animation: glow-in 0.8s ease forwards;
+    }
+
+    @keyframes glow-in {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    .purchase-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+
+    .purchase-note.visible { opacity: 1; }
+
+    /* ─── WELCOME OVERLAY ─── */
+    .welcome {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0D0E1A;
+      padding: 40px;
+      text-align: center;
+      transition: opacity 0.8s ease;
+    }
+
+    .welcome.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .welcome-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-style: italic;
+      font-size: 14px;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      margin-bottom: 24px;
+    }
+
+    .welcome-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: 36px;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .welcome-sub {
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--muted);
+      max-width: 280px;
+      margin-bottom: 48px;
+    }
+
+    .welcome-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 40px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 3px;
+      font-family: 'Manrope', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .welcome-btn:active { opacity: 0.8; }
+
+    .welcome-skip {
+      margin-top: 16px;
+      font-size: 11px;
+      color: var(--muted);
+      cursor: pointer;
+      letter-spacing: 0.1em;
+      background: none;
+      border: none;
+      font-family: 'Manrope', sans-serif;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* hidden audio */
+    audio { display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- WELCOME OVERLAY -->
+  <div class="welcome" id="welcome">
+    <div class="welcome-name">Екатерина Донна</div>
+    <h1 class="welcome-title">Баланс стихий</h1>
+    <p class="welcome-sub">Нейроакустическая сессия. 21 минута. Нажмите, чтобы начать практику.</p>
+    <button class="welcome-btn" onclick="startDemo()">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+        <path d="M3 2.5l9 4.5-9 4.5V2.5z"/>
+      </svg>
+      Начать практику
+    </button>
+    <button class="welcome-skip" onclick="startDemo()">уже слушал — пропустить</button>
+  </div>
+
+  <!-- PLAYER SCREEN -->
+  <div class="screen">
+
+    <header class="header">
+      <span class="logo">Ekaterina Donnat</span>
+      <a href="https://ekaterina-donnat.com" class="site-link">
+        Сайт
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 8L8 2M8 2H4M8 2v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </header>
+
+    <div class="center">
+      <div class="track-eyebrow">Демо · Нейроакустика</div>
+      <h2 class="track-title">Баланс стихий</h2>
+      <div class="track-author">Екатерина Донна</div>
+
+      <div class="waveform" id="waveform"></div>
+
+      <div class="progress-row">
+        <span class="time" id="time-cur">0:00</span>
+        <div class="progress-track" id="progress-track" onclick="seekAudio(event)">
+          <div class="progress-fill" id="progress-fill"></div>
+          <div class="progress-thumb" id="progress-thumb"></div>
+        </div>
+        <span class="time time-end" id="time-total">21:00</span>
+      </div>
+
+      <div class="controls">
+        <button class="btn-skip" onclick="skipBack()" title="-15 сек">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5V2L7 7l5 5V9c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="currentColor"/>
+            <text x="12" y="16" text-anchor="middle" font-size="6" fill="currentColor" font-family="Manrope">15</text>
+          </svg>
+        </button>
+
+        <button class="btn-play" id="btn-play" onclick="togglePlay()">
+          <svg id="icon-play" width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
+            <path d="M5 3.5l14 7.5-14 7.5V3.5z"/>
+          </svg>
+          <svg id="icon-pause" width="22" height="22" viewBox="0 0 22 22" fill="currentColor" style="display:none">
+            <rect x="5" y="3" width="4" height="16" rx="1"/>
+            <rect x="13" y="3" width="4" height="16" rx="1"/>
+          </svg>
+        </button>
+
+        <button class="btn-skip" onclick="skipForward()" title="+15 сек">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M12 5V2l5 5-5 5V9c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" fill="currentColor"/>
+            <text x="12" y="16" text-anchor="middle" font-size="6" fill="currentColor" font-family="Manrope">15</text>
+          </svg>
+        </button>
+      </div>
+
+      <div class="purchase">
+        <button class="purchase-btn locked" id="purchase-btn" onclick="goToPurchase()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="3" y="6" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M5 6V4.5a2 2 0 014 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span id="purchase-label">Ступень 1 · 150€</span>
+        </button>
+        <div class="purchase-note" id="purchase-note">Полный курс · 4 ступени · прогрессивная глубина</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- AUDIO -->
+  <!-- WELCOME: когда Екатерина запишет приветствие — раскомментировать:
+  <audio id="audio-welcome" src="https://audio.ekaterina-donnat.com/promo/welcome.mp3" preload="auto"></audio>
+  -->
+  <audio id="audio-demo"
+    src="https://audio.ekaterina-donnat.com/promo/water_energy.mp3"
+    preload="auto">
+  </audio>
+
+  <script>
+    var audio = document.getElementById('audio-demo');
+    var isPlaying = false;
+    var unlocked = false;
+    var BARS = 60;
+
+    // build waveform bars
+    var wf = document.getElementById('waveform');
+    var heights = [];
+    for (var i = 0; i < BARS; i++) {
+      var h = 8 + Math.random() * 32;
+      heights.push(h);
+      var bar = document.createElement('div');
+      bar.className = 'wave-bar';
+      bar.style.height = h + 'px';
+      wf.appendChild(bar);
+    }
+
+    function startDemo() {
+      document.getElementById('welcome').classList.add('hidden');
+      audio.play().catch(function(){});
+      setPlaying(true);
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        audio.pause();
+        setPlaying(false);
+      } else {
+        audio.play().catch(function(){});
+        setPlaying(true);
+      }
+    }
+
+    function setPlaying(v) {
+      isPlaying = v;
+      document.getElementById('icon-play').style.display = v ? 'none' : 'block';
+      document.getElementById('icon-pause').style.display = v ? 'block' : 'none';
+    }
+
+    function skipBack() {
+      audio.currentTime = Math.max(0, audio.currentTime - 15);
+    }
+
+    function skipForward() {
+      audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15);
+    }
+
+    function seekAudio(e) {
+      var track = document.getElementById('progress-track');
+      var rect = track.getBoundingClientRect();
+      var pct = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) {
+        audio.currentTime = pct * audio.duration;
+      }
+    }
+
+    function formatTime(s) {
+      if (isNaN(s)) return '0:00';
+      var m = Math.floor(s / 60);
+      var sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    audio.addEventListener('timeupdate', function() {
+      var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-thumb').style.left = pct + '%';
+      document.getElementById('time-cur').textContent = formatTime(audio.currentTime);
+
+      // waveform
+      var bars = wf.querySelectorAll('.wave-bar');
+      var idx = Math.floor((audio.currentTime / (audio.duration || 1)) * BARS);
+      bars.forEach(function(b, i) {
+        b.classList.remove('played', 'active');
+        if (i < idx) b.classList.add('played');
+        if (i === idx) b.classList.add('active');
+      });
+
+      // unlock at 90%
+      if (!unlocked && audio.duration && audio.currentTime / audio.duration > 0.9) {
+        unlock();
+      }
+    });
+
+    audio.addEventListener('loadedmetadata', function() {
+      document.getElementById('time-total').textContent = formatTime(audio.duration);
+    });
+
+    audio.addEventListener('ended', function() {
+      setPlaying(false);
+      unlock();
+    });
+
+    function unlock() {
+      if (unlocked) return;
+      unlocked = true;
+      var btn = document.getElementById('purchase-btn');
+      var note = document.getElementById('purchase-note');
+      btn.classList.remove('locked');
+      btn.classList.add('unlocked');
+      document.getElementById('purchase-label').textContent = 'Перейти к ступени 1 · 150€';
+      note.classList.add('visible');
+    }
+
+    function goToPurchase() {
+      window.location.href = 'https://ekaterina-donnat.com/#buy';
+    }
+  </script>
+
+</body>
+</html>
