@@ -6,61 +6,28 @@
   <title>Баланс стихий — Екатерина Донна</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Manrope:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg: #0D0E1A;
-      --surface: rgba(255,255,255,0.05);
-      --border: rgba(160,165,220,0.12);
-      --text: #EEEDF8;
-      --muted: #8A8AAE;
-      --accent: #C8A84B;
-      --accent-dim: rgba(200,168,75,0.15);
-    }
-
     html, body {
       height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Manrope', sans-serif;
+      background: #151933;
+      color: rgba(248,250,252,0.95);
+      font-family: 'Outfit', sans-serif;
       font-weight: 300;
       -webkit-font-smoothing: antialiased;
       overflow: hidden;
     }
 
-    /* ─── BACKGROUND ─── */
-    .bg {
+    /* ─── BG CANVAS ─── */
+    #bg-canvas {
       position: fixed;
       inset: 0;
-      z-index: 0;
-    }
-
-    .bg-placeholder {
       width: 100%;
       height: 100%;
-      background: radial-gradient(ellipse at 30% 40%, #161830 0%, #0D0E1A 60%);
-    }
-
-    /* когда будет фото Екатерины - заменить .bg-placeholder на:
-    .bg-photo {
-      width: 100%; height: 100%;
-      background: url('URL_ФОТО') center/cover no-repeat;
-      filter: blur(40px) brightness(0.3) saturate(0.6);
-      transform: scale(1.1);
-    } */
-
-    .bg-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(13,14,26,0.3) 0%,
-        rgba(13,14,26,0.1) 30%,
-        rgba(13,14,26,0.6) 70%,
-        rgba(13,14,26,0.95) 100%
-      );
+      pointer-events: none;
+      z-index: 0;
     }
 
     /* ─── LAYOUT ─── */
@@ -77,38 +44,35 @@
 
     /* ─── HEADER ─── */
     .header {
-      padding: 48px 0 0;
+      padding: 40px 0 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .logo {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: 14px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--muted);
-      text-decoration: none;
+    .logo-img {
+      height: 32px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 8px rgba(212,175,55,0.3));
     }
 
     .site-link {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
-      letter-spacing: 0.14em;
+      font-size: 10px;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--muted);
+      color: rgba(248,250,252,0.4);
       text-decoration: none;
       padding: 7px 14px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(212,175,55,0.2);
       border-radius: 40px;
+      font-family: 'Outfit', sans-serif;
       transition: color 0.2s, border-color 0.2s;
     }
 
-    .site-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+    .site-link:hover { color: rgba(248,250,252,0.8); border-color: rgba(212,175,55,0.4); }
 
     /* ─── CENTER ─── */
     .center {
@@ -120,36 +84,62 @@
       text-align: center;
     }
 
+    /* ─── SPHERE ─── */
+    .sphere-wrap {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,0.3);
+      overflow: hidden;
+      margin-bottom: 28px;
+      animation: sphereBreathe 4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes sphereBreathe {
+      0%   { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
+      50%  { box-shadow: 0 0 50px rgba(212,175,55,0.35), 0 0 90px rgba(212,175,55,0.15), 0 0 120px rgba(130,80,180,0.08); }
+      100% { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
+    }
+
+    #sphere-canvas {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      display: block;
+    }
+
+    /* ─── TRACK INFO ─── */
     .track-eyebrow {
       font-size: 10px;
       letter-spacing: 0.28em;
       text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 16px;
+      color: #d4af37;
+      margin-bottom: 12px;
       opacity: 0.8;
     }
 
     .track-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(32px, 8vw, 48px);
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: clamp(28px, 7vw, 40px);
       letter-spacing: -0.01em;
       line-height: 1.1;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .track-author {
-      font-size: 13px;
-      color: var(--muted);
-      letter-spacing: 0.08em;
-      margin-bottom: 48px;
+      font-size: 12px;
+      color: rgba(248,250,252,0.4);
+      letter-spacing: 0.12em;
+      margin-bottom: 36px;
     }
 
     /* ─── WAVEFORM ─── */
     .waveform {
       width: 100%;
-      height: 48px;
-      margin-bottom: 16px;
+      height: 44px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -159,13 +149,13 @@
     .wave-bar {
       width: 3px;
       border-radius: 2px;
-      background: var(--border);
-      transition: background 0.3s, height 0.1s;
+      background: rgba(212,175,55,0.12);
+      transition: background 0.3s;
       flex-shrink: 0;
     }
 
-    .wave-bar.played { background: var(--accent); }
-    .wave-bar.active { background: var(--accent); }
+    .wave-bar.played { background: rgba(212,175,55,0.5); }
+    .wave-bar.active { background: #d4af37; }
 
     /* ─── PROGRESS ─── */
     .progress-row {
@@ -173,15 +163,16 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
     }
 
     .time {
       font-size: 11px;
       letter-spacing: 0.06em;
-      color: var(--muted);
+      color: rgba(248,250,252,0.35);
       flex-shrink: 0;
       width: 36px;
+      font-family: 'Outfit', sans-serif;
     }
 
     .time-end { text-align: right; }
@@ -189,7 +180,7 @@
     .progress-track {
       flex: 1;
       height: 2px;
-      background: var(--border);
+      background: rgba(212,175,55,0.12);
       border-radius: 2px;
       cursor: pointer;
       position: relative;
@@ -197,7 +188,7 @@
 
     .progress-fill {
       height: 100%;
-      background: var(--accent);
+      background: #d4af37;
       border-radius: 2px;
       width: 0%;
       transition: width 0.5s linear;
@@ -208,10 +199,10 @@
       position: absolute;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 50%;
-      background: var(--accent);
+      background: #d4af37;
       left: 0%;
       transition: left 0.5s linear;
       pointer-events: none;
@@ -223,7 +214,7 @@
       align-items: center;
       justify-content: center;
       gap: 32px;
-      margin-bottom: 56px;
+      margin-bottom: 48px;
     }
 
     .btn-skip {
@@ -235,34 +226,31 @@
       background: none;
       border: none;
       cursor: pointer;
-      color: var(--muted);
+      color: rgba(248,250,252,0.3);
       transition: color 0.2s;
     }
 
-    .btn-skip:hover { color: var(--text); }
+    .btn-skip:hover { color: rgba(248,250,252,0.7); }
 
     .btn-play {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      border: 1px solid var(--accent);
-      background: var(--accent-dim);
+      border: 1px solid rgba(212,175,55,0.4);
+      background: rgba(212,175,55,0.08);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: var(--accent);
+      color: #d4af37;
       transition: background 0.2s, transform 0.1s;
     }
 
-    .btn-play:hover { background: rgba(200,168,75,0.25); }
+    .btn-play:hover { background: rgba(212,175,55,0.16); }
     .btn-play:active { transform: scale(0.96); }
 
-    /* ─── PURCHASE CTA ─── */
-    .purchase {
-      width: 100%;
-      margin-bottom: 32px;
-    }
+    /* ─── PURCHASE ─── */
+    .purchase { width: 100%; }
 
     .purchase-btn {
       display: flex;
@@ -270,159 +258,66 @@
       justify-content: center;
       gap: 10px;
       width: 100%;
-      padding: 17px;
-      border-radius: 3px;
-      text-decoration: none;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Outfit', sans-serif;
       font-size: 11px;
       font-weight: 500;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      transition: opacity 0.3s, background 0.3s, border-color 0.3s;
       cursor: pointer;
       border: none;
+      transition: opacity 0.4s, background 0.4s, transform 0.1s;
     }
 
     .purchase-btn.locked {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      opacity: 0.5;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(212,175,55,0.15);
+      color: rgba(248,250,252,0.25);
       pointer-events: none;
     }
 
     .purchase-btn.unlocked {
-      background: var(--accent);
-      border: 1px solid var(--accent);
-      color: var(--bg);
-      opacity: 1;
+      background: #d4af37;
+      color: #0f1123;
       pointer-events: all;
-      animation: glow-in 0.8s ease forwards;
+      animation: unlock-in 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
     }
 
-    @keyframes glow-in {
-      0% { opacity: 0; transform: translateY(6px); }
+    .purchase-btn.unlocked:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    @keyframes unlock-in {
+      0%   { opacity: 0; transform: translateY(8px); }
       100% { opacity: 1; transform: translateY(0); }
     }
 
     .purchase-note {
       text-align: center;
       font-size: 11px;
-      color: var(--muted);
+      color: rgba(248,250,252,0.3);
       margin-top: 10px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
       opacity: 0;
       transition: opacity 0.6s;
     }
 
     .purchase-note.visible { opacity: 1; }
 
-    /* ─── WELCOME OVERLAY ─── */
-    .welcome {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: #0D0E1A;
-      padding: 40px;
-      text-align: center;
-      transition: opacity 0.8s ease;
-    }
-
-    .welcome.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .welcome-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-style: italic;
-      font-size: 14px;
-      letter-spacing: 0.2em;
-      color: var(--accent);
-      margin-bottom: 24px;
-    }
-
-    .welcome-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: 36px;
-      line-height: 1.2;
-      margin-bottom: 16px;
-    }
-
-    .welcome-sub {
-      font-size: 13px;
-      line-height: 1.7;
-      color: var(--muted);
-      max-width: 280px;
-      margin-bottom: 48px;
-    }
-
-    .welcome-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 16px 40px;
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 3px;
-      font-family: 'Manrope', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-
-    .welcome-btn:active { opacity: 0.8; }
-
-    .welcome-skip {
-      margin-top: 16px;
-      font-size: 11px;
-      color: var(--muted);
-      cursor: pointer;
-      letter-spacing: 0.1em;
-      background: none;
-      border: none;
-      font-family: 'Manrope', sans-serif;
-      text-decoration: underline;
-      text-underline-offset: 3px;
-    }
-
-    /* hidden audio */
     audio { display: none; }
   </style>
 </head>
 <body>
 
-  <!-- WELCOME OVERLAY -->
-  <div class="welcome" id="welcome">
-    <div class="welcome-name">Екатерина Донна</div>
-    <h1 class="welcome-title">Баланс стихий</h1>
-    <p class="welcome-sub">Нейроакустическая сессия. 21 минута. Нажмите, чтобы начать практику.</p>
-    <button class="welcome-btn" onclick="startDemo()">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-        <path d="M3 2.5l9 4.5-9 4.5V2.5z"/>
-      </svg>
-      Начать практику
-    </button>
-    <button class="welcome-skip" onclick="startDemo()">уже слушал — пропустить</button>
-  </div>
+  <canvas id="bg-canvas"></canvas>
 
-  <!-- PLAYER SCREEN -->
   <div class="screen">
 
     <header class="header">
-      <span class="logo">Ekaterina Donnat</span>
+      <img class="logo-img"
+        src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
+        alt="Ekaterina Donna" />
       <a href="https://ekaterina-donnat.com/?from=demo" class="site-link">
-        Сайт
+        На сайт
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
           <path d="M2 8L8 2M8 2H4M8 2v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -430,8 +325,13 @@
     </header>
 
     <div class="center">
-      <div class="track-eyebrow">Демо · Нейроакустика</div>
-      <h2 class="track-title">Баланс стихий</h2>
+
+      <div class="sphere-wrap">
+        <canvas id="sphere-canvas" width="192" height="192"></canvas>
+      </div>
+
+      <div class="track-eyebrow">Авторская нейроакустика · Демо</div>
+      <h1 class="track-title">Баланс стихий</h1>
       <div class="track-author">Екатерина Донна</div>
 
       <div class="waveform" id="waveform"></div>
@@ -447,9 +347,10 @@
 
       <div class="controls">
         <button class="btn-skip" onclick="skipBack()" title="-15 сек">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5V2L7 7l5 5V9c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="currentColor"/>
-            <text x="12" y="16" text-anchor="middle" font-size="6" fill="currentColor" font-family="Manrope">15</text>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11 5L6 9l5 4V5z"/>
+            <path d="M18 5l-5 4 5 4V5z"/>
+            <line x1="6" y1="19" x2="18" y2="19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </button>
 
@@ -464,16 +365,17 @@
         </button>
 
         <button class="btn-skip" onclick="skipForward()" title="+15 сек">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path d="M12 5V2l5 5-5 5V9c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" fill="currentColor"/>
-            <text x="12" y="16" text-anchor="middle" font-size="6" fill="currentColor" font-family="Manrope">15</text>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13 5l5 4-5 4V5z"/>
+            <path d="M6 5l5 4-5 4V5z"/>
+            <line x1="6" y1="19" x2="18" y2="19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
         </button>
       </div>
 
       <div class="purchase">
         <button class="purchase-btn locked" id="purchase-btn" onclick="goToPurchase()">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <svg id="lock-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
             <rect x="3" y="6" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>
             <path d="M5 6V4.5a2 2 0 014 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
           </svg>
@@ -483,11 +385,9 @@
       </div>
 
     </div>
-
   </div>
 
-  <!-- AUDIO -->
-  <!-- WELCOME: когда Екатерина запишет приветствие — раскомментировать:
+  <!-- когда Екатерина запишет приветствие — раскомментировать и добавить автостарт:
   <audio id="audio-welcome" src="https://audio.ekaterina-donnat.com/promo/welcome.mp3" preload="auto"></audio>
   -->
   <audio id="audio-demo"
@@ -496,38 +396,160 @@
   </audio>
 
   <script>
+  (function() {
+
+    // ── СФЕРА ────────────────────────────────────────────────────────────
+    var sc = document.getElementById('sphere-canvas');
+    var sCtx = sc.getContext('2d');
+    var SW = 192, SH = 192;
+    var sAngle = 0;
+
+    var rings = [
+      { color: 'rgba(212,175,55,0.7)', width: 1.5 },
+      { color: 'rgba(212,175,55,0.35)', width: 1 },
+      { color: 'rgba(180,160,220,0.5)', width: 1.2 },
+      { color: 'rgba(212,175,55,0.2)', width: 0.8 },
+    ];
+
+    function drawSphere() {
+      sCtx.clearRect(0, 0, SW, SH);
+      sCtx.save();
+      sCtx.beginPath();
+      sCtx.arc(SW/2, SH/2, SW/2-1, 0, Math.PI*2);
+      sCtx.clip();
+      sCtx.fillStyle = '#0d1030';
+      sCtx.fillRect(0, 0, SW, SH);
+
+      var grd = sCtx.createRadialGradient(SW*0.35, SH*0.3, 0, SW/2, SH/2, SW/2);
+      grd.addColorStop(0, 'rgba(212,175,55,0.18)');
+      grd.addColorStop(0.5, 'transparent');
+      grd.addColorStop(1, 'rgba(75,0,130,0.25)');
+      sCtx.fillStyle = grd;
+      sCtx.fillRect(0, 0, SW, SH);
+
+      var cx = SW/2, cy = SH/2, r = SW/2-2;
+      for (var i = 0; i < 7; i++) {
+        var latAngle = -Math.PI/2 + Math.PI*(i/7);
+        var ringR = Math.cos(latAngle)*r;
+        var ringY = cy + Math.sin(latAngle)*r;
+        var rotOffset = sAngle*(i%2===0?1:-0.7)+i*0.4;
+        var ri = rings[i % rings.length];
+        sCtx.save();
+        sCtx.translate(cx, ringY);
+        sCtx.scale(1, 0.22);
+        sCtx.beginPath();
+        sCtx.arc(0, 0, Math.abs(ringR), 0, Math.PI*2);
+        sCtx.strokeStyle = ri.color;
+        sCtx.lineWidth = ri.width*(1+0.3*Math.cos(latAngle));
+        sCtx.stroke();
+        var dotCount = Math.floor(Math.abs(ringR)/12);
+        for (var d = 0; d < dotCount; d++) {
+          var dAngle = (d/dotCount)*Math.PI*2+rotOffset;
+          sCtx.beginPath();
+          sCtx.arc(Math.cos(dAngle)*Math.abs(ringR), Math.sin(dAngle)*Math.abs(ringR), 1.2, 0, Math.PI*2);
+          sCtx.fillStyle = 'rgba(248,245,235,0.85)';
+          sCtx.fill();
+        }
+        sCtx.restore();
+      }
+
+      var shine = sCtx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
+      shine.addColorStop(0, 'rgba(255,255,255,0.07)');
+      shine.addColorStop(0.4, 'transparent');
+      sCtx.fillStyle = shine;
+      sCtx.fillRect(0, 0, SW, SH);
+      sCtx.restore();
+    }
+
+    // ── ФОНОВЫЙ CANVAS ────────────────────────────────────────────────────
+    var bgCanvas = document.getElementById('bg-canvas');
+    var bCtx = bgCanvas.getContext('2d');
+    var BW, BH, gradPhase = 0;
+    var mouseX = -1000, mouseY = -1000;
+
+    function resizeBg() {
+      BW = bgCanvas.width = window.innerWidth;
+      BH = bgCanvas.height = window.innerHeight;
+    }
+
+    document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
+    document.addEventListener('mouseleave', function() { mouseX = -1000; mouseY = -1000; });
+
+    var PARTICLE_COUNT = 60;
+    var particles = [];
+
+    function initParticles() {
+      particles = [];
+      for (var i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+          x: Math.random()*BW, y: Math.random()*BH,
+          r: Math.random()*2+0.6,
+          opacity: Math.random()*0.6+0.2,
+          speedX: (Math.random()-0.5)*0.2,
+          speedY: (Math.random()-0.5)*0.2,
+          opacitySpeed: (Math.random()-0.5)*0.004,
+        });
+      }
+    }
+
+    function drawBg() {
+      bCtx.clearRect(0, 0, BW, BH);
+      gradPhase += 0.003;
+      var cx1 = BW*0.5 + Math.sin(gradPhase*0.7)*BW*0.15;
+      var cy1 = BH*0.15 + Math.cos(gradPhase*0.5)*BH*0.08;
+      var grd = bCtx.createRadialGradient(cx1, cy1, 0, BW/2, BH/2, BH*0.9);
+      grd.addColorStop(0, 'rgba(40,45,92,0.95)');
+      grd.addColorStop(0.4, 'rgba(21,25,51,0.85)');
+      grd.addColorStop(1, 'rgba(10,12,30,0.9)');
+      bCtx.fillStyle = grd;
+      bCtx.fillRect(0, 0, BW, BH);
+
+      if (mouseX > 0) {
+        var mgrd = bCtx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 160);
+        mgrd.addColorStop(0, 'rgba(212,175,55,0.08)');
+        mgrd.addColorStop(1, 'transparent');
+        bCtx.fillStyle = mgrd;
+        bCtx.fillRect(0, 0, BW, BH);
+      }
+
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.speedX; p.y += p.speedY; p.opacity += p.opacitySpeed;
+        if (mouseX > 0) {
+          var dx = mouseX-p.x, dy = mouseY-p.y;
+          var dist = Math.sqrt(dx*dx+dy*dy);
+          if (dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
+        }
+        if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
+        if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
+        if (p.x < 0) p.x = BW; if (p.x > BW) p.x = 0;
+        if (p.y < 0) p.y = BH; if (p.y > BH) p.y = 0;
+        bCtx.beginPath();
+        bCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        bCtx.fillStyle = 'rgba(212,175,55,'+p.opacity+')';
+        bCtx.fill();
+      }
+    }
+
+    // ── ПЛЕЕР ────────────────────────────────────────────────────────────
     var audio = document.getElementById('audio-demo');
     var isPlaying = false;
     var unlocked = false;
-    var BARS = 60;
-
-    // build waveform bars
+    var BARS = 56;
     var wf = document.getElementById('waveform');
-    var heights = [];
+
     for (var i = 0; i < BARS; i++) {
-      var h = 8 + Math.random() * 32;
-      heights.push(h);
+      var h = 8 + Math.random()*28;
       var bar = document.createElement('div');
       bar.className = 'wave-bar';
       bar.style.height = h + 'px';
       wf.appendChild(bar);
     }
 
-    function startDemo() {
-      document.getElementById('welcome').classList.add('hidden');
-      audio.play().catch(function(){});
-      setPlaying(true);
-    }
-
-    function togglePlay() {
-      if (isPlaying) {
-        audio.pause();
-        setPlaying(false);
-      } else {
-        audio.play().catch(function(){});
-        setPlaying(true);
-      }
-    }
+    window.togglePlay = function() {
+      if (isPlaying) { audio.pause(); setPlaying(false); }
+      else { audio.play().catch(function(){}); setPlaying(true); }
+    };
 
     function setPlaying(v) {
       isPlaying = v;
@@ -535,74 +557,72 @@
       document.getElementById('icon-pause').style.display = v ? 'block' : 'none';
     }
 
-    function skipBack() {
-      audio.currentTime = Math.max(0, audio.currentTime - 15);
-    }
+    window.skipBack = function() { audio.currentTime = Math.max(0, audio.currentTime-15); };
+    window.skipForward = function() { audio.currentTime = Math.min(audio.duration||0, audio.currentTime+15); };
 
-    function skipForward() {
-      audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15);
-    }
-
-    function seekAudio(e) {
+    window.seekAudio = function(e) {
       var track = document.getElementById('progress-track');
       var rect = track.getBoundingClientRect();
-      var pct = (e.clientX - rect.left) / rect.width;
-      if (audio.duration) {
-        audio.currentTime = pct * audio.duration;
-      }
-    }
+      var pct = (e.clientX-rect.left)/rect.width;
+      if (audio.duration) audio.currentTime = pct*audio.duration;
+    };
 
     function formatTime(s) {
       if (isNaN(s)) return '0:00';
-      var m = Math.floor(s / 60);
-      var sec = Math.floor(s % 60);
-      return m + ':' + (sec < 10 ? '0' : '') + sec;
+      var m = Math.floor(s/60), sec = Math.floor(s%60);
+      return m+':'+(sec<10?'0':'')+sec;
     }
 
     audio.addEventListener('timeupdate', function() {
-      var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
-      document.getElementById('progress-fill').style.width = pct + '%';
-      document.getElementById('progress-thumb').style.left = pct + '%';
+      var pct = audio.duration ? (audio.currentTime/audio.duration)*100 : 0;
+      document.getElementById('progress-fill').style.width = pct+'%';
+      document.getElementById('progress-thumb').style.left = pct+'%';
       document.getElementById('time-cur').textContent = formatTime(audio.currentTime);
-
-      // waveform
       var bars = wf.querySelectorAll('.wave-bar');
-      var idx = Math.floor((audio.currentTime / (audio.duration || 1)) * BARS);
-      bars.forEach(function(b, i) {
-        b.classList.remove('played', 'active');
+      var idx = Math.floor((audio.currentTime/(audio.duration||1))*BARS);
+      bars.forEach(function(b,i) {
+        b.classList.remove('played','active');
         if (i < idx) b.classList.add('played');
         if (i === idx) b.classList.add('active');
       });
-
-      // unlock at 90%
-      if (!unlocked && audio.duration && audio.currentTime / audio.duration > 0.9) {
-        unlock();
-      }
+      if (!unlocked && audio.duration && audio.currentTime/audio.duration > 0.9) unlock();
     });
 
     audio.addEventListener('loadedmetadata', function() {
       document.getElementById('time-total').textContent = formatTime(audio.duration);
     });
 
-    audio.addEventListener('ended', function() {
-      setPlaying(false);
-      unlock();
-    });
+    audio.addEventListener('ended', function() { setPlaying(false); unlock(); });
 
     function unlock() {
       if (unlocked) return;
       unlocked = true;
       var btn = document.getElementById('purchase-btn');
-      var note = document.getElementById('purchase-note');
       btn.classList.remove('locked');
       btn.classList.add('unlocked');
+      document.getElementById('lock-icon').style.display = 'none';
       document.getElementById('purchase-label').textContent = 'Перейти к ступени 1 · 150€';
-      note.classList.add('visible');
+      document.getElementById('purchase-note').classList.add('visible');
     }
 
-    function goToPurchase() {
+    window.goToPurchase = function() {
       window.location.href = 'https://ekaterina-donnat.com/?from=demo#buy';
+    };
+
+    // ── LOOP ─────────────────────────────────────────────────────────────
+    function loop() {
+      sAngle += 0.004;
+      drawSphere();
+      drawBg();
+      requestAnimationFrame(loop);
     }
+
+    resizeBg();
+    initParticles();
+    window.addEventListener('resize', function() { resizeBg(); initParticles(); });
+    loop();
+
+  })();
   </script>
 
 </body>
