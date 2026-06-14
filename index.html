@@ -225,6 +225,105 @@
 
         .bonus-btn:hover { background: rgba(212,175,55,0.18); }
 
+        /* ─── TRANSITION OVERLAY ─── */
+        .transition-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(13,14,26,0);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 28px;
+            text-align: center;
+            transition: background 1.2s ease;
+        }
+
+        .transition-overlay.visible {
+            display: flex;
+        }
+
+        .transition-overlay.dark {
+            background: rgba(13,14,26,0.92);
+        }
+
+        .transition-content {
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .transition-content.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .transition-label {
+            font-size: 10px;
+            letter-spacing: 0.24em;
+            text-transform: uppercase;
+            color: rgba(212,175,55,0.6);
+            margin-bottom: 16px;
+        }
+
+        .transition-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 200;
+            font-size: 28px;
+            line-height: 1.2;
+            color: #f0eae1;
+            margin-bottom: 12px;
+        }
+
+        .transition-text {
+            font-size: 13px;
+            line-height: 1.75;
+            color: rgba(248,250,252,0.45);
+            margin-bottom: 36px;
+            max-width: 280px;
+        }
+
+        .transition-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 36px;
+            background: #d4af37;
+            color: #151933;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+            margin-bottom: 16px;
+            display: block;
+            width: 100%;
+            max-width: 280px;
+            text-align: center;
+        }
+
+        .transition-btn:hover { opacity: 0.9; }
+
+        .transition-skip {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(248,250,252,0.25);
+            background: none;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            margin-top: 4px;
+        }
+
+        .transition-skip:hover { color: rgba(248,250,252,0.5); }
+
         /* ─── REST OF STYLES (unchanged) ─── */
         .app-subtitle {
             font-weight: 200;
@@ -492,7 +591,21 @@
         <button class="toast-close" onclick="closeToast()">Закрыть</button>
     </div>
 
+    <!-- TRANSITION OVERLAY — появляется после последнего трека ступени -->
+    <div class="transition-overlay" id="transition-overlay">
+        <div class="transition-content" id="transition-content">
+            <div class="transition-label" id="transition-label">Следующая ступень</div>
+            <div class="transition-title" id="transition-title"></div>
+            <div class="transition-text" id="transition-text"></div>
+            <a href="#" class="transition-btn" id="transition-btn" target="_blank">Продолжить</a>
+            <button class="transition-skip" onclick="closeTransition()">Вернуться к плееру</button>
+        </div>
+    </div>
+
     <audio id="mainAudio" playsinline preload="none"></audio>
+    <!-- Переходное аудио Екатерины — раскомментировать когда запишет:
+    <audio id="audio-transition" preload="auto"></audio>
+    -->
 
     <script>
     // ── КОНФИГ ПОРОГОВ ────────────────────────────────────────────────────────
@@ -500,6 +613,81 @@
     var THRESHOLD_BONUS    = 10 * 3600; // 10 часов в секундах
     // URL бонусного трека — заменить когда Екатерина запишет:
     var BONUS_TRACK_URL = null; // 'https://audio.ekaterina-donnat.com/bonus/secret.mp3'
+
+    // ── STRIPE ССЫЛКИ ПО СТУПЕНЯМ ────────────────────────────────────────────
+    // Заменить на реальные Stripe Payment Links когда ступени будут готовы:
+    var STRIPE_LINKS = {
+        2: null, // 'https://buy.stripe.com/xxxx' — ступень 2
+        3: null, // 'https://buy.stripe.com/xxxx' — ступень 3
+        4: null, // 'https://buy.stripe.com/xxxx' — ступень 4
+    };
+
+    // Тексты переходов между ступенями
+    var TRANSITION_COPY = {
+        ru: {
+            1: { label: 'Первая ступень завершена', title: 'Ты прошла этот круг', text: 'На следующей глубине тебя ждёт кое-что, до чего мы ещё не добирались. Я рада что ты готова.' },
+            2: { label: 'Вторая ступень завершена', title: 'Ты дошла', text: 'Следующая ступень работает уже на другом уровне - там где слова перестают быть нужны.' },
+            3: { label: 'Третья ступень завершена', title: 'Последний порог', text: 'За ним - то, ради чего всё начиналось. Я жду тебя там.' },
+        },
+        fr: {
+            1: { label: "Première étape terminée", title: "Tu as fait ce chemin", text: "Au prochain niveau, quelque chose t'attend que nous n'avons pas encore exploré. Je suis heureuse que tu sois prête." },
+            2: { label: "Deuxième étape terminée", title: "Tu es arrivée", text: "L'étape suivante fonctionne à un autre niveau - là où les mots ne sont plus nécessaires." },
+            3: { label: "Troisième étape terminée", title: "Le dernier seuil", text: "Au-delà se trouve ce pour quoi tout a commencé. Je t'y attends." },
+        },
+    };
+
+    // Текущая ступень (определяется по трекам из Supabase)
+    var currentStep = 1;
+    var transitionShown = false;
+
+    // ── ЛОГИКА ПОСЛЕДНЕГО ТРЕКА (по сценарию Джейми) ────────────────────────
+    function showTransition(step) {
+        if (transitionShown) return;
+        transitionShown = true;
+
+        var overlay = document.getElementById('transition-overlay');
+        var contentEl = document.getElementById('transition-content');
+        var copy = (TRANSITION_COPY[currentLang] || TRANSITION_COPY.ru)[step] || TRANSITION_COPY.ru[1];
+        var stripeLink = STRIPE_LINKS[step + 1];
+
+        // Наполняем оверлей
+        document.getElementById('transition-label').textContent = copy.label;
+        document.getElementById('transition-title').textContent = copy.title;
+        document.getElementById('transition-text').textContent = copy.text;
+        var btn = document.getElementById('transition-btn');
+        btn.href = stripeLink || 'https://ekaterina-donnat.com/#buy';
+
+        // Затемняем экран
+        overlay.classList.add('visible');
+        requestAnimationFrame(function() {
+            overlay.classList.add('dark');
+            // Пока нет записи Екатерины — тишина. Когда запишет, раскомментировать:
+            // audio.src = 'https://audio.ekaterina-donnat.com/transitions/step' + step + '.mp3';
+            // audio.load(); audio.play().catch(function(){});
+
+            // Показываем контент
+            setTimeout(function() {
+                contentEl.classList.add('visible');
+            }, 600);
+        });
+
+        // Флаг в Supabase — тихо, после показа
+        if (currentToken && currentToken !== LINEUP_MODE_TOKEN) {
+            fetch('/.netlify/functions/upsell-flag', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: currentToken, step: step }),
+            }).catch(function() {});
+        }
+    }
+
+    function closeTransition() {
+        var overlay = document.getElementById('transition-overlay');
+        var contentEl = document.getElementById('transition-content');
+        overlay.classList.remove('dark');
+        contentEl.classList.remove('visible');
+        setTimeout(function() { overlay.classList.remove('visible'); }, 600);
+    }
 
     // ── ПРОГРЕСС ──────────────────────────────────────────────────────────────
     var totalSeconds = 0;       // накопленные секунды
@@ -1010,8 +1198,12 @@
         }
     });
 
+    // Глобальный список треков для проверки последнего
+    var allTracks = [];
+
     function renderTracks(tracks, allowDownload, showUpsell) {
         lastRenderArgs = [tracks, allowDownload, showUpsell];
+        allTracks = tracks || [];
         const container = document.getElementById('app-content');
         const playingId = currentCard ? currentCard.getAttribute('data-track-id') : null;
 
@@ -1128,6 +1320,13 @@
             currentCard.querySelector('.current-time').textContent = '0:00';
         }
         saveProgressRemote();
+
+        // Последний трек = последний элемент массива allTracks
+        var trackId = currentCard ? currentCard.getAttribute('data-track-id') : null;
+        var isLast = allTracks.length > 0 && trackId === allTracks[allTracks.length - 1].id;
+        if (isLast) {
+            setTimeout(function() { showTransition(currentStep); }, 1200);
+        }
     });
 
     let isSeeking = false;
