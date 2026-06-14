@@ -496,8 +496,8 @@
 
     <script>
     // ── КОНФИГ ПОРОГОВ ────────────────────────────────────────────────────────
-    var THRESHOLD_REMINDER = 30;  // 30 секунд
-    var THRESHOLD_BONUS    = 60;  // 1 минута
+    var THRESHOLD_REMINDER = 5 * 3600;  // 5 часов в секундах
+    var THRESHOLD_BONUS    = 10 * 3600; // 10 часов в секундах
     // URL бонусного трека — заменить когда Екатерина запишет:
     var BONUS_TRACK_URL = null; // 'https://audio.ekaterina-donnat.com/bonus/secret.mp3'
 
@@ -611,24 +611,54 @@
         card.className = 'bonus-card visible';
         card.id = 'bonus-card';
         card.innerHTML = `
-            <div class="bonus-label">Особый подарок</div>
-            <div class="bonus-title">Ты прошла путь</div>
-            <div class="bonus-text">10 часов глубинной практики — это серьёзно.<br>Екатерина приготовила для тебя закрытое послание.</div>
+            <div class="bonus-label">Только для тебя</div>
+            <div class="bonus-title">Десять часов наедине с собой</div>
+            <div class="bonus-text">Екатерина оставила здесь секретный трек специально для этого момента.</div>
             ${BONUS_TRACK_URL
-                ? `<a href="${BONUS_TRACK_URL}" class="bonus-btn">
+                ? `<button class="bonus-btn" onclick="playBonusTrack()">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    Открыть послание
-                   </a>`
+                    Послушать
+                   </button>`
                 : `<div class="bonus-btn" style="opacity:0.4;pointer-events:none;">Скоро появится</div>`
             }`;
 
         container.insertBefore(card, container.firstChild);
 
         showToast(
-            'Особый подарок',
-            '10 часов практики',
-            'Ты заслужила кое-что особенное. Смотри выше.'
+            'Только для тебя',
+            'Десять часов наедине с собой',
+            'Екатерина оставила здесь кое-что особенное. Смотри выше.'
         );
+    }
+
+    // ── БОНУСНЫЙ ТРЕК ────────────────────────────────────────────────────────
+    function playBonusTrack() {
+        if (!BONUS_TRACK_URL) return;
+        // Останавливаем текущий трек
+        if (isPlaying) {
+            audio.pause();
+            isPlaying = false;
+            if (currentCard) currentCard.classList.remove('active');
+        }
+        // Затемняем экран
+        var overlay = document.createElement('div');
+        overlay.id = 'bonus-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(13,14,26,0.85);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;animation:fadeIn 0.8s ease forwards;';
+        overlay.innerHTML = `
+            <div style="font-family:'Fraunces',serif;font-weight:200;font-size:22px;color:#f0eae1;text-align:center;">Секретный трек</div>
+            <div style="font-size:12px;color:rgba(212,175,55,0.6);letter-spacing:0.14em;">Екатерина Донна</div>
+            <button onclick="closeBonusOverlay()" style="margin-top:24px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(248,250,252,0.3);background:none;border:none;font-family:'Outfit',sans-serif;cursor:pointer;">Закрыть</button>`;
+        document.body.appendChild(overlay);
+        // Запускаем бонусный трек
+        audio.src = BONUS_TRACK_URL;
+        audio.load();
+        audio.play().catch(function(e) { console.error(e); });
+    }
+
+    function closeBonusOverlay() {
+        var overlay = document.getElementById('bonus-overlay');
+        if (overlay) overlay.remove();
+        audio.pause();
     }
 
     // ── ORBIT CANVAS ──────────────────────────────────────────────────────────
