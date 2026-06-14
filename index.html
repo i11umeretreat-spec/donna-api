@@ -48,18 +48,37 @@
             height: 36px;
             object-fit: contain;
             filter: drop-shadow(0 0 12px rgba(212,175,55,0.35));
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+        }
+
+        /* ─── SPHERE + ORBIT ─── */
+        .sphere-outer {
+            position: relative;
+            width: 96px;
+            height: 96px;
+            margin-bottom: 16px;
+        }
+
+        /* orbit canvas sits behind sphere */
+        #orbit-canvas {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 128px;
+            height: 128px;
+            pointer-events: none;
         }
 
         .sphere-wrap {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             width: 80px;
             height: 80px;
             border-radius: 50%;
             border: 1px solid rgba(212,175,55,0.3);
             overflow: hidden;
-            margin-bottom: 20px;
             animation: sphereBreathe 4s ease-in-out infinite;
-            flex-shrink: 0;
         }
 
         @keyframes sphereBreathe {
@@ -75,6 +94,138 @@
             display: block;
         }
 
+        /* ─── PROGRESS HINT ─── */
+        .progress-hint {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            color: rgba(212,175,55,0.5);
+            margin-bottom: 6px;
+            min-height: 14px;
+            transition: color 0.4s;
+        }
+
+        .progress-hint.milestone { color: #d4af37; }
+
+        /* ─── MILESTONE TOAST ─── */
+        .milestone-toast {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(23,27,54,0.95);
+            border: 1px solid rgba(212,175,55,0.4);
+            border-radius: 12px;
+            padding: 16px 24px;
+            text-align: center;
+            max-width: 320px;
+            width: calc(100% - 48px);
+            z-index: 100;
+            animation: toastIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+            backdrop-filter: blur(12px);
+        }
+
+        .milestone-toast.visible { display: block; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+            to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .toast-label {
+            font-size: 9px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: rgba(212,175,55,0.6);
+            margin-bottom: 6px;
+        }
+
+        .toast-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 200;
+            font-size: 18px;
+            color: #f0eae1;
+            margin-bottom: 6px;
+        }
+
+        .toast-text {
+            font-size: 12px;
+            color: rgba(248,250,252,0.5);
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .toast-close {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: rgba(212,175,55,0.5);
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* ─── BONUS UNLOCK ─── */
+        .bonus-card {
+            display: none;
+            background: rgba(23,27,54,0.6);
+            border: 1px solid rgba(212,175,55,0.35);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 12px;
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        .bonus-card.visible { display: block; }
+
+        .bonus-label {
+            font-size: 9px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: #d4af37;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .bonus-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 200;
+            font-size: 20px;
+            color: #f0eae1;
+            margin-bottom: 8px;
+        }
+
+        .bonus-text {
+            font-size: 12px;
+            color: rgba(248,250,252,0.45);
+            line-height: 1.65;
+            margin-bottom: 16px;
+        }
+
+        .bonus-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(212,175,55,0.1);
+            border: 1px solid rgba(212,175,55,0.35);
+            border-radius: 8px;
+            color: #d4af37;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .bonus-btn:hover { background: rgba(212,175,55,0.18); }
+
+        /* ─── REST OF STYLES (unchanged) ─── */
         .app-subtitle {
             font-weight: 200;
             font-size: 10px;
@@ -105,14 +256,9 @@
             font-family: 'Outfit', sans-serif;
         }
 
-        .lang-btn.active {
-            color: #d4af37;
-            background: rgba(212, 175, 55, 0.1);
-        }
-
+        .lang-btn.active { color: #d4af37; background: rgba(212, 175, 55, 0.1); }
         .lang-btn:hover:not(.active) { color: rgba(248, 250, 252, 0.6); }
 
-        /* ─── TRACKS ─── */
         .tracks-container {
             padding: 0 20px 40px;
             max-width: 600px;
@@ -130,8 +276,6 @@
             border-radius: 16px;
             padding: 20px;
             transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
         }
 
         .player-card.active {
@@ -194,13 +338,10 @@
             width: 36px; height: 36px; min-width: 36px;
             border-radius: 50%;
             border: 1px solid rgba(212, 175, 55, 0.25);
-            color: #d4af37;
-            background: transparent;
+            color: #d4af37; background: transparent;
             display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-left: auto;
-            flex-shrink: 0;
+            cursor: pointer; transition: all 0.3s ease;
+            margin-left: auto; flex-shrink: 0;
         }
 
         .download-btn:hover { background: rgba(212, 175, 55, 0.1); border-color: #d4af37; }
@@ -209,12 +350,10 @@
         .download-btn .spin {
             width: 13px; height: 13px;
             border: 1.5px solid rgba(212, 175, 55, 0.25);
-            border-top-color: #d4af37;
-            border-radius: 50%;
+            border-top-color: #d4af37; border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
-        /* ─── PROGRESS ─── */
         .progress-area {
             display: flex; align-items: center; gap: 10px;
             opacity: 0.35; transition: opacity 0.3s ease;
@@ -226,8 +365,7 @@
             font-size: 10px; font-weight: 300;
             color: rgba(248, 250, 252, 0.5);
             width: 32px; text-align: center;
-            font-family: 'Outfit', sans-serif;
-            flex-shrink: 0;
+            font-family: 'Outfit', sans-serif; flex-shrink: 0;
         }
 
         .progress-bar-wrap {
@@ -239,9 +377,7 @@
         .progress-track {
             width: 100%; height: 3px;
             background: rgba(212,175,55,0.1);
-            border-radius: 2px;
-            position: relative;
-            pointer-events: none;
+            border-radius: 2px; position: relative; pointer-events: none;
         }
 
         .progress-fill {
@@ -253,15 +389,13 @@
 
         .progress-fill::after {
             content: ''; position: absolute; right: -4px; top: -3px;
-            width: 9px; height: 9px;
-            background: #fff; border-radius: 50%;
+            width: 9px; height: 9px; background: #fff; border-radius: 50%;
             box-shadow: 0 0 8px rgba(212,175,55,0.5);
             opacity: 0; transition: opacity 0.2s ease;
         }
 
         .player-card.active .progress-fill::after { opacity: 1; }
 
-        /* ─── SYSTEM ─── */
         .system-message {
             text-align: center; padding: 48px 20px;
             color: rgba(248, 250, 252, 0.5);
@@ -271,55 +405,32 @@
         .loader {
             width: 28px; height: 28px;
             border: 1.5px solid rgba(212, 175, 55, 0.2);
-            border-top-color: #d4af37;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            border-top-color: #d4af37; border-radius: 50%;
+            animation: spin 1s linear infinite; margin: 0 auto 20px;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ─── UPSELL ─── */
-        .upsell-card {
-            background: rgba(23, 27, 54, 0.5);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(212, 175, 55, 0.15);
-            border-radius: 16px;
-            padding: 32px 24px;
-            text-align: center;
-            animation: fadeIn 0.8s ease forwards;
-        }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        .upsell-label {
-            font-size: 9px; letter-spacing: 0.22em;
-            text-transform: uppercase;
-            color: rgba(212,175,55,0.5);
-            margin-bottom: 12px;
+        .upsell-card {
+            background: rgba(23, 27, 54, 0.5);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+            border-radius: 16px; padding: 32px 24px; text-align: center;
+            animation: fadeIn 0.8s ease forwards;
         }
 
-        .upsell-title {
-            font-family: 'Fraunces', serif;
-            font-weight: 200; font-size: 24px;
-            color: #f0eae1; margin-bottom: 12px;
-        }
-
-        .upsell-text {
-            font-weight: 300; font-size: 13px;
-            color: rgba(248, 250, 252, 0.5);
-            margin-bottom: 28px; line-height: 1.75;
-        }
+        .upsell-label { font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(212,175,55,0.5); margin-bottom: 12px; }
+        .upsell-title { font-family: 'Fraunces', serif; font-weight: 200; font-size: 24px; color: #f0eae1; margin-bottom: 12px; }
+        .upsell-text { font-weight: 300; font-size: 13px; color: rgba(248,250,252,0.5); margin-bottom: 28px; line-height: 1.75; }
 
         .btn-primary {
             display: block; background: #d4af37; color: #151933;
-            padding: 15px 24px; border-radius: 8px;
-            text-decoration: none; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.18em;
+            padding: 15px 24px; border-radius: 8px; text-decoration: none;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em;
             font-weight: 500; font-family: 'Outfit', sans-serif;
             margin-bottom: 10px; transition: all 0.3s ease;
         }
@@ -328,12 +439,10 @@
 
         .btn-secondary {
             display: block; background: transparent; color: #d4af37;
-            border: 1px solid rgba(212,175,55,0.3);
-            padding: 15px 24px; border-radius: 8px;
-            text-decoration: none; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.18em;
-            font-weight: 500; font-family: 'Outfit', sans-serif;
-            transition: all 0.3s ease;
+            border: 1px solid rgba(212,175,55,0.3); padding: 15px 24px;
+            border-radius: 8px; text-decoration: none; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.18em; font-weight: 500;
+            font-family: 'Outfit', sans-serif; transition: all 0.3s ease;
         }
 
         .btn-secondary:hover { background: rgba(212,175,55,0.08); border-color: #d4af37; }
@@ -348,11 +457,18 @@
         <header class="app-header">
             <img class="logo-img"
                 src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
-                alt="Ekaterina Donna" />
-            <div class="sphere-wrap">
-                <canvas id="sphere-canvas" width="160" height="160"></canvas>
+                alt="Екатерина Донна" />
+
+            <div class="sphere-outer">
+                <canvas id="orbit-canvas" width="128" height="128"></canvas>
+                <div class="sphere-wrap">
+                    <canvas id="sphere-canvas" width="160" height="160"></canvas>
+                </div>
             </div>
+
+            <div class="progress-hint" id="progress-hint"></div>
             <div class="app-subtitle" id="header-subtitle">Глубинная работа с подсознанием</div>
+
             <div class="lang-toggle">
                 <button class="lang-btn active" id="lang-ru" onclick="setLang('ru')">RU</button>
                 <button class="lang-btn" id="lang-fr" onclick="setLang('fr')">FR</button>
@@ -368,421 +484,671 @@
 
     </div>
 
+    <!-- MILESTONE TOAST -->
+    <div class="milestone-toast" id="milestone-toast">
+        <div class="toast-label" id="toast-label"></div>
+        <div class="toast-title" id="toast-title"></div>
+        <div class="toast-text" id="toast-text"></div>
+        <button class="toast-close" onclick="closeToast()">Закрыть</button>
+    </div>
+
     <audio id="mainAudio" playsinline preload="none"></audio>
 
     <script>
-        // ── ВСЯ ЛОГИКА ПЛЕЕРА (не тронута) ──────────────────────────────────
-        const audio = document.getElementById('mainAudio');
-        let currentCard = null;
-        let isPlaying = false;
-        let currentToken = null;
-        let currentLang = 'ru';
-        let lastRenderArgs = null;
+    // ── КОНФИГ ПОРОГОВ ────────────────────────────────────────────────────────
+    var THRESHOLD_REMINDER = 5 * 3600;  // 5 часов в секундах
+    var THRESHOLD_BONUS    = 10 * 3600; // 10 часов в секундах
+    // URL бонусного трека — заменить когда Екатерина запишет:
+    var BONUS_TRACK_URL = null; // 'https://audio.ekaterina-donnat.com/bonus/secret.mp3'
 
-        const i18n = {
-            ru: {
-                subtitle: 'Глубинная работа с подсознанием',
-                loading: 'Подготавливаем пространство...',
-                errorToken: 'Срок действия ключа истёк или он неверен.<br>Пожалуйста, проверьте ваше письмо.',
-                errorServer: 'Ошибка соединения с сервером.<br>Пожалуйста, обновите страницу.',
-                errorDownload: 'Не удалось подготовить файл. Попробуйте ещё раз.',
-                downloadTitle: 'Скачать практику',
-                upsellLabel: 'Следующий шаг',
-                upsellTitle: 'Глубокое погружение',
-                upsellText: 'Открой для себя полную коллекцию нейропрактик или запишись на личный чек-ап к Екатерине для точечной работы с подсознанием.',
-                upsellBtn1: 'Полная коллекция',
-                upsellBtn2: 'Записаться на чек-ап',
-                tracks: {
-                    'water_energy': { title: 'Баланс стихий', type: 'Сеанс самогипноза · Энергетическое наполнение' },
-                    'track-01': { title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза' },
-                    'track-02': { title: 'Очищение от негативных программ', type: 'Сеанс самогипноза' },
-                    'track-03': { title: 'Роскошь быть собой', type: 'Женская практика' },
-                    'track-04': { title: 'Укрепление уверенности', type: 'Мягкие нейрокорректоры' },
-                    'track-05': { title: 'Творец своего счастья', type: 'Сеанс самогипноза' },
-                    'track-06': { title: 'Против апатии и прокрастинации', type: 'Гипномедитация' },
-                    'track-07': { title: 'Перезапуск здоровья и молодости', type: 'Сеанс самогипноза' },
-                    'track-08': { title: 'Личные границы', type: 'Гипномедитация' },
-                    'track-09': { title: 'Расслабление по Шульцу', type: 'Самогипноз' },
-                    'track-10': { title: 'Крокодил, обнуление тревоги', type: 'Метафорический гипноз' },
-                    'track-11': { title: 'Иммунный бустер', type: 'Аудиопрактика' },
-                    'track-12': { title: 'Сеанс самогипноза, снижение веса', type: 'Глубинная перестройка' },
-                    'track-13': { title: 'Три Тотема', type: 'Ресурсный транс' },
-                    'track-14': { title: 'Достижение целей', type: 'Активация целевого мышления' },
-                },
-            },
-            fr: {
-                subtitle: 'Travail en profondeur avec l\'inconscient',
-                loading: 'Nous préparons votre espace...',
-                errorToken: 'Ce lien n\'est plus actif.<br>Veuillez vérifier votre e-mail.',
-                errorServer: 'Erreur de connexion au serveur.<br>Veuillez rafraîchir la page.',
-                errorDownload: 'Impossible de préparer le fichier. Veuillez réessayer.',
-                downloadTitle: 'Télécharger la pratique',
-                upsellLabel: 'Étape suivante',
-                upsellTitle: 'Plongée en profondeur',
-                upsellText: 'Explorez la collection complète de neuro-pratiques ou réservez un bilan privé avec Ekaterina pour un travail ciblé avec votre inconscient.',
-                upsellBtn1: 'Collection complète',
-                upsellBtn2: 'Réserver un bilan',
-                tracks: {
-                    'water_energy': { title: 'L\'équilibre des éléments', type: 'Séance d\'auto-hypnose · Recharge énergétique' },
-                    'track-01': { title: 'Libération des blocages financiers', type: 'Séance d\'auto-hypnose' },
-                    'track-02': { title: 'Libération des schémas limitants', type: 'Séance d\'auto-hypnose' },
-                    'track-03': { title: 'Le luxe d\'être soi', type: 'Pratique féminine' },
-                    'track-04': { title: 'Renforcement de la confiance en soi', type: 'Neuro-correcteurs doux' },
-                    'track-05': { title: 'Créateur de son propre bonheur', type: 'Séance d\'auto-hypnose' },
-                    'track-06': { title: 'Dépasser l\'apathie et la procrastination', type: 'Hypnoméditation' },
-                    'track-07': { title: 'Renouveau du corps et de la jeunesse', type: 'Séance d\'auto-hypnose' },
-                    'track-08': { title: 'Les frontières personnelles', type: 'Hypnoméditation' },
-                    'track-09': { title: 'Relaxation de Schultz', type: 'Auto-hypnose' },
-                    'track-10': { title: 'Le Crocodile, dissolution de l\'anxiété', type: 'Hypnose métaphorique' },
-                    'track-11': { title: 'Booster immunitaire', type: 'Pratique audio' },
-                    'track-12': { title: 'Séance d\'auto-hypnose, perte de poids', type: 'Restructuration profonde' },
-                    'track-13': { title: 'Les Trois Totems', type: 'Transe ressourçante' },
-                    'track-14': { title: 'Réalisation des objectifs', type: 'Activation de la pensée orientée vers le but' },
-                },
-            },
-        };
+    // ── ПРОГРЕСС ──────────────────────────────────────────────────────────────
+    var totalSeconds = 0;       // накопленные секунды
+    var sessionSeconds = 0;     // секунды текущей сессии (для Supabase flush)
+    var reminderShown = false;
+    var bonusShown = false;
+    var currentToken = null;
+    var isDemo = false;
 
-        function t(key) { return i18n[currentLang][key]; }
-        function tTrack(id) { return i18n[currentLang].tracks[id] || { title: id, type: '' }; }
+    var LS_KEY = 'donna_listen_seconds';
 
-        function setLang(lang) {
-            currentLang = lang;
-            document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
-            document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
-            document.getElementById('header-subtitle').textContent = t('subtitle');
-            document.querySelector('.logo-img').alt = lang === 'fr' ? 'Ekaterina Donnat' : 'Екатерина Донна';
-            document.documentElement.lang = lang;
-            if (lastRenderArgs) renderTracks(...lastRenderArgs);
+    function loadProgress() {
+        // localStorage для всех — базовое хранилище
+        var stored = parseInt(localStorage.getItem(LS_KEY) || '0', 10);
+        totalSeconds = isNaN(stored) ? 0 : stored;
+    }
+
+    function saveProgressLocal() {
+        localStorage.setItem(LS_KEY, String(totalSeconds));
+    }
+
+    // Supabase upsert — только для авторизованных
+    async function saveProgressRemote() {
+        if (!currentToken || isDemo) return;
+        try {
+            await fetch('/.netlify/functions/save-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: currentToken, seconds: totalSeconds }),
+            });
+        } catch(e) { /* тихий фейл */ }
+    }
+
+    // Загрузка прогресса из Supabase при старте
+    async function loadProgressRemote() {
+        if (!currentToken || isDemo) return;
+        try {
+            var res = await fetch('/.netlify/functions/get-progress?token=' + currentToken);
+            var data = await res.json();
+            if (data && data.seconds) {
+                totalSeconds = Math.max(totalSeconds, data.seconds);
+                saveProgressLocal();
+            }
+        } catch(e) { /* тихий фейл */ }
+    }
+
+    function addListenedSeconds(secs) {
+        totalSeconds += secs;
+        sessionSeconds += secs;
+        saveProgressLocal();
+        updateOrbit();
+        checkMilestones();
+
+        // Flush в Supabase каждые 30 секунд накопленных
+        if (sessionSeconds >= 30) {
+            sessionSeconds = 0;
+            saveProgressRemote();
+        }
+    }
+
+    function checkMilestones() {
+        if (!reminderShown && totalSeconds >= THRESHOLD_REMINDER) {
+            reminderShown = true;
+            showToast(
+                'Ты в практике',
+                'Уже 5 часов глубинной работы',
+                'Следующая ступень откроет новый уровень. Ты готова идти дальше?'
+            );
+        }
+        if (!bonusShown && totalSeconds >= THRESHOLD_BONUS) {
+            bonusShown = true;
+            showBonusCard();
+        }
+        updateHint();
+    }
+
+    function updateHint() {
+        var hint = document.getElementById('progress-hint');
+        if (!hint) return;
+        var hrs = Math.floor(totalSeconds / 3600);
+        var mins = Math.floor((totalSeconds % 3600) / 60);
+        if (totalSeconds < 60) { hint.textContent = ''; return; }
+        var timeStr = hrs > 0 ? hrs + ' ч ' + mins + ' мин' : mins + ' мин';
+        hint.textContent = timeStr + ' практики';
+        hint.classList.toggle('milestone', totalSeconds >= THRESHOLD_REMINDER);
+    }
+
+    // ── TOAST ─────────────────────────────────────────────────────────────────
+    function showToast(label, title, text) {
+        document.getElementById('toast-label').textContent = label;
+        document.getElementById('toast-title').textContent = title;
+        document.getElementById('toast-text').textContent = text;
+        var toast = document.getElementById('milestone-toast');
+        toast.classList.add('visible');
+        setTimeout(function() { closeToast(); }, 8000);
+    }
+
+    function closeToast() {
+        document.getElementById('milestone-toast').classList.remove('visible');
+    }
+
+    // ── BONUS CARD ────────────────────────────────────────────────────────────
+    function showBonusCard() {
+        var container = document.getElementById('app-content');
+        var existing = document.getElementById('bonus-card');
+        if (existing) return;
+
+        var card = document.createElement('div');
+        card.className = 'bonus-card visible';
+        card.id = 'bonus-card';
+        card.innerHTML = `
+            <div class="bonus-label">Особый подарок</div>
+            <div class="bonus-title">Ты прошла путь</div>
+            <div class="bonus-text">10 часов глубинной практики — это серьёзно.<br>Екатерина приготовила для тебя закрытое послание.</div>
+            ${BONUS_TRACK_URL
+                ? `<a href="${BONUS_TRACK_URL}" class="bonus-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    Открыть послание
+                   </a>`
+                : `<div class="bonus-btn" style="opacity:0.4;pointer-events:none;">Скоро появится</div>`
+            }`;
+
+        container.insertBefore(card, container.firstChild);
+
+        showToast(
+            'Особый подарок',
+            '10 часов практики',
+            'Ты заслужила кое-что особенное. Смотри выше.'
+        );
+    }
+
+    // ── ORBIT CANVAS ──────────────────────────────────────────────────────────
+    var orbitCanvas = null;
+    var oCtx = null;
+    var orbitProgress = 0; // 0..1
+    var orbitPulse = 0;
+
+    function initOrbit() {
+        orbitCanvas = document.getElementById('orbit-canvas');
+        oCtx = orbitCanvas.getContext('2d');
+    }
+
+    function updateOrbit() {
+        orbitProgress = Math.min(1, totalSeconds / THRESHOLD_BONUS);
+    }
+
+    function drawOrbit() {
+        if (!oCtx) return;
+        var W = 128, H = 128;
+        oCtx.clearRect(0, 0, W, H);
+        var cx = W/2, cy = H/2, r = 58;
+
+        // track - едва видимое кольцо
+        oCtx.beginPath();
+        oCtx.arc(cx, cy, r, 0, Math.PI*2);
+        oCtx.strokeStyle = 'rgba(212,175,55,0.08)';
+        oCtx.lineWidth = 1.5;
+        oCtx.stroke();
+
+        if (orbitProgress <= 0) return;
+
+        // фаза 1: 0-50% (до напоминания) - тонкая приглушённая дуга
+        // фаза 2: 50-100% (после напоминания) - ярче, с пульсацией
+        var phase2 = orbitProgress >= 0.5;
+        orbitPulse += 0.04;
+        var pulse = phase2 ? (0.7 + 0.3 * Math.sin(orbitPulse)) : 1;
+        var alpha = phase2 ? (0.6 + 0.3 * Math.sin(orbitPulse)) : 0.35;
+        var lineW = phase2 ? 2 : 1.5;
+
+        var endAngle = -Math.PI/2 + orbitProgress * Math.PI*2;
+
+        // glow под дугой
+        if (phase2) {
+            oCtx.beginPath();
+            oCtx.arc(cx, cy, r, -Math.PI/2, endAngle);
+            oCtx.strokeStyle = 'rgba(212,175,55,' + (alpha * 0.3) + ')';
+            oCtx.lineWidth = lineW + 6;
+            oCtx.lineCap = 'round';
+            oCtx.stroke();
         }
 
-        const DEMO_TRACK = {
-            id: 'water_energy',
-            streamUrl: 'https://audio.ekaterina-donnat.com/promo/water_energy.mp3',
-            duration: '21:00'
-        };
+        // основная дуга
+        oCtx.beginPath();
+        oCtx.arc(cx, cy, r, -Math.PI/2, endAngle);
+        oCtx.strokeStyle = 'rgba(212,175,55,' + alpha + ')';
+        oCtx.lineWidth = lineW;
+        oCtx.lineCap = 'round';
+        oCtx.stroke();
 
-        const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+        // точка на конце дуги
+        var dotX = cx + r * Math.cos(endAngle);
+        var dotY = cy + r * Math.sin(endAngle);
+        oCtx.beginPath();
+        oCtx.arc(dotX, dotY, phase2 ? 3.5 : 2.5, 0, Math.PI*2);
+        oCtx.fillStyle = 'rgba(212,175,55,' + (alpha * pulse) + ')';
+        oCtx.fill();
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            let token = urlParams.get('token');
-            const container = document.getElementById('app-content');
+        // на 100% — вспышка
+        if (orbitProgress >= 1) {
+            oCtx.beginPath();
+            oCtx.arc(cx, cy, r, 0, Math.PI*2);
+            oCtx.strokeStyle = 'rgba(212,175,55,' + (0.5 + 0.4 * Math.sin(orbitPulse * 1.5)) + ')';
+            oCtx.lineWidth = 2;
+            oCtx.stroke();
+        }
+    }
 
-            if (token === LINEUP_MODE_TOKEN) {
-                console.log('🏄 Lineup Mode activated');
-                currentToken = token;
+    // ── SPHERE ────────────────────────────────────────────────────────────────
+    var sc, sCtx, sAngle = 0;
+    var rings = [
+        { color: 'rgba(212,175,55,0.7)', width: 1.5 },
+        { color: 'rgba(212,175,55,0.35)', width: 1 },
+        { color: 'rgba(180,160,220,0.5)', width: 1.2 },
+        { color: 'rgba(212,175,55,0.2)', width: 0.8 },
+    ];
+
+    function initSphere() {
+        sc = document.getElementById('sphere-canvas');
+        sCtx = sc.getContext('2d');
+    }
+
+    function drawSphere() {
+        var SW = 160, SH = 160;
+        sCtx.clearRect(0, 0, SW, SH);
+        sCtx.save();
+        sCtx.beginPath();
+        sCtx.arc(SW/2, SH/2, SW/2-1, 0, Math.PI*2);
+        sCtx.clip();
+        sCtx.fillStyle = '#0d1030';
+        sCtx.fillRect(0, 0, SW, SH);
+        var grd = sCtx.createRadialGradient(SW*0.35, SH*0.3, 0, SW/2, SH/2, SW/2);
+        grd.addColorStop(0, 'rgba(212,175,55,0.18)');
+        grd.addColorStop(0.5, 'transparent');
+        grd.addColorStop(1, 'rgba(75,0,130,0.25)');
+        sCtx.fillStyle = grd; sCtx.fillRect(0, 0, SW, SH);
+        var cx = SW/2, cy = SH/2, r = SW/2-2;
+        for (var i = 0; i < 7; i++) {
+            var latAngle = -Math.PI/2 + Math.PI*(i/7);
+            var ringR = Math.cos(latAngle)*r;
+            var ringY = cy + Math.sin(latAngle)*r;
+            var rotOffset = sAngle*(i%2===0?1:-0.7)+i*0.4;
+            var ri = rings[i % rings.length];
+            sCtx.save();
+            sCtx.translate(cx, ringY); sCtx.scale(1, 0.22);
+            sCtx.beginPath(); sCtx.arc(0, 0, Math.abs(ringR), 0, Math.PI*2);
+            sCtx.strokeStyle = ri.color;
+            sCtx.lineWidth = ri.width*(1+0.3*Math.cos(latAngle));
+            sCtx.stroke();
+            var dotCount = Math.floor(Math.abs(ringR)/12);
+            for (var d = 0; d < dotCount; d++) {
+                var dAngle = (d/dotCount)*Math.PI*2+rotOffset;
+                sCtx.beginPath();
+                sCtx.arc(Math.cos(dAngle)*Math.abs(ringR), Math.sin(dAngle)*Math.abs(ringR), 1.2, 0, Math.PI*2);
+                sCtx.fillStyle = 'rgba(248,245,235,0.85)'; sCtx.fill();
+            }
+            sCtx.restore();
+        }
+        var shine = sCtx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
+        shine.addColorStop(0, 'rgba(255,255,255,0.07)');
+        shine.addColorStop(0.4, 'transparent');
+        sCtx.fillStyle = shine; sCtx.fillRect(0, 0, SW, SH);
+        sCtx.restore();
+    }
+
+    // ── BG CANVAS ─────────────────────────────────────────────────────────────
+    var bgCanvas, bCtx, BW, BH, gradPhase = 0;
+    var mouseX = -1000, mouseY = -1000;
+    var particles = [];
+
+    function initBg() {
+        bgCanvas = document.getElementById('bg-canvas');
+        bCtx = bgCanvas.getContext('2d');
+        resizeBg();
+        initParticles();
+        document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
+        document.addEventListener('mouseleave', function() { mouseX = -1000; mouseY = -1000; });
+        window.addEventListener('resize', function() { resizeBg(); initParticles(); });
+    }
+
+    function resizeBg() {
+        BW = bgCanvas.width = window.innerWidth;
+        BH = bgCanvas.height = window.innerHeight;
+    }
+
+    function initParticles() {
+        particles = [];
+        for (var i = 0; i < 60; i++) {
+            particles.push({
+                x: Math.random()*BW, y: Math.random()*BH,
+                r: Math.random()*2+0.6,
+                opacity: Math.random()*0.6+0.2,
+                speedX: (Math.random()-0.5)*0.2,
+                speedY: (Math.random()-0.5)*0.2,
+                opacitySpeed: (Math.random()-0.5)*0.004,
+            });
+        }
+    }
+
+    function drawBg() {
+        bCtx.clearRect(0, 0, BW, BH);
+        gradPhase += 0.003;
+        var cx1 = BW*0.5+Math.sin(gradPhase*0.7)*BW*0.15;
+        var cy1 = BH*0.15+Math.cos(gradPhase*0.5)*BH*0.08;
+        var grd = bCtx.createRadialGradient(cx1, cy1, 0, BW/2, BH/2, BH*0.9);
+        grd.addColorStop(0, 'rgba(40,45,92,0.95)');
+        grd.addColorStop(0.4, 'rgba(21,25,51,0.85)');
+        grd.addColorStop(1, 'rgba(10,12,30,0.9)');
+        bCtx.fillStyle = grd; bCtx.fillRect(0, 0, BW, BH);
+        if (mouseX > 0) {
+            var mgrd = bCtx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 160);
+            mgrd.addColorStop(0, 'rgba(212,175,55,0.08)');
+            mgrd.addColorStop(1, 'transparent');
+            bCtx.fillStyle = mgrd; bCtx.fillRect(0, 0, BW, BH);
+        }
+        for (var i = 0; i < particles.length; i++) {
+            var p = particles[i];
+            p.x += p.speedX; p.y += p.speedY; p.opacity += p.opacitySpeed;
+            if (mouseX > 0) {
+                var dx = mouseX-p.x, dy = mouseY-p.y;
+                var dist = Math.sqrt(dx*dx+dy*dy);
+                if (dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
+            }
+            if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
+            if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
+            if (p.x < 0) p.x = BW; if (p.x > BW) p.x = 0;
+            if (p.y < 0) p.y = BH; if (p.y > BH) p.y = 0;
+            bCtx.beginPath(); bCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+            bCtx.fillStyle = 'rgba(212,175,55,'+p.opacity+')'; bCtx.fill();
+        }
+    }
+
+    // ── MAIN LOOP ─────────────────────────────────────────────────────────────
+    function loop() {
+        sAngle += 0.004;
+        drawSphere();
+        drawOrbit();
+        drawBg();
+        requestAnimationFrame(loop);
+    }
+
+    // ── ПЛЕЕР ЛОГИКА (не тронута) ─────────────────────────────────────────────
+    const audio = document.getElementById('mainAudio');
+    let currentCard = null;
+    let isPlaying = false;
+    let currentLang = 'ru';
+    let lastRenderArgs = null;
+    let lastTimeUpdate = 0;
+
+    const i18n = {
+        ru: {
+            subtitle: 'Глубинная работа с подсознанием',
+            loading: 'Подготавливаем пространство...',
+            errorToken: 'Срок действия ключа истёк или он неверен.<br>Пожалуйста, проверьте ваше письмо.',
+            errorServer: 'Ошибка соединения с сервером.<br>Пожалуйста, обновите страницу.',
+            errorDownload: 'Не удалось подготовить файл. Попробуйте ещё раз.',
+            downloadTitle: 'Скачать практику',
+            upsellLabel: 'Следующий шаг',
+            upsellTitle: 'Глубокое погружение',
+            upsellText: 'Открой для себя полную коллекцию нейропрактик или запишись на личный чек-ап к Екатерине для точечной работы с подсознанием.',
+            upsellBtn1: 'Полная коллекция',
+            upsellBtn2: 'Записаться на чек-ап',
+            tracks: {
+                'water_energy': { title: 'Баланс стихий', type: 'Сеанс самогипноза · Энергетическое наполнение' },
+                'track-01': { title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза' },
+                'track-02': { title: 'Очищение от негативных программ', type: 'Сеанс самогипноза' },
+                'track-03': { title: 'Роскошь быть собой', type: 'Женская практика' },
+                'track-04': { title: 'Укрепление уверенности', type: 'Мягкие нейрокорректоры' },
+                'track-05': { title: 'Творец своего счастья', type: 'Сеанс самогипноза' },
+                'track-06': { title: 'Против апатии и прокрастинации', type: 'Гипномедитация' },
+                'track-07': { title: 'Перезапуск здоровья и молодости', type: 'Сеанс самогипноза' },
+                'track-08': { title: 'Личные границы', type: 'Гипномедитация' },
+                'track-09': { title: 'Расслабление по Шульцу', type: 'Самогипноз' },
+                'track-10': { title: 'Крокодил, обнуление тревоги', type: 'Метафорический гипноз' },
+                'track-11': { title: 'Иммунный бустер', type: 'Аудиопрактика' },
+                'track-12': { title: 'Сеанс самогипноза, снижение веса', type: 'Глубинная перестройка' },
+                'track-13': { title: 'Три Тотема', type: 'Ресурсный транс' },
+                'track-14': { title: 'Достижение целей', type: 'Активация целевого мышления' },
+            },
+        },
+        fr: {
+            subtitle: 'Travail en profondeur avec l\'inconscient',
+            loading: 'Nous préparons votre espace...',
+            errorToken: 'Ce lien n\'est plus actif.<br>Veuillez vérifier votre e-mail.',
+            errorServer: 'Erreur de connexion au serveur.<br>Veuillez rafraîchir la page.',
+            errorDownload: 'Impossible de préparer le fichier. Veuillez réessayer.',
+            downloadTitle: 'Télécharger la pratique',
+            upsellLabel: 'Étape suivante',
+            upsellTitle: 'Plongée en profondeur',
+            upsellText: 'Explorez la collection complète de neuro-pratiques ou réservez un bilan privé avec Ekaterina pour un travail ciblé avec votre inconscient.',
+            upsellBtn1: 'Collection complète',
+            upsellBtn2: 'Réserver un bilan',
+            tracks: {
+                'water_energy': { title: 'L\'équilibre des éléments', type: 'Séance d\'auto-hypnose · Recharge énergétique' },
+                'track-01': { title: 'Libération des blocages financiers', type: 'Séance d\'auto-hypnose' },
+                'track-02': { title: 'Libération des schémas limitants', type: 'Séance d\'auto-hypnose' },
+                'track-03': { title: 'Le luxe d\'être soi', type: 'Pratique féminine' },
+                'track-04': { title: 'Renforcement de la confiance en soi', type: 'Neuro-correcteurs doux' },
+                'track-05': { title: 'Créateur de son propre bonheur', type: 'Séance d\'auto-hypnose' },
+                'track-06': { title: 'Dépasser l\'apathie et la procrastination', type: 'Hypnoméditation' },
+                'track-07': { title: 'Renouveau du corps et de la jeunesse', type: 'Séance d\'auto-hypnose' },
+                'track-08': { title: 'Les frontières personnelles', type: 'Hypnoméditation' },
+                'track-09': { title: 'Relaxation de Schultz', type: 'Auto-hypnose' },
+                'track-10': { title: 'Le Crocodile, dissolution de l\'anxiété', type: 'Hypnose métaphorique' },
+                'track-11': { title: 'Booster immunitaire', type: 'Pratique audio' },
+                'track-12': { title: 'Séance d\'auto-hypnose, perte de poids', type: 'Restructuration profonde' },
+                'track-13': { title: 'Les Trois Totems', type: 'Transe ressourçante' },
+                'track-14': { title: 'Réalisation des objectifs', type: 'Activation de la pensée orientée vers le but' },
+            },
+        },
+    };
+
+    function t(key) { return i18n[currentLang][key]; }
+    function tTrack(id) { return i18n[currentLang].tracks[id] || { title: id, type: '' }; }
+
+    function setLang(lang) {
+        currentLang = lang;
+        document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
+        document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
+        document.getElementById('header-subtitle').textContent = t('subtitle');
+        document.documentElement.lang = lang;
+        if (lastRenderArgs) renderTracks(...lastRenderArgs);
+    }
+
+    const DEMO_TRACK = {
+        id: 'water_energy',
+        streamUrl: 'https://audio.ekaterina-donnat.com/promo/water_energy.mp3',
+        duration: '21:00'
+    };
+
+    const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        initSphere();
+        initOrbit();
+        initBg();
+        loadProgress();
+        updateOrbit();
+        updateHint();
+        loop();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let token = urlParams.get('token');
+        const container = document.getElementById('app-content');
+
+        if (token === LINEUP_MODE_TOKEN) {
+            currentToken = token;
+        }
+
+        if (!token) {
+            isDemo = true;
+            renderTracks([DEMO_TRACK], false, true);
+            return;
+        }
+
+        currentToken = token;
+        await loadProgressRemote();
+        updateOrbit();
+        updateHint();
+
+        try {
+            const response = await fetch('/.netlify/functions/verify-token?token=' + token);
+            const data = await response.json();
+
+            if (!response.ok || !data.valid) {
+                container.innerHTML = `<div class="system-message">${t('errorToken')}</div>`;
+                return;
             }
 
-            if (!token) {
+            if (!data.tracks || data.tracks.length === 0) {
                 renderTracks([DEMO_TRACK], false, true);
                 return;
             }
 
-            currentToken = token;
+            renderTracks(data.tracks, true, false);
 
-            try {
-                const response = await fetch('/.netlify/functions/verify-token?token=' + token);
-                const data = await response.json();
+        } catch (error) {
+            container.innerHTML = `<div class="system-message">${t('errorServer')}</div>`;
+        }
+    });
 
-                if (!response.ok || !data.valid) {
-                    container.innerHTML = `<div class="system-message">${t('errorToken')}</div>`;
-                    return;
-                }
+    function renderTracks(tracks, allowDownload, showUpsell) {
+        lastRenderArgs = [tracks, allowDownload, showUpsell];
+        const container = document.getElementById('app-content');
+        const playingId = currentCard ? currentCard.getAttribute('data-track-id') : null;
 
-                if (!data.tracks || data.tracks.length === 0) {
-                    renderTracks([DEMO_TRACK], false, true);
-                    return;
-                }
-
-                renderTracks(data.tracks, true, false);
-
-            } catch (error) {
-                container.innerHTML = `<div class="system-message">${t('errorServer')}</div>`;
-            }
-        });
-
-        function renderTracks(tracks, allowDownload, showUpsell) {
-            lastRenderArgs = [tracks, allowDownload, showUpsell];
-            const container = document.getElementById('app-content');
-            const playingId = currentCard ? currentCard.getAttribute('data-track-id') : null;
-
-            let html = '';
-            tracks.forEach(track => {
-                const tr = tTrack(track.id);
-                html += `
-                <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
-                    <div class="card-top">
-                        <button class="play-btn" onclick="togglePlay(this.closest('.player-card'))">
-                            <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                        </button>
-                        <div class="track-info">
-                            <div class="track-title">${tr.title}</div>
-                            <div class="track-meta">${tr.type}${track.duration ? ' · ' + track.duration : ''}</div>
-                        </div>
-                        ${allowDownload ? `
-                        <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="${t('downloadTitle')}">
-                            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                        </button>` : ''}
+        let html = '';
+        tracks.forEach(track => {
+            const tr = tTrack(track.id);
+            html += `
+            <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
+                <div class="card-top">
+                    <button class="play-btn" onclick="togglePlay(this.closest('.player-card'))">
+                        <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+                    <div class="track-info">
+                        <div class="track-title">${tr.title}</div>
+                        <div class="track-meta">${tr.type}${track.duration ? ' · ' + track.duration : ''}</div>
                     </div>
-                    <div class="progress-area">
-                        <span class="time current-time">0:00</span>
-                        <div class="progress-bar-wrap"
-                             onmousedown="startSeek(event, this)"
-                             ontouchstart="startSeek(event, this)">
-                            <div class="progress-track">
-                                <div class="progress-fill"></div>
-                            </div>
+                    ${allowDownload ? `
+                    <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="${t('downloadTitle')}">
+                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    </button>` : ''}
+                </div>
+                <div class="progress-area">
+                    <span class="time current-time">0:00</span>
+                    <div class="progress-bar-wrap"
+                         onmousedown="startSeek(event, this)"
+                         ontouchstart="startSeek(event, this)">
+                        <div class="progress-track">
+                            <div class="progress-fill"></div>
                         </div>
-                        <span class="time total-time">${track.duration || '0:00'}</span>
                     </div>
-                </div>`;
-            });
-
-            if (showUpsell) {
-                html += `
-                <div class="upsell-card">
-                    <div class="upsell-label">${t('upsellLabel')}</div>
-                    <div class="upsell-title">${t('upsellTitle')}</div>
-                    <div class="upsell-text">${t('upsellText')}</div>
-                    <a href="https://ekaterina-donnat.com" class="btn-primary" target="_blank">${t('upsellBtn1')}</a>
-                    <a href="https://ekaterina-donnat.com/#checkup" class="btn-secondary" target="_blank">${t('upsellBtn2')}</a>
-                </div>`;
-            }
-
-            container.innerHTML = html;
-
-            if (playingId && isPlaying) {
-                const card = container.querySelector(`[data-track-id="${playingId}"]`);
-                if (card) { card.classList.add('active'); currentCard = card; }
-            }
-        }
-
-        function formatTime(seconds) {
-            if (isNaN(seconds) || seconds === Infinity) return '0:00';
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
-
-        function togglePlay(card) {
-            const url = card.getAttribute('data-url');
-            if (currentCard !== card) {
-                if (currentCard) {
-                    currentCard.classList.remove('active');
-                    currentCard.querySelector('.progress-fill').style.width = '0%';
-                    currentCard.querySelector('.current-time').textContent = '0:00';
-                }
-                currentCard = card;
-                currentCard.classList.add('active');
-                audio.src = url;
-                audio.load();
-                audio.play().then(() => { isPlaying = true; }).catch(e => console.error('Play error:', e));
-            } else {
-                if (isPlaying) {
-                    audio.pause(); isPlaying = false;
-                    currentCard.classList.remove('active');
-                } else {
-                    audio.play().then(() => { isPlaying = true; currentCard.classList.add('active'); }).catch(e => console.error('Play error:', e));
-                }
-            }
-        }
-
-        audio.addEventListener('loadedmetadata', () => {
-            if (currentCard && audio.duration && audio.duration !== Infinity)
-                currentCard.querySelector('.total-time').textContent = formatTime(audio.duration);
+                    <span class="time total-time">${track.duration || '0:00'}</span>
+                </div>
+            </div>`;
         });
 
-        audio.addEventListener('timeupdate', () => {
-            if (audio.duration && audio.duration !== Infinity && currentCard) {
-                const percent = (audio.currentTime / audio.duration) * 100;
-                currentCard.querySelector('.progress-fill').style.width = percent + '%';
-                currentCard.querySelector('.current-time').textContent = formatTime(audio.currentTime);
-            }
-        });
+        if (showUpsell) {
+            html += `
+            <div class="upsell-card">
+                <div class="upsell-label">${t('upsellLabel')}</div>
+                <div class="upsell-title">${t('upsellTitle')}</div>
+                <div class="upsell-text">${t('upsellText')}</div>
+                <a href="https://ekaterina-donnat.com" class="btn-primary" target="_blank">${t('upsellBtn1')}</a>
+                <a href="https://ekaterina-donnat.com/#checkup" class="btn-secondary" target="_blank">${t('upsellBtn2')}</a>
+            </div>`;
+        }
 
-        audio.addEventListener('ended', () => {
-            isPlaying = false;
+        container.innerHTML = html;
+
+        if (playingId && isPlaying) {
+            const card = container.querySelector(`[data-track-id="${playingId}"]`);
+            if (card) { card.classList.add('active'); currentCard = card; }
+        }
+
+        // Показать бонус если уже достигнут
+        if (totalSeconds >= THRESHOLD_BONUS) showBonusCard();
+    }
+
+    function formatTime(seconds) {
+        if (isNaN(seconds) || seconds === Infinity) return '0:00';
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+        return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function togglePlay(card) {
+        const url = card.getAttribute('data-url');
+        if (currentCard !== card) {
             if (currentCard) {
                 currentCard.classList.remove('active');
                 currentCard.querySelector('.progress-fill').style.width = '0%';
                 currentCard.querySelector('.current-time').textContent = '0:00';
             }
-        });
-
-        let isSeeking = false;
-
-        function seek(e, wrap) {
-            const card = wrap.closest('.player-card');
-            if (card !== currentCard || !audio.duration || audio.duration === Infinity) return;
-            const rect = wrap.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-            audio.currentTime = pos * audio.duration;
-        }
-
-        function startSeek(e, wrap) {
-            e.preventDefault(); isSeeking = true; seek(e, wrap);
-            const onMove = (ev) => { if (isSeeking) seek(ev, wrap); };
-            const onEnd = () => {
-                isSeeking = false;
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onEnd);
-                document.removeEventListener('touchmove', onMove);
-                document.removeEventListener('touchend', onEnd);
-            };
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onEnd);
-            document.addEventListener('touchmove', onMove, { passive: false });
-            document.addEventListener('touchend', onEnd);
-        }
-
-        async function downloadTrack(btn, trackId) {
-            if (btn.classList.contains('loading')) return;
-            btn.classList.add('loading');
-            btn.innerHTML = '<div class="spin"></div>';
-            try {
-                const res = await fetch('/.netlify/functions/get-download-url', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: currentToken, trackId }),
-                });
-                const data = await res.json();
-                if (!res.ok || !data.url) throw new Error('No URL');
-                const a = document.createElement('a');
-                a.href = data.url; a.download = '';
-                a.style.display = 'none';
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            } catch (err) {
-                console.error('Download error:', err);
-                alert(t('errorDownload'));
-            } finally {
-                btn.classList.remove('loading');
-                btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+            currentCard = card;
+            currentCard.classList.add('active');
+            audio.src = url; audio.load();
+            audio.play().then(() => { isPlaying = true; }).catch(e => console.error(e));
+        } else {
+            if (isPlaying) {
+                audio.pause(); isPlaying = false; currentCard.classList.remove('active');
+            } else {
+                audio.play().then(() => { isPlaying = true; currentCard.classList.add('active'); }).catch(e => console.error(e));
             }
         }
+    }
 
-        // ── СФЕРА + CANVAS ────────────────────────────────────────────────────
-        (function() {
-            var sc = document.getElementById('sphere-canvas');
-            var sCtx = sc.getContext('2d');
-            var SW = 160, SH = 160, sAngle = 0;
+    audio.addEventListener('loadedmetadata', () => {
+        if (currentCard && audio.duration && audio.duration !== Infinity)
+            currentCard.querySelector('.total-time').textContent = formatTime(audio.duration);
+    });
 
-            var rings = [
-                { color: 'rgba(212,175,55,0.7)', width: 1.5 },
-                { color: 'rgba(212,175,55,0.35)', width: 1 },
-                { color: 'rgba(180,160,220,0.5)', width: 1.2 },
-                { color: 'rgba(212,175,55,0.2)', width: 0.8 },
-            ];
+    audio.addEventListener('timeupdate', () => {
+        if (audio.duration && audio.duration !== Infinity && currentCard) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            currentCard.querySelector('.progress-fill').style.width = percent + '%';
+            currentCard.querySelector('.current-time').textContent = formatTime(audio.currentTime);
 
-            function drawSphere() {
-                sCtx.clearRect(0, 0, SW, SH);
-                sCtx.save();
-                sCtx.beginPath();
-                sCtx.arc(SW/2, SH/2, SW/2-1, 0, Math.PI*2);
-                sCtx.clip();
-                sCtx.fillStyle = '#0d1030';
-                sCtx.fillRect(0, 0, SW, SH);
-                var grd = sCtx.createRadialGradient(SW*0.35, SH*0.3, 0, SW/2, SH/2, SW/2);
-                grd.addColorStop(0, 'rgba(212,175,55,0.18)');
-                grd.addColorStop(0.5, 'transparent');
-                grd.addColorStop(1, 'rgba(75,0,130,0.25)');
-                sCtx.fillStyle = grd; sCtx.fillRect(0, 0, SW, SH);
-                var cx = SW/2, cy = SH/2, r = SW/2-2;
-                for (var i = 0; i < 7; i++) {
-                    var latAngle = -Math.PI/2 + Math.PI*(i/7);
-                    var ringR = Math.cos(latAngle)*r;
-                    var ringY = cy + Math.sin(latAngle)*r;
-                    var rotOffset = sAngle*(i%2===0?1:-0.7)+i*0.4;
-                    var ri = rings[i % rings.length];
-                    sCtx.save();
-                    sCtx.translate(cx, ringY); sCtx.scale(1, 0.22);
-                    sCtx.beginPath(); sCtx.arc(0, 0, Math.abs(ringR), 0, Math.PI*2);
-                    sCtx.strokeStyle = ri.color;
-                    sCtx.lineWidth = ri.width*(1+0.3*Math.cos(latAngle));
-                    sCtx.stroke();
-                    var dotCount = Math.floor(Math.abs(ringR)/12);
-                    for (var d = 0; d < dotCount; d++) {
-                        var dAngle = (d/dotCount)*Math.PI*2+rotOffset;
-                        sCtx.beginPath();
-                        sCtx.arc(Math.cos(dAngle)*Math.abs(ringR), Math.sin(dAngle)*Math.abs(ringR), 1.2, 0, Math.PI*2);
-                        sCtx.fillStyle = 'rgba(248,245,235,0.85)'; sCtx.fill();
-                    }
-                    sCtx.restore();
-                }
-                var shine = sCtx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
-                shine.addColorStop(0, 'rgba(255,255,255,0.07)');
-                shine.addColorStop(0.4, 'transparent');
-                sCtx.fillStyle = shine; sCtx.fillRect(0, 0, SW, SH);
-                sCtx.restore();
+            // Трекер: добавляем реальные секунды с момента прошлого апдейта
+            const now = audio.currentTime;
+            if (lastTimeUpdate > 0 && isPlaying) {
+                const delta = now - lastTimeUpdate;
+                if (delta > 0 && delta < 2) addListenedSeconds(delta);
             }
+            lastTimeUpdate = now;
+        }
+    });
 
-            var bgCanvas = document.getElementById('bg-canvas');
-            var bCtx = bgCanvas.getContext('2d');
-            var BW, BH, gradPhase = 0;
-            var mouseX = -1000, mouseY = -1000;
+    audio.addEventListener('pause', () => { lastTimeUpdate = 0; });
+    audio.addEventListener('ended', () => {
+        isPlaying = false; lastTimeUpdate = 0;
+        if (currentCard) {
+            currentCard.classList.remove('active');
+            currentCard.querySelector('.progress-fill').style.width = '0%';
+            currentCard.querySelector('.current-time').textContent = '0:00';
+        }
+        saveProgressRemote();
+    });
 
-            function resizeBg() {
-                BW = bgCanvas.width = window.innerWidth;
-                BH = bgCanvas.height = window.innerHeight;
-            }
+    let isSeeking = false;
 
-            document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
-            document.addEventListener('mouseleave', function() { mouseX = -1000; mouseY = -1000; });
+    function seek(e, wrap) {
+        const card = wrap.closest('.player-card');
+        if (card !== currentCard || !audio.duration || audio.duration === Infinity) return;
+        const rect = wrap.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        audio.currentTime = pos * audio.duration;
+    }
 
-            var particles = [];
-            function initParticles() {
-                particles = [];
-                for (var i = 0; i < 60; i++) {
-                    particles.push({
-                        x: Math.random()*BW, y: Math.random()*BH,
-                        r: Math.random()*2+0.6,
-                        opacity: Math.random()*0.6+0.2,
-                        speedX: (Math.random()-0.5)*0.2,
-                        speedY: (Math.random()-0.5)*0.2,
-                        opacitySpeed: (Math.random()-0.5)*0.004,
-                    });
-                }
-            }
+    function startSeek(e, wrap) {
+        e.preventDefault(); isSeeking = true; seek(e, wrap);
+        const onMove = (ev) => { if (isSeeking) seek(ev, wrap); };
+        const onEnd = () => {
+            isSeeking = false;
+            document.removeEventListener('mousemove', onMove);
+            document.removeEventListener('mouseup', onEnd);
+            document.removeEventListener('touchmove', onMove);
+            document.removeEventListener('touchend', onEnd);
+        };
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onEnd);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('touchend', onEnd);
+    }
 
-            function drawBg() {
-                bCtx.clearRect(0, 0, BW, BH);
-                gradPhase += 0.003;
-                var cx1 = BW*0.5+Math.sin(gradPhase*0.7)*BW*0.15;
-                var cy1 = BH*0.15+Math.cos(gradPhase*0.5)*BH*0.08;
-                var grd = bCtx.createRadialGradient(cx1, cy1, 0, BW/2, BH/2, BH*0.9);
-                grd.addColorStop(0, 'rgba(40,45,92,0.95)');
-                grd.addColorStop(0.4, 'rgba(21,25,51,0.85)');
-                grd.addColorStop(1, 'rgba(10,12,30,0.9)');
-                bCtx.fillStyle = grd; bCtx.fillRect(0, 0, BW, BH);
-                if (mouseX > 0) {
-                    var mgrd = bCtx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 160);
-                    mgrd.addColorStop(0, 'rgba(212,175,55,0.08)');
-                    mgrd.addColorStop(1, 'transparent');
-                    bCtx.fillStyle = mgrd; bCtx.fillRect(0, 0, BW, BH);
-                }
-                for (var i = 0; i < particles.length; i++) {
-                    var p = particles[i];
-                    p.x += p.speedX; p.y += p.speedY; p.opacity += p.opacitySpeed;
-                    if (mouseX > 0) {
-                        var dx = mouseX-p.x, dy = mouseY-p.y;
-                        var dist = Math.sqrt(dx*dx+dy*dy);
-                        if (dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
-                    }
-                    if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
-                    if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
-                    if (p.x < 0) p.x = BW; if (p.x > BW) p.x = 0;
-                    if (p.y < 0) p.y = BH; if (p.y > BH) p.y = 0;
-                    bCtx.beginPath(); bCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-                    bCtx.fillStyle = 'rgba(212,175,55,'+p.opacity+')'; bCtx.fill();
-                }
-            }
-
-            function loop() { sAngle += 0.004; drawSphere(); drawBg(); requestAnimationFrame(loop); }
-            resizeBg(); initParticles();
-            window.addEventListener('resize', function() { resizeBg(); initParticles(); });
-            loop();
-        })();
+    async function downloadTrack(btn, trackId) {
+        if (btn.classList.contains('loading')) return;
+        btn.classList.add('loading');
+        btn.innerHTML = '<div class="spin"></div>';
+        try {
+            const res = await fetch('/.netlify/functions/get-download-url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: currentToken, trackId }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.url) throw new Error('No URL');
+            const a = document.createElement('a');
+            a.href = data.url; a.download = ''; a.style.display = 'none';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        } catch (err) {
+            alert(t('errorDownload'));
+        } finally {
+            btn.classList.remove('loading');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+        }
+    }
     </script>
 </body>
 </html>
