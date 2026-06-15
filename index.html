@@ -17,6 +17,43 @@
     <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=570014464378584&ev=PageView&noscript=1"/></noscript>
     <!-- End Facebook Pixel -->
+
+    <!-- Instagram WebView Detection -->
+    <script>
+    (function() {
+        var ua = navigator.userAgent || '';
+        var isInstagram = ua.indexOf('Instagram') > -1;
+        var isFacebook = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1;
+
+        if (isInstagram || isFacebook) {
+            // Показываем баннер после загрузки DOM
+            document.addEventListener('DOMContentLoaded', function() {
+                var banner = document.createElement('div');
+                banner.id = 'ig-banner';
+                banner.style.cssText = [
+                    'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:99999',
+                    'background:rgba(13,15,38,0.97)', 'backdrop-filter:blur(12px)',
+                    'border-bottom:1px solid rgba(212,175,55,0.25)',
+                    'padding:12px 20px', 'display:flex', 'align-items:center',
+                    'justify-content:space-between', 'gap:12px'
+                ].join(';');
+
+                banner.innerHTML = [
+                    '<p style="margin:0;font-family:Outfit,sans-serif;font-size:12px;',
+                    'font-weight:300;color:rgba(248,250,252,0.8);line-height:1.4;">',
+                    'Для комфортного прослушивания<br>открой в браузере</p>',
+                    '<a href="' + window.location.href + '" target="_blank" rel="noopener"',
+                    ' style="flex-shrink:0;background:#d4af37;color:#0f1123;padding:8px 16px;',
+                    'border-radius:8px;text-decoration:none;font-family:Outfit,sans-serif;',
+                    'font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;',
+                    'white-space:nowrap;">Открыть</a>'
+                ].join('');
+
+                document.body.insertBefore(banner, document.body.firstChild);
+            });
+        }
+    })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
@@ -1327,8 +1364,8 @@
             }
             lastTimeUpdate = now;
 
-            // FB Pixel - Lead на 90% прослушивания (только один раз)
-            if (percent >= 90 && !window._fbLeadFired) {
+            // FB Pixel - Lead на 3 минутах прослушивания (достаточно для обучения алгоритма)
+            if (audio.currentTime >= 180 && !window._fbLeadFired) {
                 window._fbLeadFired = true;
                 if (typeof fbq !== 'undefined') fbq('track', 'Lead');
             }
