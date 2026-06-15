@@ -41,14 +41,11 @@
           'justify-content:space-between','gap:12px'
         ].join(';');
         banner.innerHTML = [
-          '<p style="margin:0;font-family:Outfit,sans-serif;font-size:12px;',
-          'font-weight:300;color:rgba(248,250,252,0.8);line-height:1.4;">',
-          'Для комфортного прослушивания<br>открой в браузере</p>',
-          '<a href="' + window.location.href + '" target="_blank" rel="noopener"',
-          ' style="flex-shrink:0;background:#d4af37;color:#0f1123;padding:8px 16px;',
-          'border-radius:8px;text-decoration:none;font-family:Outfit,sans-serif;',
-          'font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;',
-          'white-space:nowrap;">Открыть</a>'
+          '<p style="margin:0;font-family:Outfit,sans-serif;font-size:11px;',
+          'font-weight:300;color:rgba(248,250,252,0.75);line-height:1.6;">',
+          'Нажми <span style=\\"color:#d4af37;font-weight:500;letter-spacing:0.05em;\\">···</span>',
+          ' в правом верхнем углу<br>',
+          'и выбери \\"Открыть в браузере\\"</p>'
         ].join('');
         document.body.insertBefore(banner, document.body.firstChild);
       });
@@ -648,12 +645,8 @@
     window.skipBack = function() { audio.currentTime = Math.max(0, audio.currentTime-15); };
     window.skipForward = function() { audio.currentTime = Math.min(audio.duration||0, audio.currentTime+15); };
 
-    window.seekAudio = function(e) {
-      var track = document.getElementById('progress-track');
-      var rect = track.getBoundingClientRect();
-      var pct = (e.clientX-rect.left)/rect.width;
-      if (audio.duration) audio.currentTime = pct*audio.duration;
-    };
+    // Перемотка отключена намеренно - клиент должен дослушать
+    window.seekAudio = function(e) { return; };
 
     function formatTime(s) {
       if (isNaN(s)) return '0:00';
@@ -709,7 +702,15 @@
     };
 
     // ── LOOP ─────────────────────────────────────────────────────────────
+    var isPageVisible = true;
+
+    document.addEventListener('visibilitychange', function() {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) loop();
+    });
+
     function loop() {
+      if (!isPageVisible) return;
       sAngle += 0.004;
       drawSphere();
       drawBg();
