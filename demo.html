@@ -4,6 +4,58 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Баланс стихий — Екатерина Донна</title>
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '570014464378584');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=570014464378584&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
+
+  <!-- UTM + Instagram WebView -->
+  <script>
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var source = params.get('utm_source') || 'direct';
+    window.TRAFFIC_SOURCE = source;
+
+    // PageView с источником
+    if (typeof fbq !== 'undefined') fbq('track', 'PageView', { traffic_source: source });
+
+    // Instagram WebView баннер
+    var ua = navigator.userAgent || '';
+    if (ua.indexOf('Instagram') > -1 || ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var banner = document.createElement('div');
+        banner.style.cssText = [
+          'position:fixed','top:0','left:0','right:0','z-index:99999',
+          'background:rgba(13,15,38,0.97)','backdrop-filter:blur(12px)',
+          'border-bottom:1px solid rgba(212,175,55,0.25)',
+          'padding:12px 20px','display:flex','align-items:center',
+          'justify-content:space-between','gap:12px'
+        ].join(';');
+        banner.innerHTML = [
+          '<p style="margin:0;font-family:Outfit,sans-serif;font-size:12px;',
+          'font-weight:300;color:rgba(248,250,252,0.8);line-height:1.4;">',
+          'Для комфортного прослушивания<br>открой в браузере</p>',
+          '<a href="' + window.location.href + '" target="_blank" rel="noopener"',
+          ' style="flex-shrink:0;background:#d4af37;color:#0f1123;padding:8px 16px;',
+          'border-radius:8px;text-decoration:none;font-family:Outfit,sans-serif;',
+          'font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;',
+          'white-space:nowrap;">Открыть</a>'
+        ].join('');
+        document.body.insertBefore(banner, document.body.firstChild);
+      });
+    }
+  })();
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
@@ -20,7 +72,6 @@
       overflow: hidden;
     }
 
-    /* ─── BG CANVAS ─── */
     #bg-canvas {
       position: fixed;
       inset: 0;
@@ -30,7 +81,6 @@
       z-index: 0;
     }
 
-    /* ─── LAYOUT ─── */
     .screen {
       position: relative;
       z-index: 1;
@@ -42,7 +92,6 @@
       padding: 0 28px;
     }
 
-    /* ─── HEADER ─── */
     .header {
       padding: 40px 0 0;
       display: flex;
@@ -74,7 +123,6 @@
 
     .site-link:hover { color: rgba(248,250,252,0.8); border-color: rgba(212,175,55,0.4); }
 
-    /* ─── CENTER ─── */
     .center {
       flex: 1;
       display: flex;
@@ -84,7 +132,33 @@
       text-align: center;
     }
 
-    /* ─── SPHERE ─── */
+    /* Реферальная плашка */
+    .referral-badge {
+      display: none;
+      background: rgba(212,175,55,0.08);
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+
+    .referral-badge.visible { display: block; }
+
+    .referral-badge p {
+      font-size: 12px;
+      font-weight: 300;
+      color: rgba(248,250,252,0.6);
+      line-height: 1.6;
+    }
+
+    .referral-badge span {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: 13px;
+      color: rgba(248,250,252,0.85);
+    }
+
     .sphere-wrap {
       width: 96px;
       height: 96px;
@@ -98,18 +172,12 @@
 
     @keyframes sphereBreathe {
       0%   { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
-      50%  { box-shadow: 0 0 50px rgba(212,175,55,0.35), 0 0 90px rgba(212,175,55,0.15), 0 0 120px rgba(130,80,180,0.08); }
+      50%  { box-shadow: 0 0 50px rgba(212,175,55,0.35), 0 0 90px rgba(212,175,55,0.15); }
       100% { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
     }
 
-    #sphere-canvas {
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      display: block;
-    }
+    #sphere-canvas { width: 96px; height: 96px; border-radius: 50%; display: block; }
 
-    /* ─── TRACK INFO ─── */
     .track-eyebrow {
       font-size: 10px;
       letter-spacing: 0.28em;
@@ -135,7 +203,6 @@
       margin-bottom: 36px;
     }
 
-    /* ─── WAVEFORM ─── */
     .waveform {
       width: 100%;
       height: 44px;
@@ -157,7 +224,6 @@
     .wave-bar.played { background: rgba(212,175,55,0.5); }
     .wave-bar.active { background: #d4af37; }
 
-    /* ─── PROGRESS ─── */
     .progress-row {
       width: 100%;
       display: flex;
@@ -172,7 +238,6 @@
       color: rgba(248,250,252,0.35);
       flex-shrink: 0;
       width: 36px;
-      font-family: 'Outfit', sans-serif;
     }
 
     .time-end { text-align: right; }
@@ -208,7 +273,6 @@
       pointer-events: none;
     }
 
-    /* ─── CONTROLS ─── */
     .controls {
       display: flex;
       align-items: center;
@@ -249,7 +313,6 @@
     .btn-play:hover { background: rgba(212,175,55,0.16); }
     .btn-play:active { transform: scale(0.96); }
 
-    /* ─── PURCHASE ─── */
     .purchase { width: 100%; }
 
     .purchase-btn {
@@ -326,6 +389,11 @@
 
     <div class="center">
 
+      <!-- Реферальная плашка - показывается только при utm_source=referral -->
+      <div class="referral-badge" id="referral-badge">
+        <p><span>Тебе это прислал(а) близкий человек.</span><br>Просто нажми play - и позволь себе выдохнуть.</p>
+      </div>
+
       <div class="sphere-wrap">
         <canvas id="sphere-canvas" width="192" height="192"></canvas>
       </div>
@@ -346,7 +414,7 @@
       </div>
 
       <div class="controls">
-        <button class="btn-skip" onclick="skipBack()" title="-15 сек">
+        <button class="btn-skip" onclick="skipBack()">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
             <path d="M11 5L6 9l5 4V5z"/>
             <path d="M18 5l-5 4 5 4V5z"/>
@@ -364,7 +432,7 @@
           </svg>
         </button>
 
-        <button class="btn-skip" onclick="skipForward()" title="+15 сек">
+        <button class="btn-skip" onclick="skipForward()">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
             <path d="M13 5l5 4-5 4V5z"/>
             <path d="M6 5l5 4-5 4V5z"/>
@@ -387,9 +455,6 @@
     </div>
   </div>
 
-  <!-- когда Екатерина запишет приветствие — раскомментировать и добавить автостарт:
-  <audio id="audio-welcome" src="https://audio.ekaterina-donnat.com/promo/welcome.mp3" preload="auto"></audio>
-  -->
   <audio id="audio-demo"
     src="https://audio.ekaterina-donnat.com/promo/water_energy.mp3"
     preload="auto">
@@ -397,6 +462,15 @@
 
   <script>
   (function() {
+
+    // UTM источник
+    var source = window.TRAFFIC_SOURCE || 'direct';
+    var isReferral = source === 'referral';
+
+    // Показываем реферальную плашку
+    if (isReferral) {
+      document.getElementById('referral-badge').classList.add('visible');
+    }
 
     // ── СФЕРА ────────────────────────────────────────────────────────────
     var sc = document.getElementById('sphere-canvas');
@@ -547,8 +621,22 @@
     }
 
     window.togglePlay = function() {
-      if (isPlaying) { audio.pause(); setPlaying(false); }
-      else { audio.play().catch(function(){}); setPlaying(true); }
+      if (isPlaying) {
+        audio.pause();
+        setPlaying(false);
+      } else {
+        audio.play().catch(function(){});
+        setPlaying(true);
+
+        // FB Pixel ViewContent при первом нажатии play
+        if (!window._fbViewFired) {
+          window._fbViewFired = true;
+          if (typeof fbq !== 'undefined') fbq('track', 'ViewContent', {
+            content_name: 'demo_track',
+            traffic_source: source
+          });
+        }
+      }
     };
 
     function setPlaying(v) {
@@ -578,13 +666,24 @@
       document.getElementById('progress-fill').style.width = pct+'%';
       document.getElementById('progress-thumb').style.left = pct+'%';
       document.getElementById('time-cur').textContent = formatTime(audio.currentTime);
+
       var bars = wf.querySelectorAll('.wave-bar');
       var idx = Math.floor((audio.currentTime/(audio.duration||1))*BARS);
-      bars.forEach(function(b,i) {
+      bars.forEach(function(b, i) {
         b.classList.remove('played','active');
         if (i < idx) b.classList.add('played');
         if (i === idx) b.classList.add('active');
       });
+
+      // FB Pixel Lead на 3 минутах - достаточно данных для обучения алгоритма
+      if (!window._fbLeadFired && audio.currentTime >= 180) {
+        window._fbLeadFired = true;
+        if (typeof fbq !== 'undefined') fbq('track', 'Lead', {
+          traffic_source: source
+        });
+      }
+
+      // Разблокировка кнопки на 90%
       if (!unlocked && audio.duration && audio.currentTime/audio.duration > 0.9) unlock();
     });
 
@@ -606,7 +705,7 @@
     }
 
     window.goToPurchase = function() {
-      window.location.href = 'https://ekaterina-donnat.com/?from=demo#buy';
+      window.location.href = 'https://ekaterina-donnat.com/?from=demo&utm_source=' + source + '#buy';
     };
 
     // ── LOOP ─────────────────────────────────────────────────────────────
