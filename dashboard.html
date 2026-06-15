@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard · Donna</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0c0e1a;
+      --surface:  #131627;
+      --border:   rgba(212,175,55,0.12);
+      --gold:     #d4af37;
+      --gold-dim: rgba(212,175,55,0.45);
+      --text:     rgba(248,250,252,0.9);
+      --muted:    rgba(248,250,252,0.35);
+      --green:    #4ade80;
+      --yellow:   #fbbf24;
+      --red:      #f87171;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .dash-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dash-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .dash-logo-name {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: 18px;
+      color: var(--gold);
+    }
+
+    .dash-meta {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .dash-updated {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── LAYOUT ── */
+    .dash-body {
+      padding: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 14px;
+    }
+
+    /* ── FUNNEL ── */
+    .funnel-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+    }
+
+    .funnel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .funnel-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    .funnel-period {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .funnel-stages {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+
+    .funnel-stage {
+      flex: 1;
+      position: relative;
+    }
+
+    .funnel-stage + .funnel-stage::before {
+      content: '→';
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    .funnel-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      height: 100%;
+      margin: 0 10px;
+    }
+
+    .funnel-stage:first-child .funnel-card { margin-left: 0; }
+    .funnel-stage:last-child .funnel-card { margin-right: 0; }
+
+    .funnel-stage-label {
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .funnel-stage-name {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 14px;
+      line-height: 1.3;
+    }
+
+    .funnel-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--gold);
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .funnel-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .funnel-conv {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .conv-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .conv-dot.green { background: var(--green); }
+    .conv-dot.yellow { background: var(--yellow); }
+    .conv-dot.red { background: var(--red); }
+    .conv-dot.muted { background: var(--muted); }
+
+    .conv-value.green { color: var(--green); }
+    .conv-value.yellow { color: var(--yellow); }
+    .conv-value.red { color: var(--red); }
+    .conv-value.muted { color: var(--muted); }
+
+    .funnel-bar-bg {
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .funnel-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--gold);
+      opacity: 0.6;
+      transition: width 1s ease;
+    }
+
+    /* ── GRID 3 ── */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .funnel-stages { flex-direction: column; gap: 12px; }
+      .funnel-stage + .funnel-stage::before { display: none; }
+      .funnel-card { margin: 0; }
+    }
+
+    /* ── STAT CARD ── */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 20px;
+    }
+
+    .stat-card-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-card-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 32px;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .stat-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 100px;
+      margin-top: 10px;
+    }
+
+    .stat-card-badge.green { background: rgba(74,222,128,0.1); color: var(--green); }
+    .stat-card-badge.yellow { background: rgba(251,191,36,0.1); color: var(--yellow); }
+    .stat-card-badge.red { background: rgba(248,113,113,0.1); color: var(--red); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .table-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: 17px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
+    }
+
+    td {
+      padding: 14px 20px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .td-product {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .td-amount { color: var(--gold); }
+
+    .badge-source {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .badge-source.paid { background: rgba(212,175,55,0.1); color: var(--gold); }
+    .badge-source.referral { background: rgba(74,222,128,0.1); color: var(--green); }
+    .badge-source.organic { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+    /* ── NORMS ── */
+    .norms-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 20px;
+    }
+
+    .norm-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 12px;
+    }
+
+    .norm-row:last-child { border-bottom: none; }
+
+    .norm-name {
+      font-size: 12px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .norm-range {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .norm-status {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      padding: 2px 8px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
+
+    .norm-status.wait { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+    /* ── PLACEHOLDER ── */
+    .placeholder-note {
+      text-align: center;
+      padding: 28px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="dash-header">
+    <div class="dash-logo">
+      <div class="dash-logo-dot"></div>
+      <div class="dash-logo-name">Donna · Dashboard</div>
+    </div>
+    <div class="dash-meta">The Lineup · Internal</div>
+    <div class="dash-updated">Обновлено: —</div>
+  </header>
+
+  <div class="dash-body">
+
+    <!-- ВОРОНКА AIDA -->
+    <div>
+      <div class="section-label">Воронка · AIDA</div>
+      <div class="funnel-wrap">
+        <div class="funnel-header">
+          <div class="funnel-title">Путь клиента</div>
+          <div class="funnel-period">Последние 30 дней</div>
+        </div>
+
+        <div class="funnel-stages">
+
+          <!-- ATTENTION -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Attention</div>
+              <div class="funnel-stage-name">Клики из рекламы</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">переходов</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">— € / клик</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%"></div></div>
+            </div>
+          </div>
+
+          <!-- INTEREST -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Interest</div>
+              <div class="funnel-stage-name">Нажали play</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">прослушиваний</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 30-50%</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- DESIRE -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Desire</div>
+              <div class="funnel-stage-name">3 минуты прослушано</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">тёплых лидов</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 40-60%</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- ACTION -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Action</div>
+              <div class="funnel-stage-name">Купили ступень 1</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">покупок</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 3-8%</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- RETENTION -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Retention</div>
+              <div class="funnel-stage-name">Часы в плеере</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">накоплено часов</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 20-35% → ст.2</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- КЛЮЧЕВЫЕ МЕТРИКИ -->
+    <div>
+      <div class="section-label">Ключевые метрики</div>
+      <div class="grid-3">
+
+        <div class="stat-card">
+          <div class="stat-card-label">Выручка · месяц</div>
+          <div class="stat-card-value">— €</div>
+          <div class="stat-card-sub">Через воронку</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">ROAS · реклама</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Цель: 2.0+</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Email база</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Гостей через форму</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Стоимость лида</div>
+          <div class="stat-card-value">— €</div>
+          <div class="stat-card-sub">Цель: &lt; 1.00 €</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">FB API pending</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Сарафан vs реклама</div>
+          <div class="stat-card-value">—%</div>
+          <div class="stat-card-sub">Доля реферального трафика</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Средний чек</div>
+          <div class="stat-card-value">— €</div>
+          <div class="stat-card-sub">Все продукты</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ПРОДАЖИ + НОРМЫ -->
+    <div class="grid-2">
+
+      <!-- ПОСЛЕДНИЕ ПРОДАЖИ -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Последние продажи</div>
+        </div>
+        <div class="placeholder-note">Продажи появятся после первой оплаты через Stripe</div>
+        <!--
+        <table>
+          <thead>
+            <tr>
+              <th>Продукт</th>
+              <th>Сумма</th>
+              <th>Источник</th>
+              <th>Дата</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="td-product">Ступень 1 + чек-ап</td>
+              <td class="td-amount">150 €</td>
+              <td><span class="badge-source paid">Реклама</span></td>
+              <td>15.06.2026</td>
+            </tr>
+          </tbody>
+        </table>
+        -->
+      </div>
+
+      <!-- НОРМЫ КОНВЕРСИИ -->
+      <div class="norms-wrap">
+        <div class="section-label" style="margin-bottom:16px;">Нормы конверсии · ориентир</div>
+
+        <div class="norm-row">
+          <div class="norm-name">Клик → Play</div>
+          <div class="norm-range">30 – 50%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Play → 3 мин (Lead)</div>
+          <div class="norm-range">40 – 60%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Lead → Покупка (холодный)</div>
+          <div class="norm-range">3 – 8%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Lead → Покупка (тёплый)</div>
+          <div class="norm-range">10 – 20%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Ступень 1 → Ступень 2</div>
+          <div class="norm-range">20 – 35%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Стоимость клика · EU</div>
+          <div class="norm-range">0.40 – 0.80 €</div>
+          <div class="norm-status wait">FB API pending</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">ROAS · цель</div>
+          <div class="norm-range">2.0+</div>
+          <div class="norm-status wait">FB API pending</div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ИСТОЧНИКИ ТРАФИКА -->
+    <div>
+      <div class="section-label">Источники трафика</div>
+      <div class="grid-3">
+
+        <div class="stat-card">
+          <div class="stat-card-label">Реклама · Instagram / FB</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">utm_source=instagram</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Сарафан · invite</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">utm_source=referral</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Органика · сайт</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Прямые заходы</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="text-align:center;padding-bottom:16px;">
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.1em;">
+        The Lineup · Internal Tool · ekaterina-donnat.com
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Защита паролем - только на проде
+    (function() {
+      var PASSWORD = 'lineup2026';
+      // Проверяем что мы на реальном домене а не в превью
+      var isPreview = window.location.hostname === 'localhost'
+                   || window.location.hostname.indexOf('claude') > -1
+                   || window.location.hostname.indexOf('anthropic') > -1;
+      if (isPreview) return;
+
+      var stored = sessionStorage.getItem('dash_auth');
+      if (stored !== PASSWORD) {
+        var input = prompt('Пароль:');
+        if (input !== PASSWORD) {
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
+          return;
+        }
+        sessionStorage.setItem('dash_auth', PASSWORD);
+      }
+    })();
+
+    // Обновляем время
+    var updatedEl = document.querySelector('.dash-updated');
+    if (updatedEl) {
+      updatedEl.textContent = 'Обновлено: ' + new Date().toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+  </script>
+
+</body>
+</html>
