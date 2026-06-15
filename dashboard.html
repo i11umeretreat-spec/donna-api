@@ -740,29 +740,57 @@
         // Воронка AIDA
         var stages = document.querySelectorAll('.funnel-stage');
         if (stages.length >= 5) {
-          // Interest - лиды через форму
-          stages[1].querySelector('.funnel-num').textContent = d.funnel.leads;
+          // Attention - открыли демо
+          stages[0].querySelector('.funnel-num').textContent = d.demo.pageviews.total;
+          stages[0].querySelector('.funnel-sub').textContent = 'переходов';
+
+          // Interest - нажали play
+          stages[1].querySelector('.funnel-num').textContent = d.demo.plays.total;
+          if (d.demo.pageviews.total > 0) {
+            var playRate = Math.round((d.demo.plays.total / d.demo.pageviews.total) * 100);
+            var playConv = stages[1].querySelector('.funnel-conv');
+            var playDot = playConv.querySelector('.conv-dot');
+            var playVal = playConv.querySelector('.conv-value');
+            playVal.textContent = playRate + '% · норма 30-50%';
+            var playColor = playRate >= 50 ? 'green' : playRate >= 30 ? 'yellow' : 'red';
+            playDot.className = 'conv-dot ' + playColor;
+            playVal.className = 'conv-value ' + playColor;
+            stages[1].querySelector('.funnel-bar-fill').style.width = Math.round((d.demo.plays.total / d.demo.pageviews.total) * 100) + '%';
+          }
+
+          // Desire - 3 минуты (Lead)
+          stages[2].querySelector('.funnel-num').textContent = d.demo.leads.total;
+          if (d.demo.plays.total > 0) {
+            var leadRate = Math.round((d.demo.leads.total / d.demo.plays.total) * 100);
+            var leadConv = stages[2].querySelector('.funnel-conv');
+            var leadDot = leadConv.querySelector('.conv-dot');
+            var leadVal = leadConv.querySelector('.conv-value');
+            leadVal.textContent = leadRate + '% · норма 40-60%';
+            var leadColor = leadRate >= 60 ? 'green' : leadRate >= 40 ? 'yellow' : 'red';
+            leadDot.className = 'conv-dot ' + leadColor;
+            leadVal.className = 'conv-value ' + leadColor;
+            stages[2].querySelector('.funnel-bar-fill').style.width = Math.round((d.demo.leads.total / d.demo.pageviews.total) * 100) + '%';
+          }
+
           // Action - покупки
           stages[3].querySelector('.funnel-num').textContent = d.funnel.purchases;
-          // Retention - часы
-          stages[4].querySelector('.funnel-num').textContent = d.funnel.hours + 'ч';
-
-          // Конверсия Lead → Purchase
-          if (d.funnel.leads > 0) {
-            var convRate = Math.round((d.funnel.purchases / d.funnel.leads) * 100);
+          if (d.demo.leads.total > 0) {
+            var convRate = Math.round((d.funnel.purchases / d.demo.leads.total) * 100);
             var convEl = stages[3].querySelector('.funnel-conv');
             var dot = convEl.querySelector('.conv-dot');
             var val = convEl.querySelector('.conv-value');
-            val.textContent = convRate + '%';
+            val.textContent = convRate + '% · норма 3-8%';
             var color = convRate >= 8 ? 'green' : convRate >= 3 ? 'yellow' : 'red';
             dot.className = 'conv-dot ' + color;
             val.className = 'conv-value ' + color;
+            stages[3].querySelector('.funnel-bar-fill').style.width = Math.round((d.funnel.purchases / d.demo.pageviews.total) * 100) + '%';
           }
 
-          // Бары воронки
-          var maxVal = Math.max(d.funnel.leads, 1);
-          stages[1].querySelector('.funnel-bar-fill').style.width = '100%';
-          stages[3].querySelector('.funnel-bar-fill').style.width = Math.round((d.funnel.purchases / maxVal) * 100) + '%';
+          // Retention - часы
+          stages[4].querySelector('.funnel-num').textContent = d.funnel.hours + 'ч';
+
+          // Бар Attention всегда 100%
+          stages[0].querySelector('.funnel-bar-fill').style.width = '100%';
         }
 
         // Ключевые метрики
@@ -787,16 +815,27 @@
         // Средний чек
         statCards[5].querySelector('.stat-card-value').textContent = d.avgCheck + ' €';
 
-        // Источники трафика
-        var sourceCards = document.querySelectorAll('.grid-3[style] .stat-card, .grid-3:last-of-type .stat-card');
-        // Ищем все карточки источников по тексту
+        // Источники трафика - показываем прослушивания демо
         document.querySelectorAll('.stat-card').forEach(function(card) {
           var label = card.querySelector('.stat-card-label')?.textContent || '';
           var valEl = card.querySelector('.stat-card-value');
-          if (label.includes('Instagram')) valEl.textContent = d.sourceGuests.instagram;
-          if (label.includes('invite')) valEl.textContent = d.sourceGuests.referral;
-          if (label.includes('Pinterest')) valEl.textContent = d.sourceGuests.pinterest;
-          if (label.includes('Органика')) valEl.textContent = d.sourceGuests.organic;
+          var subEl = card.querySelector('.stat-card-sub');
+          if (label.includes('Instagram')) {
+            valEl.textContent = d.demo.plays.paid;
+            subEl.textContent = d.demo.pageviews.paid + ' визитов · ' + d.demo.plays.paid + ' play';
+          }
+          if (label.includes('invite')) {
+            valEl.textContent = d.demo.plays.referral;
+            subEl.textContent = d.demo.pageviews.referral + ' визитов · ' + d.demo.plays.referral + ' play';
+          }
+          if (label.includes('Pinterest')) {
+            valEl.textContent = d.demo.plays.pinterest;
+            subEl.textContent = d.demo.pageviews.pinterest + ' визитов · ' + d.demo.plays.pinterest + ' play';
+          }
+          if (label.includes('Органика')) {
+            valEl.textContent = d.demo.plays.organic;
+            subEl.textContent = d.demo.pageviews.organic + ' визитов · ' + d.demo.plays.organic + ' play';
+          }
         });
 
         // Последние продажи
