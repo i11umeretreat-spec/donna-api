@@ -711,6 +711,7 @@
       }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.ok) {
           sessionStorage.setItem('dash_auth', '1');
+          sessionStorage.setItem('dash_auth_token', input);
         } else {
           document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
         }
@@ -731,7 +732,9 @@
     // Загружаем данные из Supabase через dashboard-data.js
     (async function loadDashboard() {
       try {
-        var res = await fetch('/.netlify/functions/dashboard-data');
+        var res = await fetch('/.netlify/functions/dashboard-data', {
+          headers: { 'X-Dashboard-Token': sessionStorage.getItem('dash_auth_token') || '' }
+        });
         if (!res.ok) return;
         var d = await res.json();
 
