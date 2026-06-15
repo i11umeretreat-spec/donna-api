@@ -9,7 +9,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #0c0e1a;
+      --bg:       #151933;
       --surface:  #131627;
       --border:   rgba(212,175,55,0.12);
       --gold:     #d4af37;
@@ -539,42 +539,42 @@
       <div class="section-label">Ключевые метрики</div>
       <div class="grid-3">
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="revenue">
           <div class="stat-card-label">Выручка · месяц</div>
           <div class="stat-card-value">— €</div>
           <div class="stat-card-sub">Через воронку</div>
           <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="roas">
           <div class="stat-card-label">ROAS · реклама</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">Цель: 2.0+</div>
           <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="email-base">
           <div class="stat-card-label">Email база</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">Гостей через форму</div>
           <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="lead-cost">
           <div class="stat-card-label">Стоимость лида</div>
           <div class="stat-card-value">— €</div>
           <div class="stat-card-sub">Цель: &lt; 1.00 €</div>
           <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">FB API pending</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="referral-share">
           <div class="stat-card-label">Сарафан vs реклама</div>
           <div class="stat-card-value">—%</div>
           <div class="stat-card-sub">Доля реферального трафика</div>
           <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="avg-check">
           <div class="stat-card-label">Средний чек</div>
           <div class="stat-card-value">— €</div>
           <div class="stat-card-sub">Все продукты</div>
@@ -648,21 +648,27 @@
     <!-- ИСТОЧНИКИ ТРАФИКА -->
     <div>
       <div class="section-label">Источники трафика</div>
-      <div class="grid-3">
+      <div class="grid-3" style="grid-template-columns: repeat(4, 1fr);">
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="src-instagram">
           <div class="stat-card-label">Реклама · Instagram / FB</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">utm_source=instagram</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="src-referral">
           <div class="stat-card-label">Сарафан · invite</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">utm_source=referral</div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card" data-metric="src-pinterest">
+          <div class="stat-card-label">Pinterest</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">utm_source=pinterest</div>
+        </div>
+
+        <div class="stat-card" data-metric="src-organic">
           <div class="stat-card-label">Органика · сайт</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">Прямые заходы</div>
@@ -793,50 +799,39 @@
           stages[0].querySelector('.funnel-bar-fill').style.width = '100%';
         }
 
-        // Ключевые метрики
-        var statCards = document.querySelectorAll('.stat-card');
-        // Выручка
-        statCards[0].querySelector('.stat-card-value').textContent = d.revenue + ' €';
-        if (d.revenue > 0) {
-          statCards[0].querySelector('.stat-card-badge').textContent = 'Активно';
-          statCards[0].querySelector('.stat-card-badge').className = 'stat-card-badge green';
+        // Ключевые метрики - по data-metric ID
+        function setCard(id, value, badge, badgeClass) {
+          var card = document.querySelector('[data-metric="' + id + '"]');
+          if (!card) return;
+          card.querySelector('.stat-card-value').textContent = value;
+          if (badge !== undefined) {
+            var b = card.querySelector('.stat-card-badge');
+            if (b) { b.textContent = badge; b.className = 'stat-card-badge ' + (badgeClass || ''); }
+          }
         }
 
-        // Email база
-        statCards[2].querySelector('.stat-card-value').textContent = d.emailBase;
-        if (d.emailBase > 0) {
-          statCards[2].querySelector('.stat-card-badge').textContent = d.emailBase + ' контактов';
-          statCards[2].querySelector('.stat-card-badge').className = 'stat-card-badge green';
+        setCard('revenue', d.revenue + ' €',
+          d.revenue > 0 ? 'Активно' : 'Ждём данных',
+          d.revenue > 0 ? 'green' : '');
+        setCard('email-base', d.emailBase,
+          d.emailBase > 0 ? d.emailBase + ' контактов' : 'Ждём данных',
+          d.emailBase > 0 ? 'green' : '');
+        setCard('referral-share', d.referralPercent + '%');
+        setCard('avg-check', d.avgCheck > 0 ? d.avgCheck + ' €' : '—');
+
+        // Источники трафика - по data-metric ID
+        function setSrc(id, plays, pageviews) {
+          var card = document.querySelector('[data-metric="' + id + '"]');
+          if (!card) return;
+          card.querySelector('.stat-card-value').textContent = plays;
+          card.querySelector('.stat-card-sub').textContent =
+            pageviews + ' визитов · ' + plays + ' play';
         }
 
-        // Сарафан %
-        statCards[4].querySelector('.stat-card-value').textContent = d.referralPercent + '%';
-
-        // Средний чек
-        statCards[5].querySelector('.stat-card-value').textContent = d.avgCheck + ' €';
-
-        // Источники трафика - показываем прослушивания демо
-        document.querySelectorAll('.stat-card').forEach(function(card) {
-          var label = card.querySelector('.stat-card-label')?.textContent || '';
-          var valEl = card.querySelector('.stat-card-value');
-          var subEl = card.querySelector('.stat-card-sub');
-          if (label.includes('Instagram')) {
-            valEl.textContent = d.demo.plays.paid;
-            subEl.textContent = d.demo.pageviews.paid + ' визитов · ' + d.demo.plays.paid + ' play';
-          }
-          if (label.includes('invite')) {
-            valEl.textContent = d.demo.plays.referral;
-            subEl.textContent = d.demo.pageviews.referral + ' визитов · ' + d.demo.plays.referral + ' play';
-          }
-          if (label.includes('Pinterest')) {
-            valEl.textContent = d.demo.plays.pinterest;
-            subEl.textContent = d.demo.pageviews.pinterest + ' визитов · ' + d.demo.plays.pinterest + ' play';
-          }
-          if (label.includes('Органика')) {
-            valEl.textContent = d.demo.plays.organic;
-            subEl.textContent = d.demo.pageviews.organic + ' визитов · ' + d.demo.plays.organic + ' play';
-          }
-        });
+        setSrc('src-instagram', d.demo.plays.paid, d.demo.pageviews.paid);
+        setSrc('src-referral', d.demo.plays.referral, d.demo.pageviews.referral);
+        setSrc('src-pinterest', d.demo.plays.pinterest, d.demo.pageviews.pinterest);
+        setSrc('src-organic', d.demo.plays.organic, d.demo.pageviews.organic);
 
         // Последние продажи
         if (d.sales && d.sales.length > 0) {
@@ -881,8 +876,8 @@
             var normStatus = normRows[2].querySelector('.norm-status');
             normStatus.textContent = convPurchase + '%';
             normStatus.className = 'norm-status ' + (convPurchase >= 8 ? 'green' : convPurchase >= 3 ? 'yellow' : 'red');
-            normStatus.style.background = convPurchase >= 8 ? 'rgba(74,222,128,0.1)' : convPurchase >= 3 ? 'rgba(251,191,36,0.1)' : 'rgba(248,113,113,0.1)';
-            normStatus.style.color = convPurchase >= 8 ? 'var(--green)' : convPurchase >= 3 ? 'var(--yellow)' : 'var(--red)';
+            
+            
           }
         }
 
