@@ -12,7 +12,26 @@ const supabase = createClient(
 const VALID_EVENTS = ['pageview', 'play', 'lead'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
+const ALLOWED_ORIGINS = [
+    'https://app.ekaterina-donnat.com',
+    'https://ekaterina-donnat.com',
+];
+
 exports.handler = async (event) => {
+    const origin = event.headers.origin || '';
+    const corsOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+
+    const corsHeaders = {
+        'Access-Control-Allow-Origin': corsOrigin,
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type',
+    };
+
+    // CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+        return { statusCode: 200, headers: corsHeaders, body: '' };
+    }
+
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
@@ -38,7 +57,7 @@ exports.handler = async (event) => {
                 created_at: new Date().toISOString(),
             });
 
-        return { statusCode: 200, body: '{"ok":true}' };
+        return { statusCode: 200, headers: corsHeaders, body: '{"ok":true}' };
     } catch (err) {
         console.error('track-demo error:', err);
         return { statusCode: 500, body: 'Server error' };
