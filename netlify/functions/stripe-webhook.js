@@ -96,6 +96,11 @@ exports.handler = async (event) => {
 
     const token = crypto.randomUUID();
 
+    // Определяем источник трафика из метаданных Stripe
+    const utmSource = session.metadata?.utm_source
+                   || session.client_reference_id?.split('|')[1]
+                   || 'direct';
+
     // Сохраняем в Supabase только если есть треки
     if (product.track_ids.length > 0) {
         const { error } = await supabase
@@ -105,6 +110,8 @@ exports.handler = async (event) => {
                 email: customerEmail,
                 track_ids: product.track_ids,
                 stripe_session_id: session.id,
+                utm_source: utmSource,
+                product_name: product.name,
                 created_at: new Date().toISOString(),
             });
 
