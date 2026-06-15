@@ -42,6 +42,33 @@ exports.handler = async (event) => {
             .from('listening_progress')
             .select('token, seconds');
 
+        // 5. События демо-плеера за 30 дней
+        const { data: demoEvents } = await supabase
+            .from('demo_events')
+            .select('event, source, created_at')
+            .gte('created_at', thirtyDaysAgo);
+
+        // Считаем события демо по типу и источнику
+        const demo = {
+            pageviews: { total: 0, paid: 0, referral: 0, pinterest: 0, organic: 0 },
+            plays:     { total: 0, paid: 0, referral: 0, pinterest: 0, organic: 0 },
+            leads:     { total: 0, paid: 0, referral: 0, pinterest: 0, organic: 0 },
+        };
+
+        if (demoEvents) {
+            demoEvents.forEach(e => {
+                const bucket = e.event === 'pageview' ? demo.pageviews
+                             : e.event === 'play' ? demo.plays
+                             : e.event === 'lead' ? demo.leads : null;
+                if (!bucket) return;
+                bucket.total++;
+                if (e.source === 'paid') bucket.paid++;
+                else if (e.source === 'referral') bucket.referral++;
+                else if (e.source === 'pinterest') bucket.pinterest++;
+                else bucket.organic++;
+            });
+        }
+
         // Считаем метрики
         const purchaseCount = purchases?.length || 0;
         const guestCount = guests?.length || 0;
@@ -146,6 +173,9 @@ exports.handler = async (event) => {
 
                 // Последние продажи
                 sales: salesList.slice(0, 10),
+
+                // События демо-плеера
+                demo: demo,
             }),
         };
 
