@@ -10,18 +10,37 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
+    // CORS preflight
+    if (event.httpMethod === 'OPTIONS') {
+        return {
+            statusCode: 200,
+            headers: {
+                'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
+                'Access-Control-Allow-Methods': 'GET',
+                'Access-Control-Allow-Headers': 'X-Dashboard-Token',
+            },
+            body: '',
+        };
+    }
+
     if (event.httpMethod !== 'GET') {
         return { statusCode: 405, body: 'Method Not Allowed' };
+    }
+
+    // Проверка пароля на сервере
+    const token = event.headers['x-dashboard-token'];
+    if (!token || token !== process.env.DASHBOARD_PASSWORD) {
+        return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
     }
 
     try {
         const now = new Date();
         const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        // 1. Покупки за 30 дней
+        // 1. Покупки за 30 дней - берём реальную сумму из БД
         const { data: purchases } = await supabase
             .from('purchases')
-            .select('email, track_ids, utm_source, product_name, created_at')
+            .select('email, track_ids, utm_source, product_name, amount, created_at')
             .gte('created_at', thirtyDaysAgo)
             .order('created_at', { ascending: false });
 
@@ -88,15 +107,8 @@ exports.handler = async (event) => {
 
         if (purchases) {
             purchases.forEach(p => {
-                // Определяем цену по track_ids или product_name
-                let price = 150; // дефолт - ступень 1
-                const name = (p.product_name || '').toLowerCase();
-                if (name.includes('checkup') || name.includes('чек-ап')) price = 25;
-                else if (name.includes('combo') || name.includes('комбо')) price = 55;
-                else if (name.includes('deep') || name.includes('разбор')) price = 310;
-                else if (name.includes('cycle') || name.includes('цикл')) price = 650;
-                else if (name.includes('album') || name.includes('альбом')) price = 350;
-
+                // Берём реальную сумму из Stripe через БД
+                const price = p.amount || 0;
                 totalRevenue += price;
                 salesList.push({
                     product: p.product_name || 'Ступень 1',
@@ -147,7 +159,10 @@ exports.handler = async (event) => {
 
         return {
             statusCode: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
+            },
             body: JSON.stringify({
                 period: '30d',
                 updated: now.toISOString(),
