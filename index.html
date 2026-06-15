@@ -2,58 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <!-- DEV ONLY: удалить в проде или не добавлять -->
+    <!-- <meta name="lineup-token" content="lineup-dev-permanent"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Donna Audio</title>
-    <!-- Facebook Pixel -->
-    <script>
-    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-    document,'script','https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '570014464378584');
-    fbq('track', 'PageView');
-    </script>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=570014464378584&ev=PageView&noscript=1"/></noscript>
-    <!-- End Facebook Pixel -->
-
-    <!-- Instagram WebView Detection -->
-    <script>
-    (function() {
-        var ua = navigator.userAgent || '';
-        var isInstagram = ua.indexOf('Instagram') > -1;
-        var isFacebook = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1;
-
-        if (isInstagram || isFacebook) {
-            // Показываем баннер после загрузки DOM
-            document.addEventListener('DOMContentLoaded', function() {
-                var banner = document.createElement('div');
-                banner.id = 'ig-banner';
-                banner.style.cssText = [
-                    'position:fixed', 'top:0', 'left:0', 'right:0', 'z-index:99999',
-                    'background:rgba(13,15,38,0.97)', 'backdrop-filter:blur(12px)',
-                    'border-bottom:1px solid rgba(212,175,55,0.25)',
-                    'padding:12px 20px', 'display:flex', 'align-items:center',
-                    'justify-content:space-between', 'gap:12px'
-                ].join(';');
-
-                banner.innerHTML = [
-                    '<p style="margin:0;font-family:Outfit,sans-serif;font-size:12px;',
-                    'font-weight:300;color:rgba(248,250,252,0.8);line-height:1.4;">',
-                    'Для комфортного прослушивания<br>открой в браузере</p>',
-                    '<a href="' + window.location.href + '" target="_blank" rel="noopener"',
-                    ' style="flex-shrink:0;background:#d4af37;color:#0f1123;padding:8px 16px;',
-                    'border-radius:8px;text-decoration:none;font-family:Outfit,sans-serif;',
-                    'font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;',
-                    'white-space:nowrap;">Открыть</a>'
-                ].join('');
-
-                document.body.insertBefore(banner, document.body.firstChild);
-            });
-        }
-    })();
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
@@ -662,7 +614,7 @@
     var THRESHOLD_REMINDER = 5 * 3600;  // 5 часов в секундах
     var THRESHOLD_BONUS    = 10 * 3600; // 10 часов в секундах
     // URL бонусного трека — заменить когда Екатерина запишет:
-    var BONUS_TRACK_URL = null; // 'https://audio.ekaterina-donnat.com/bonus/secret.mp3'
+    var BONUS_TRACK_URL = null;
 
     // ── STRIPE ССЫЛКИ ПО СТУПЕНЯМ ────────────────────────────────────────────
     // Заменить на реальные Stripe Payment Links когда ступени будут готовы:
@@ -1197,7 +1149,7 @@
         duration: '21:00'
     };
 
-    const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+    const LINEUP_MODE_TOKEN = document.querySelector('meta[name="lineup-token"]')?.content || '';
 
     document.addEventListener('DOMContentLoaded', async () => {
         initSphere();
@@ -1320,11 +1272,6 @@
     }
 
     function togglePlay(card) {
-        // FB Pixel - ViewContent при первом нажатии play
-        if (!window._fbViewFired) {
-            window._fbViewFired = true;
-            if (typeof fbq !== 'undefined') fbq('track', 'ViewContent', { content_name: 'demo_track' });
-        }
         const url = card.getAttribute('data-url');
         if (currentCard !== card) {
             if (currentCard) {
@@ -1363,12 +1310,6 @@
                 if (delta > 0 && delta < 2) addListenedSeconds(delta);
             }
             lastTimeUpdate = now;
-
-            // FB Pixel - Lead на 3 минутах прослушивания (достаточно для обучения алгоритма)
-            if (audio.currentTime >= 180 && !window._fbLeadFired) {
-                window._fbLeadFired = true;
-                if (typeof fbq !== 'undefined') fbq('track', 'Lead');
-            }
         }
     });
 
