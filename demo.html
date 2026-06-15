@@ -465,6 +465,18 @@
 
     // UTM источник
     var source = window.TRAFFIC_SOURCE || 'direct';
+
+    // Трекер событий в Supabase
+    function trackDemo(eventName) {
+      fetch('/.netlify/functions/track-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: eventName, source: source })
+      }).catch(function() {});
+    }
+
+    // Pageview
+    trackDemo('pageview');
     var isReferral = source === 'referral';
 
     // Показываем реферальную плашку
@@ -628,9 +640,10 @@
         audio.play().catch(function(){});
         setPlaying(true);
 
-        // FB Pixel ViewContent при первом нажатии play
+        // FB Pixel ViewContent + Supabase при первом нажатии play
         if (!window._fbViewFired) {
           window._fbViewFired = true;
+          trackDemo('play');
           if (typeof fbq !== 'undefined') fbq('track', 'ViewContent', {
             content_name: 'demo_track',
             traffic_source: source
@@ -675,9 +688,10 @@
         if (i === idx) b.classList.add('active');
       });
 
-      // FB Pixel Lead на 3 минутах - достаточно данных для обучения алгоритма
+      // FB Pixel Lead + Supabase на 3 минутах
       if (!window._fbLeadFired && audio.currentTime >= 180) {
         window._fbLeadFired = true;
+        trackDemo('lead');
         if (typeof fbq !== 'undefined') fbq('track', 'Lead', {
           traffic_source: source
         });
