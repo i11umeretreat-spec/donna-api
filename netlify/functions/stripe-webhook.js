@@ -96,6 +96,9 @@ exports.handler = async (event) => {
 
     const token = crypto.randomUUID();
 
+    // Берём реальную сумму из Stripe - в центах, делим на 100
+    const amountPaid = session.amount_total ? Math.round(session.amount_total / 100) : null;
+
     // Определяем источник трафика из метаданных Stripe
     const utmSource = session.metadata?.utm_source
                    || session.client_reference_id?.split('|')[1]
@@ -112,6 +115,7 @@ exports.handler = async (event) => {
                 stripe_session_id: session.id,
                 utm_source: utmSource,
                 product_name: product.name,
+                amount: amountPaid,
                 created_at: new Date().toISOString(),
             });
 
