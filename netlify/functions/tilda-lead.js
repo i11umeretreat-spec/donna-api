@@ -21,18 +21,19 @@ exports.handler = async (event) => {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
 
-    // Tilda шлёт данные как form-urlencoded или JSON
-    let email;
+    let email, utmSource;
     try {
         const contentType = event.headers['content-type'] || '';
 
         if (contentType.includes('application/json')) {
             const body = JSON.parse(event.body);
             email = body.email || body.Email;
+            utmSource = body.utm_source || body.UTM_SOURCE || 'organic';
         } else {
-            // form-urlencoded
+            // form-urlencoded - Тильда передаёт UTM автоматически
             const params = new URLSearchParams(event.body);
             email = params.get('email') || params.get('Email');
+            utmSource = params.get('utm_source') || params.get('UTM_SOURCE') || 'organic';
         }
     } catch (err) {
         console.error('Parse error:', err);
@@ -69,6 +70,7 @@ exports.handler = async (event) => {
                 token,
                 email,
                 promo_track: 'water_energy',
+                utm_source: utmSource,
                 created_at: new Date().toISOString(),
             });
 
