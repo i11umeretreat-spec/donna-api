@@ -282,8 +282,8 @@
     }
 
     .btn-skip {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -719,6 +719,8 @@
     }
 
     window.goToPurchase = function() {
+      // Программная проверка - не только CSS
+      if (!unlocked) return;
       window.location.href = 'https://ekaterina-donnat.com/?from=demo&utm_source=' + source + '#buy';
     };
 
