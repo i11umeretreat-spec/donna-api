@@ -721,6 +721,136 @@
         hour: '2-digit', minute: '2-digit'
       });
     }
+
+    // Загружаем данные из Supabase через dashboard-data.js
+    (async function loadDashboard() {
+      try {
+        var res = await fetch('/.netlify/functions/dashboard-data');
+        if (!res.ok) return;
+        var d = await res.json();
+
+        // Обновляем время из сервера
+        if (updatedEl && d.updated) {
+          updatedEl.textContent = 'Обновлено: ' + new Date(d.updated).toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+          });
+        }
+
+        // Воронка AIDA
+        var stages = document.querySelectorAll('.funnel-stage');
+        if (stages.length >= 5) {
+          // Interest - лиды через форму
+          stages[1].querySelector('.funnel-num').textContent = d.funnel.leads;
+          // Action - покупки
+          stages[3].querySelector('.funnel-num').textContent = d.funnel.purchases;
+          // Retention - часы
+          stages[4].querySelector('.funnel-num').textContent = d.funnel.hours + 'ч';
+
+          // Конверсия Lead → Purchase
+          if (d.funnel.leads > 0) {
+            var convRate = Math.round((d.funnel.purchases / d.funnel.leads) * 100);
+            var convEl = stages[3].querySelector('.funnel-conv');
+            var dot = convEl.querySelector('.conv-dot');
+            var val = convEl.querySelector('.conv-value');
+            val.textContent = convRate + '%';
+            var color = convRate >= 8 ? 'green' : convRate >= 3 ? 'yellow' : 'red';
+            dot.className = 'conv-dot ' + color;
+            val.className = 'conv-value ' + color;
+          }
+
+          // Бары воронки
+          var maxVal = Math.max(d.funnel.leads, 1);
+          stages[1].querySelector('.funnel-bar-fill').style.width = '100%';
+          stages[3].querySelector('.funnel-bar-fill').style.width = Math.round((d.funnel.purchases / maxVal) * 100) + '%';
+        }
+
+        // Ключевые метрики
+        var statCards = document.querySelectorAll('.stat-card');
+        // Выручка
+        statCards[0].querySelector('.stat-card-value').textContent = d.revenue + ' €';
+        if (d.revenue > 0) {
+          statCards[0].querySelector('.stat-card-badge').textContent = 'Активно';
+          statCards[0].querySelector('.stat-card-badge').className = 'stat-card-badge green';
+        }
+
+        // Email база
+        statCards[2].querySelector('.stat-card-value').textContent = d.emailBase;
+        if (d.emailBase > 0) {
+          statCards[2].querySelector('.stat-card-badge').textContent = d.emailBase + ' контактов';
+          statCards[2].querySelector('.stat-card-badge').className = 'stat-card-badge green';
+        }
+
+        // Сарафан %
+        statCards[4].querySelector('.stat-card-value').textContent = d.referralPercent + '%';
+
+        // Средний чек
+        statCards[5].querySelector('.stat-card-value').textContent = d.avgCheck + ' €';
+
+        // Источники трафика
+        var sourceCards = document.querySelectorAll('.grid-3[style] .stat-card, .grid-3:last-of-type .stat-card');
+        // Ищем все карточки источников по тексту
+        document.querySelectorAll('.stat-card').forEach(function(card) {
+          var label = card.querySelector('.stat-card-label')?.textContent || '';
+          var valEl = card.querySelector('.stat-card-value');
+          if (label.includes('Instagram')) valEl.textContent = d.sourceGuests.instagram;
+          if (label.includes('invite')) valEl.textContent = d.sourceGuests.referral;
+          if (label.includes('Pinterest')) valEl.textContent = d.sourceGuests.pinterest;
+          if (label.includes('Органика')) valEl.textContent = d.sourceGuests.organic;
+        });
+
+        // Последние продажи
+        if (d.sales && d.sales.length > 0) {
+          var tableWrap = document.querySelector('.table-wrap');
+          var placeholder = tableWrap.querySelector('.placeholder-note');
+          if (placeholder) placeholder.remove();
+
+          var table = document.createElement('table');
+          table.innerHTML = '<thead><tr>' +
+            '<th>Продукт</th><th>Сумма</th><th>Источник</th><th>Дата</th>' +
+            '</tr></thead><tbody></tbody>';
+
+          var tbody = table.querySelector('tbody');
+          d.sales.forEach(function(sale) {
+            var srcClass = 'organic';
+            if (sale.source.includes('instagram') || sale.source.includes('facebook')) srcClass = 'paid';
+            else if (sale.source.includes('referral')) srcClass = 'referral';
+
+            var srcLabel = srcClass === 'paid' ? 'Реклама' : srcClass === 'referral' ? 'Сарафан' : 'Органика';
+
+            var date = new Date(sale.date);
+            var dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+              '<td class="td-product">' + sale.product + '</td>' +
+              '<td class="td-amount">' + sale.amount + ' €</td>' +
+              '<td><span class="badge-source ' + srcClass + '">' + srcLabel + '</span></td>' +
+              '<td>' + dateStr + '</td>';
+            tbody.appendChild(tr);
+          });
+
+          tableWrap.appendChild(table);
+        }
+
+        // Нормы конверсии - обновляем статусы
+        if (d.funnel.leads > 0) {
+          var normRows = document.querySelectorAll('.norm-row');
+          // Lead → Покупка (холодный) - строка 3
+          if (normRows[2]) {
+            var convPurchase = Math.round((d.funnel.purchases / d.funnel.leads) * 100);
+            var normStatus = normRows[2].querySelector('.norm-status');
+            normStatus.textContent = convPurchase + '%';
+            normStatus.className = 'norm-status ' + (convPurchase >= 8 ? 'green' : convPurchase >= 3 ? 'yellow' : 'red');
+            normStatus.style.background = convPurchase >= 8 ? 'rgba(74,222,128,0.1)' : convPurchase >= 3 ? 'rgba(251,191,36,0.1)' : 'rgba(248,113,113,0.1)';
+            normStatus.style.color = convPurchase >= 8 ? 'var(--green)' : convPurchase >= 3 ? 'var(--yellow)' : 'var(--red)';
+          }
+        }
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    })();
   </script>
 
 </body>
