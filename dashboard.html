@@ -69,14 +69,14 @@
     }
 
     .dash-meta {
-      font-size: 13px;
+      font-size: 11px;
       color: var(--muted);
       letter-spacing: 0.1em;
       font-family: 'DM Mono', monospace;
     }
 
     .dash-updated {
-      font-size: 12px;
+      font-size: 10px;
       color: var(--muted);
       font-family: 'DM Mono', monospace;
       letter-spacing: 0.05em;
@@ -173,7 +173,7 @@
     }
 
     .funnel-stage-name {
-      font-size: 14px;
+      font-size: 11px;
       font-weight: 400;
       color: var(--text);
       margin-bottom: 14px;
@@ -182,7 +182,7 @@
 
     .funnel-num {
       font-family: 'DM Mono', monospace;
-      font-size: 34px;
+      font-size: 28px;
       font-weight: 400;
       color: var(--gold);
       margin-bottom: 4px;
@@ -190,7 +190,7 @@
     }
 
     .funnel-sub {
-      font-size: 13px;
+      font-size: 10px;
       color: var(--muted);
       margin-bottom: 12px;
     }
@@ -199,7 +199,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 13px;
+      font-size: 11px;
       font-family: 'DM Mono', monospace;
     }
 
@@ -264,7 +264,7 @@
     }
 
     .stat-card-label {
-      font-size: 11px;
+      font-size: 9px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--muted);
@@ -273,14 +273,14 @@
 
     .stat-card-value {
       font-family: 'DM Mono', monospace;
-      font-size: 38px;
+      font-size: 32px;
       color: var(--gold);
       line-height: 1;
       margin-bottom: 4px;
     }
 
     .stat-card-sub {
-      font-size: 13px;
+      font-size: 11px;
       color: var(--muted);
     }
 
@@ -327,7 +327,7 @@
     }
 
     th {
-      font-size: 11px;
+      font-size: 9px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--muted);
@@ -339,7 +339,7 @@
 
     td {
       padding: 14px 20px;
-      font-size: 14px;
+      font-size: 12px;
       font-family: 'DM Mono', monospace;
       border-bottom: 1px solid rgba(255,255,255,0.03);
       color: var(--text);
@@ -352,7 +352,7 @@
     .td-product {
       font-family: 'Outfit', sans-serif;
       font-weight: 300;
-      font-size: 15px;
+      font-size: 13px;
       color: var(--text);
     }
 
@@ -391,14 +391,14 @@
     .norm-row:last-child { border-bottom: none; }
 
     .norm-name {
-      font-size: 14px;
+      font-size: 12px;
       color: var(--text);
       flex: 1;
     }
 
     .norm-range {
       font-family: 'DM Mono', monospace;
-      font-size: 13px;
+      font-size: 11px;
       color: var(--muted);
       white-space: nowrap;
     }
@@ -417,7 +417,7 @@
     .placeholder-note {
       text-align: center;
       padding: 28px;
-      font-size: 14px;
+      font-size: 12px;
       color: var(--muted);
       font-family: 'DM Mono', monospace;
       letter-spacing: 0.05em;
@@ -593,26 +593,6 @@
           <div class="table-title">Последние продажи</div>
         </div>
         <div class="placeholder-note">Продажи появятся после первой оплаты через Stripe</div>
-        <!--
-        <table>
-          <thead>
-            <tr>
-              <th>Продукт</th>
-              <th>Сумма</th>
-              <th>Источник</th>
-              <th>Дата</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="td-product">Ступень 1 + чек-ап</td>
-              <td class="td-amount">150 €</td>
-              <td><span class="badge-source paid">Реклама</span></td>
-              <td>15.06.2026</td>
-            </tr>
-          </tbody>
-        </table>
-        -->
       </div>
 
       <!-- НОРМЫ КОНВЕРСИИ -->
@@ -668,7 +648,7 @@
     <!-- ИСТОЧНИКИ ТРАФИКА -->
     <div>
       <div class="section-label">Источники трафика</div>
-      <div class="grid-3" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="grid-3">
 
         <div class="stat-card">
           <div class="stat-card-label">Реклама · Instagram / FB</div>
@@ -680,12 +660,6 @@
           <div class="stat-card-label">Сарафан · invite</div>
           <div class="stat-card-value">—</div>
           <div class="stat-card-sub">utm_source=referral</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-label">Pinterest</div>
-          <div class="stat-card-value">—</div>
-          <div class="stat-card-sub">utm_source=pinterest</div>
         </div>
 
         <div class="stat-card">
@@ -708,24 +682,35 @@
   </div>
 
   <script>
-    // Защита паролем - только на проде
+    // Защита паролем через сервер
     (function() {
-      var PASSWORD = 'lineup2026';
-      // Проверяем что мы на реальном домене а не в превью
       var isPreview = window.location.hostname === 'localhost'
                    || window.location.hostname.indexOf('claude') > -1
                    || window.location.hostname.indexOf('anthropic') > -1;
       if (isPreview) return;
 
       var stored = sessionStorage.getItem('dash_auth');
-      if (stored !== PASSWORD) {
-        var input = prompt('Пароль:');
-        if (input !== PASSWORD) {
-          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
-          return;
-        }
-        sessionStorage.setItem('dash_auth', PASSWORD);
+      if (stored === '1') return;
+
+      var input = prompt('Пароль:');
+      if (!input) {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
+        return;
       }
+
+      fetch('/.netlify/functions/dashboard-auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: input })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.ok) {
+          sessionStorage.setItem('dash_auth', '1');
+        } else {
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
+        }
+      }).catch(function() {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Ошибка сервера</div>';
+      });
     })();
 
     // Обновляем время
