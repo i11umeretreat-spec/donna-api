@@ -101,19 +101,19 @@
       margin-bottom: 14px;
     }
 
-    /* ── FUNNEL ── */
+    /* ── FUNNEL TABS ── */
     .funnel-wrap {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 28px 24px;
+      overflow: hidden;
     }
 
     .funnel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
+      padding: 22px 24px 0;
     }
 
     .funnel-title {
@@ -130,81 +130,166 @@
       letter-spacing: 0.05em;
     }
 
-    .funnel-stages {
+    /* Tab bar */
+    .funnel-tabs {
       display: flex;
-      gap: 0;
-      align-items: stretch;
+      gap: 2px;
+      padding: 18px 24px 0;
     }
 
-    .funnel-stage {
+    .funnel-tab {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: 10px 10px 0 0;
+      border: 1px solid transparent;
+      border-bottom: none;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--muted);
+      cursor: pointer;
+      background: transparent;
+      transition: color 0.18s, background 0.18s, border-color 0.18s;
+      white-space: nowrap;
+      position: relative;
+      bottom: -1px;
+    }
+
+    .funnel-tab:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .funnel-tab.active {
+      color: var(--gold);
+      background: var(--bg);
+      border-color: var(--border);
+      border-bottom-color: var(--bg);
+    }
+
+    .funnel-tab-icon {
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    /* Tab content area */
+    .funnel-panels {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 0 0 18px 18px;
+    }
+
+    .funnel-panel {
+      display: none;
+      padding: 24px;
+    }
+
+    .funnel-panel.active {
+      display: block;
+    }
+
+    /* Path description */
+    .funnel-path-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 22px;
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* Steps chain */
+    .funnel-steps {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+    }
+
+    .funnel-step {
       flex: 1;
       position: relative;
     }
 
-    .funnel-stage + .funnel-stage::before {
-      content: '→';
+    .funnel-step + .funnel-step::before {
+      content: '';
       position: absolute;
-      left: -14px;
+      left: -1px;
       top: 50%;
       transform: translateY(-50%);
-      color: var(--muted);
-      font-size: 14px;
-      z-index: 1;
+      width: 1px;
+      height: 40%;
+      background: var(--border);
     }
 
-    .funnel-card {
-      background: rgba(255,255,255,0.02);
+    .funnel-step-inner {
+      padding: 16px 14px;
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 18px 16px;
+      margin: 0 6px;
+      background: rgba(255,255,255,0.015);
       height: 100%;
-      margin: 0 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      position: relative;
     }
 
-    .funnel-stage:first-child .funnel-card { margin-left: 0; }
-    .funnel-stage:last-child .funnel-card { margin-right: 0; }
+    .funnel-step:first-child .funnel-step-inner { margin-left: 0; }
+    .funnel-step:last-child .funnel-step-inner { margin-right: 0; }
 
-    .funnel-stage-label {
+    .funnel-step-arrow {
+      position: absolute;
+      right: -18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gold-dim);
+      font-size: 12px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .funnel-step:last-child .funnel-step-arrow { display: none; }
+
+    .funnel-step-tag {
       font-size: 8px;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .funnel-stage-name {
-      font-size: 11px;
-      font-weight: 400;
-      color: var(--text);
-      margin-bottom: 14px;
-      line-height: 1.3;
-    }
-
-    .funnel-num {
+      color: var(--gold-dim);
       font-family: 'DM Mono', monospace;
-      font-size: 28px;
+    }
+
+    .funnel-step-name {
+      font-size: 11px;
+      color: var(--text);
       font-weight: 400;
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .funnel-step-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 24px;
       color: var(--gold);
-      margin-bottom: 4px;
       line-height: 1;
     }
 
-    .funnel-sub {
-      font-size: 10px;
+    .funnel-step-sub {
+      font-size: 9px;
       color: var(--muted);
-      margin-bottom: 12px;
     }
 
-    .funnel-conv {
+    .funnel-step-conv {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
+      gap: 5px;
+      font-size: 10px;
       font-family: 'DM Mono', monospace;
+      margin-top: 4px;
     }
 
     .conv-dot {
-      width: 6px; height: 6px;
+      width: 5px; height: 5px;
       border-radius: 50%;
       flex-shrink: 0;
     }
@@ -219,20 +304,29 @@
     .conv-value.red { color: var(--red); }
     .conv-value.muted { color: var(--muted); }
 
-    .funnel-bar-bg {
-      height: 3px;
+    .funnel-step-bar {
+      height: 2px;
       background: rgba(255,255,255,0.05);
       border-radius: 2px;
-      margin-top: 10px;
+      margin-top: 6px;
       overflow: hidden;
     }
 
-    .funnel-bar-fill {
+    .funnel-step-bar-fill {
       height: 100%;
       border-radius: 2px;
       background: var(--gold);
-      opacity: 0.6;
-      transition: width 1s ease;
+      opacity: 0.5;
+      transition: width 0.9s ease;
+    }
+
+    @media (max-width: 900px) {
+      .funnel-tabs { overflow-x: auto; padding-bottom: 0; }
+      .funnel-tab { font-size: 10px; padding: 7px 11px; }
+      .funnel-steps { flex-direction: column; gap: 10px; }
+      .funnel-step + .funnel-step::before { display: none; }
+      .funnel-step-inner { margin: 0; }
+      .funnel-step-arrow { display: none; }
     }
 
     /* ── GRID 3 ── */
@@ -250,9 +344,6 @@
 
     @media (max-width: 900px) {
       .grid-3, .grid-2 { grid-template-columns: 1fr; }
-      .funnel-stages { flex-direction: column; gap: 12px; }
-      .funnel-stage + .funnel-stage::before { display: none; }
-      .funnel-card { margin: 0; }
     }
 
     /* ── STAT CARD ── */
@@ -447,89 +538,360 @@
 
   <div class="dash-body">
 
-    <!-- ВОРОНКА AIDA -->
+    <!-- ВОРОНКА — 4 пути -->
     <div>
-      <div class="section-label">Воронка · AIDA</div>
+      <div class="section-label">Воронки · Пути клиента</div>
       <div class="funnel-wrap">
+
         <div class="funnel-header">
           <div class="funnel-title">Путь клиента</div>
           <div class="funnel-period">Последние 30 дней</div>
         </div>
 
-        <div class="funnel-stages">
+        <!-- ТАБЫ -->
+        <div class="funnel-tabs">
+          <button class="funnel-tab active" data-tab="instagram" onclick="switchFunnelTab('instagram')">
+            <span class="funnel-tab-icon">📱</span> Instagram / FB
+          </button>
+          <button class="funnel-tab" data-tab="referral" onclick="switchFunnelTab('referral')">
+            <span class="funnel-tab-icon">🤍</span> Сарафан
+          </button>
+          <button class="funnel-tab" data-tab="organic" onclick="switchFunnelTab('organic')">
+            <span class="funnel-tab-icon">🌿</span> Органика
+          </button>
+          <button class="funnel-tab" data-tab="direct" onclick="switchFunnelTab('direct')">
+            <span class="funnel-tab-icon">⚡</span> Прямая покупка
+          </button>
+        </div>
 
-          <!-- ATTENTION -->
-          <div class="funnel-stage">
-            <div class="funnel-card">
-              <div class="funnel-stage-label">Attention</div>
-              <div class="funnel-stage-name">Клики из рекламы</div>
-              <div class="funnel-num">—</div>
-              <div class="funnel-sub">переходов</div>
-              <div class="funnel-conv">
-                <div class="conv-dot muted"></div>
-                <span class="conv-value muted">— € / клик</span>
+        <!-- ПАНЕЛИ -->
+        <div class="funnel-panels">
+
+          <!-- ── INSTAGRAM / FB ── -->
+          <div class="funnel-panel active" id="panel-instagram">
+            <div class="funnel-path-desc">Рилс → demo.html?utm_source=instagram → демо → Stripe → плеер</div>
+            <div class="funnel-steps">
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Attention</div>
+                  <div class="funnel-step-name">Клик из рекламы</div>
+                  <div class="funnel-step-num" id="ig-pageviews">—</div>
+                  <div class="funnel-step-sub">переходов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted" id="ig-cpc">— € / клик</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:100%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
               </div>
-              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%"></div></div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Interest</div>
+                  <div class="funnel-step-name">Нажали play</div>
+                  <div class="funnel-step-num" id="ig-plays">—</div>
+                  <div class="funnel-step-sub">прослушиваний</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="ig-play-dot"></div>
+                    <span class="conv-value muted" id="ig-play-rate">норма 30–50%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="ig-play-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Desire</div>
+                  <div class="funnel-step-name">3 минуты прослушано</div>
+                  <div class="funnel-step-num" id="ig-leads">—</div>
+                  <div class="funnel-step-sub">тёплых лидов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="ig-lead-dot"></div>
+                    <span class="conv-value muted" id="ig-lead-rate">норма 40–60%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="ig-lead-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Action</div>
+                  <div class="funnel-step-name">Купили ступень 1</div>
+                  <div class="funnel-step-num" id="ig-purchases">—</div>
+                  <div class="funnel-step-sub">покупок</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="ig-conv-dot"></div>
+                    <span class="conv-value muted" id="ig-conv-rate">норма 3–8%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="ig-conv-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Retention</div>
+                  <div class="funnel-step-name">Часы в плеере</div>
+                  <div class="funnel-step-num" id="ig-hours">—</div>
+                  <div class="funnel-step-sub">накоплено часов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">норма 20–35% → ст. 2</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:0%"></div></div>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <!-- INTEREST -->
-          <div class="funnel-stage">
-            <div class="funnel-card">
-              <div class="funnel-stage-label">Interest</div>
-              <div class="funnel-stage-name">Нажали play</div>
-              <div class="funnel-num">—</div>
-              <div class="funnel-sub">прослушиваний</div>
-              <div class="funnel-conv">
-                <div class="conv-dot muted"></div>
-                <span class="conv-value muted">норма 30-50%</span>
+          <!-- ── САРАФАН ── -->
+          <div class="funnel-panel" id="panel-referral">
+            <div class="funnel-path-desc">Катя или клиент отправляет ссылку → demo.html?utm_source=referral → плашка «тебе прислал близкий» → Stripe → плеер</div>
+            <div class="funnel-steps">
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Attention</div>
+                  <div class="funnel-step-name">Перешли по ссылке</div>
+                  <div class="funnel-step-num" id="ref-pageviews">—</div>
+                  <div class="funnel-step-sub">переходов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">тёплый трафик</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:100%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
               </div>
-              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Interest</div>
+                  <div class="funnel-step-name">Нажали play</div>
+                  <div class="funnel-step-num" id="ref-plays">—</div>
+                  <div class="funnel-step-sub">прослушиваний</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="ref-play-dot"></div>
+                    <span class="conv-value muted" id="ref-play-rate">норма 30–50%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="ref-play-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Desire</div>
+                  <div class="funnel-step-name">3 минуты прослушано</div>
+                  <div class="funnel-step-num" id="ref-leads">—</div>
+                  <div class="funnel-step-sub">тёплых лидов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="ref-lead-dot"></div>
+                    <span class="conv-value muted" id="ref-lead-rate">норма 40–60%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="ref-lead-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Action</div>
+                  <div class="funnel-step-name">Купили</div>
+                  <div class="funnel-step-num" id="ref-purchases">—</div>
+                  <div class="funnel-step-sub">покупок</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="ref-conv-dot"></div>
+                    <span class="conv-value muted" id="ref-conv-rate">норма 10–20%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="ref-conv-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Retention</div>
+                  <div class="funnel-step-name">Часы в плеере</div>
+                  <div class="funnel-step-num" id="ref-hours">—</div>
+                  <div class="funnel-step-sub">накоплено часов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">→ ступень 2</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:0%"></div></div>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <!-- DESIRE -->
-          <div class="funnel-stage">
-            <div class="funnel-card">
-              <div class="funnel-stage-label">Desire</div>
-              <div class="funnel-stage-name">3 минуты прослушано</div>
-              <div class="funnel-num">—</div>
-              <div class="funnel-sub">тёплых лидов</div>
-              <div class="funnel-conv">
-                <div class="conv-dot muted"></div>
-                <span class="conv-value muted">норма 40-60%</span>
+          <!-- ── ОРГАНИКА (сайт → форма) ── -->
+          <div class="funnel-panel" id="panel-organic">
+            <div class="funnel-path-desc">Pinterest / органика → ekaterina-donnat.com → форма «Время выдохнуть» → письмо с демо → demo.html (гостевой токен) → Stripe → плеер</div>
+            <div class="funnel-steps">
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Attention</div>
+                  <div class="funnel-step-name">Зашли на сайт</div>
+                  <div class="funnel-step-num" id="org-visitors">—</div>
+                  <div class="funnel-step-sub">визитов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">Pinterest + органика</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:100%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
               </div>
-              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Interest</div>
+                  <div class="funnel-step-name">Заполнили форму</div>
+                  <div class="funnel-step-num" id="org-leads-form">—</div>
+                  <div class="funnel-step-sub">email в базе</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="org-form-dot"></div>
+                    <span class="conv-value muted" id="org-form-rate">лид-магнит</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="org-form-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Desire</div>
+                  <div class="funnel-step-name">Открыли демо-трек</div>
+                  <div class="funnel-step-num" id="org-plays">—</div>
+                  <div class="funnel-step-sub">прослушиваний</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="org-play-dot"></div>
+                    <span class="conv-value muted" id="org-play-rate">норма 40–60%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="org-play-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Action</div>
+                  <div class="funnel-step-name">Купили</div>
+                  <div class="funnel-step-num" id="org-purchases">—</div>
+                  <div class="funnel-step-sub">покупок</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="org-conv-dot"></div>
+                    <span class="conv-value muted" id="org-conv-rate">норма 3–8%</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="org-conv-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Retention</div>
+                  <div class="funnel-step-name">Часы в плеере</div>
+                  <div class="funnel-step-num" id="org-hours">—</div>
+                  <div class="funnel-step-sub">накоплено часов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">→ ступень 2</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:0%"></div></div>
+                </div>
+              </div>
+
             </div>
           </div>
 
-          <!-- ACTION -->
-          <div class="funnel-stage">
-            <div class="funnel-card">
-              <div class="funnel-stage-label">Action</div>
-              <div class="funnel-stage-name">Купили ступень 1</div>
-              <div class="funnel-num">—</div>
-              <div class="funnel-sub">покупок</div>
-              <div class="funnel-conv">
-                <div class="conv-dot muted"></div>
-                <span class="conv-value muted">норма 3-8%</span>
-              </div>
-              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
-            </div>
-          </div>
+          <!-- ── ПРЯМАЯ ПОКУПКА ── -->
+          <div class="funnel-panel" id="panel-direct">
+            <div class="funnel-path-desc">Органика / знакомство → ekaterina-donnat.com → аккордеон → Stripe → письмо с токеном → плеер</div>
+            <div class="funnel-steps">
 
-          <!-- RETENTION -->
-          <div class="funnel-stage">
-            <div class="funnel-card">
-              <div class="funnel-stage-label">Retention</div>
-              <div class="funnel-stage-name">Часы в плеере</div>
-              <div class="funnel-num">—</div>
-              <div class="funnel-sub">накоплено часов</div>
-              <div class="funnel-conv">
-                <div class="conv-dot muted"></div>
-                <span class="conv-value muted">норма 20-35% → ст.2</span>
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Attention</div>
+                  <div class="funnel-step-name">Зашли на сайт</div>
+                  <div class="funnel-step-num" id="dir-visitors">—</div>
+                  <div class="funnel-step-sub">прямых визитов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">уже знают Катю</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:100%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
               </div>
-              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Interest</div>
+                  <div class="funnel-step-name">Открыли аккордеон</div>
+                  <div class="funnel-step-num">—</div>
+                  <div class="funnel-step-sub">кликов на ступени</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">изучают продукт</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Action</div>
+                  <div class="funnel-step-name">Нажали «Купить»</div>
+                  <div class="funnel-step-num" id="dir-purchases">—</div>
+                  <div class="funnel-step-sub">покупок</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted" id="dir-conv-dot"></div>
+                    <span class="conv-value muted" id="dir-conv-rate">высокая тёплость</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" id="dir-conv-bar" style="width:0%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Delivery</div>
+                  <div class="funnel-step-name">Письмо с токеном</div>
+                  <div class="funnel-step-num">авто</div>
+                  <div class="funnel-step-sub">через Stripe webhook</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot green"></div>
+                    <span class="conv-value green">Resend активен</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:90%"></div></div>
+                </div>
+                <div class="funnel-step-arrow">›</div>
+              </div>
+
+              <div class="funnel-step">
+                <div class="funnel-step-inner">
+                  <div class="funnel-step-tag">Retention</div>
+                  <div class="funnel-step-name">Часы в плеере</div>
+                  <div class="funnel-step-num" id="dir-hours">—</div>
+                  <div class="funnel-step-sub">накоплено часов</div>
+                  <div class="funnel-step-conv">
+                    <div class="conv-dot muted"></div>
+                    <span class="conv-value muted">→ ступень 2</span>
+                  </div>
+                  <div class="funnel-step-bar"><div class="funnel-step-bar-fill" style="width:0%"></div></div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -720,6 +1082,37 @@
       });
     })();
 
+    // ── Tab switching ──
+    function switchFunnelTab(name) {
+      document.querySelectorAll('.funnel-tab').forEach(function(t) {
+        t.classList.toggle('active', t.dataset.tab === name);
+      });
+      document.querySelectorAll('.funnel-panel').forEach(function(p) {
+        p.classList.toggle('active', p.id === 'panel-' + name);
+      });
+    }
+
+    // Colour helper
+    function rateColor(val, lo, hi) {
+      return val >= hi ? 'green' : val >= lo ? 'yellow' : 'red';
+    }
+
+    function setConv(dotId, valId, barId, pct, normaLabel) {
+      var parts = normaLabel.split('–').map(function(s) { return parseInt(s); });
+      var c = rateColor(pct, parts[0], parts[1]);
+      var dot = document.getElementById(dotId);
+      var val = document.getElementById(valId);
+      var bar = barId ? document.getElementById(barId) : null;
+      if (dot) dot.className = 'conv-dot ' + c;
+      if (val) { val.textContent = pct + '% · норма ' + normaLabel + '%'; val.className = 'conv-value ' + c; }
+      if (bar) bar.style.width = Math.min(pct * 1.5, 100) + '%';
+    }
+
+    function setText(id, text) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
     // Обновляем время
     var updatedEl = document.querySelector('.dash-updated');
     if (updatedEl) {
@@ -746,85 +1139,72 @@
           });
         }
 
-        // Воронка AIDA
-        var stages = document.querySelectorAll('.funnel-stage');
-        if (stages.length >= 5) {
-          // Attention - открыли демо
-          stages[0].querySelector('.funnel-num').textContent = d.demo.pageviews.total;
-          stages[0].querySelector('.funnel-sub').textContent = 'переходов';
+        // ── Воронка Instagram / FB (paid) ──
+        var igPV = d.demo.pageviews.paid || 0;
+        var igPL = d.demo.plays.paid || 0;
+        var igLD = d.demo.leads.paid || 0;
+        var igBU = d.funnel.purchases_paid || 0;
+        setText('ig-pageviews', igPV);
+        setText('ig-plays', igPL);
+        setText('ig-leads', igLD);
+        setText('ig-purchases', igBU);
+        setText('ig-hours', (d.funnel.hours_paid || '—') + 'ч');
+        if (igPV > 0 && igPL > 0) setConv('ig-play-dot', 'ig-play-rate', 'ig-play-bar', Math.round(igPL/igPV*100), '30–50');
+        if (igPL > 0 && igLD > 0) setConv('ig-lead-dot', 'ig-lead-rate', 'ig-lead-bar', Math.round(igLD/igPL*100), '40–60');
+        if (igLD > 0 && igBU > 0) setConv('ig-conv-dot', 'ig-conv-rate', 'ig-conv-bar', Math.round(igBU/igLD*100), '3–8');
 
-          // Interest - нажали play
-          stages[1].querySelector('.funnel-num').textContent = d.demo.plays.total;
-          if (d.demo.pageviews.total > 0) {
-            var playRate = Math.round((d.demo.plays.total / d.demo.pageviews.total) * 100);
-            var playConv = stages[1].querySelector('.funnel-conv');
-            var playDot = playConv.querySelector('.conv-dot');
-            var playVal = playConv.querySelector('.conv-value');
-            playVal.textContent = playRate + '% · норма 30-50%';
-            var playColor = playRate >= 50 ? 'green' : playRate >= 30 ? 'yellow' : 'red';
-            playDot.className = 'conv-dot ' + playColor;
-            playVal.className = 'conv-value ' + playColor;
-            stages[1].querySelector('.funnel-bar-fill').style.width = Math.round((d.demo.plays.total / d.demo.pageviews.total) * 100) + '%';
-          }
+        // ── Воронка Сарафан (referral) ──
+        var refPV = d.demo.pageviews.referral || 0;
+        var refPL = d.demo.plays.referral || 0;
+        var refLD = d.demo.leads.referral || 0;
+        var refBU = d.funnel.purchases_referral || 0;
+        setText('ref-pageviews', refPV);
+        setText('ref-plays', refPL);
+        setText('ref-leads', refLD);
+        setText('ref-purchases', refBU);
+        setText('ref-hours', (d.funnel.hours_referral || '—') + 'ч');
+        if (refPV > 0 && refPL > 0) setConv('ref-play-dot', 'ref-play-rate', 'ref-play-bar', Math.round(refPL/refPV*100), '30–50');
+        if (refPL > 0 && refLD > 0) setConv('ref-lead-dot', 'ref-lead-rate', 'ref-lead-bar', Math.round(refLD/refPL*100), '40–60');
+        if (refLD > 0 && refBU > 0) setConv('ref-conv-dot', 'ref-conv-rate', 'ref-conv-bar', Math.round(refBU/refLD*100), '10–20');
 
-          // Desire - 3 минуты (Lead)
-          stages[2].querySelector('.funnel-num').textContent = d.demo.leads.total;
-          if (d.demo.plays.total > 0) {
-            var leadRate = Math.round((d.demo.leads.total / d.demo.plays.total) * 100);
-            var leadConv = stages[2].querySelector('.funnel-conv');
-            var leadDot = leadConv.querySelector('.conv-dot');
-            var leadVal = leadConv.querySelector('.conv-value');
-            leadVal.textContent = leadRate + '% · норма 40-60%';
-            var leadColor = leadRate >= 60 ? 'green' : leadRate >= 40 ? 'yellow' : 'red';
-            leadDot.className = 'conv-dot ' + leadColor;
-            leadVal.className = 'conv-value ' + leadColor;
-            stages[2].querySelector('.funnel-bar-fill').style.width = Math.round((d.demo.leads.total / d.demo.pageviews.total) * 100) + '%';
-          }
+        // ── Воронка Органика (pinterest + organic) ──
+        var orgPV = (d.demo.pageviews.pinterest || 0) + (d.demo.pageviews.organic || 0);
+        var orgPL = (d.demo.plays.pinterest || 0) + (d.demo.plays.organic || 0);
+        var orgEB = d.emailBase || 0;
+        var orgBU = d.funnel.purchases_organic || 0;
+        setText('org-visitors', orgPV);
+        setText('org-leads-form', orgEB);
+        setText('org-plays', orgPL);
+        setText('org-purchases', orgBU);
+        setText('org-hours', (d.funnel.hours_organic || '—') + 'ч');
+        if (orgPV > 0 && orgEB > 0) setConv('org-form-dot', 'org-form-rate', 'org-form-bar', Math.round(orgEB/orgPV*100), '10–25');
+        if (orgEB > 0 && orgPL > 0) setConv('org-play-dot', 'org-play-rate', 'org-play-bar', Math.round(orgPL/orgEB*100), '40–60');
+        if (orgPL > 0 && orgBU > 0) setConv('org-conv-dot', 'org-conv-rate', 'org-conv-bar', Math.round(orgBU/orgPL*100), '3–8');
 
-          // Action - покупки
-          stages[3].querySelector('.funnel-num').textContent = d.funnel.purchases;
-          if (d.demo.leads.total > 0) {
-            var convRate = Math.round((d.funnel.purchases / d.demo.leads.total) * 100);
-            var convEl = stages[3].querySelector('.funnel-conv');
-            var dot = convEl.querySelector('.conv-dot');
-            var val = convEl.querySelector('.conv-value');
-            val.textContent = convRate + '% · норма 3-8%';
-            var color = convRate >= 8 ? 'green' : convRate >= 3 ? 'yellow' : 'red';
-            dot.className = 'conv-dot ' + color;
-            val.className = 'conv-value ' + color;
-            stages[3].querySelector('.funnel-bar-fill').style.width = Math.round((d.funnel.purchases / d.demo.pageviews.total) * 100) + '%';
-          }
+        // ── Воронка Прямая покупка ──
+        var dirBU = d.funnel.purchases_direct || 0;
+        setText('dir-visitors', (d.funnel.direct_visitors || '—'));
+        setText('dir-purchases', dirBU);
+        setText('dir-hours', (d.funnel.hours_direct || '—') + 'ч');
 
-          // Retention - часы
-          stages[4].querySelector('.funnel-num').textContent = d.funnel.hours + 'ч';
-
-          // Бар Attention всегда 100%
-          stages[0].querySelector('.funnel-bar-fill').style.width = '100%';
-        }
-
-        // Ключевые метрики
+        // ── Ключевые метрики ──
         var statCards = document.querySelectorAll('.stat-card');
-        // Выручка
         statCards[0].querySelector('.stat-card-value').textContent = d.revenue + ' €';
         if (d.revenue > 0) {
           statCards[0].querySelector('.stat-card-badge').textContent = 'Активно';
           statCards[0].querySelector('.stat-card-badge').className = 'stat-card-badge green';
         }
 
-        // Email база
         statCards[2].querySelector('.stat-card-value').textContent = d.emailBase;
         if (d.emailBase > 0) {
           statCards[2].querySelector('.stat-card-badge').textContent = d.emailBase + ' контактов';
           statCards[2].querySelector('.stat-card-badge').className = 'stat-card-badge green';
         }
 
-        // Сарафан %
         statCards[4].querySelector('.stat-card-value').textContent = d.referralPercent + '%';
-
-        // Средний чек
         statCards[5].querySelector('.stat-card-value').textContent = d.avgCheck + ' €';
 
-        // Источники трафика - показываем прослушивания демо
+        // Источники трафика
         document.querySelectorAll('.stat-card').forEach(function(card) {
           var label = card.querySelector('.stat-card-label')?.textContent || '';
           var valEl = card.querySelector('.stat-card-value');
@@ -863,12 +1243,9 @@
             var srcClass = 'organic';
             if (sale.source.includes('instagram') || sale.source.includes('facebook')) srcClass = 'paid';
             else if (sale.source.includes('referral')) srcClass = 'referral';
-
             var srcLabel = srcClass === 'paid' ? 'Реклама' : srcClass === 'referral' ? 'Сарафан' : 'Органика';
-
             var date = new Date(sale.date);
             var dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-
             var tr = document.createElement('tr');
             tr.innerHTML =
               '<td class="td-product">' + sale.product + '</td>' +
@@ -877,14 +1254,12 @@
               '<td>' + dateStr + '</td>';
             tbody.appendChild(tr);
           });
-
           tableWrap.appendChild(table);
         }
 
-        // Нормы конверсии - обновляем статусы
+        // Нормы конверсии
         if (d.funnel.leads > 0) {
           var normRows = document.querySelectorAll('.norm-row');
-          // Lead → Покупка (холодный) - строка 3
           if (normRows[2]) {
             var convPurchase = Math.round((d.funnel.purchases / d.funnel.leads) * 100);
             var normStatus = normRows[2].querySelector('.norm-status');
