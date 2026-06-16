@@ -1,204 +1,204 @@
 // netlify/functions/dashboard-data.js
-// Читает все аналитические данные из Supabase для дашборда
-// GET /.netlify/functions/dashboard-data
+// Аналитика для дашборда — защищена серверным токеном
+// GET → Authorization: Bearer <token> → данные воронки и продаж
 
 const { createClient } = require('@supabase/supabase-js');
+const crypto = require('crypto');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
 );
 
+// CORS — только наш домен
+const CORS_HEADERS = {
+    'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Content-Type': 'application/json',
+};
+
+// Проверяем токен — тот же алгоритм, что и в dashboard-auth.js
+function isValidToken(token) {
+    if (!token || typeof token !== 'string') return false;
+
+    const expectedPassword = process.env.DASHBOARD_PASSWORD;
+    if (!expectedPassword) return false;
+
+    const windowHours = 8;
+    const windowMs = windowHours * 60 * 60 * 1000;
+
+    // Принимаем текущее окно и предыдущее (на случай смены окна прямо во время сессии)
+    for (let delta = 0; delta <= 1; delta++) {
+        const timeWindow = Math.floor((Date.now() - delta * windowMs) / windowMs).toString();
+        const expected = crypto
+            .createHmac('sha256', expectedPassword)
+            .update('dashboard:' + timeWindow)
+            .digest('hex');
+
+        try {
+            const tokenBuf = Buffer.from(token, 'hex');
+            const expectedBuf = Buffer.from(expected, 'hex');
+            if (
+                tokenBuf.length === expectedBuf.length &&
+                crypto.timingSafeEqual(tokenBuf, expectedBuf)
+            ) {
+                return true;
+            }
+        } catch {
+            // Некорректный hex — продолжаем проверку
+        }
+    }
+
+    return false;
+}
+
 exports.handler = async (event) => {
-    // CORS preflight
+    // Preflight
     if (event.httpMethod === 'OPTIONS') {
-        return {
-            statusCode: 200,
-            headers: {
-                'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
-                'Access-Control-Allow-Methods': 'GET',
-                'Access-Control-Allow-Headers': 'X-Dashboard-Token',
-            },
-            body: '',
-        };
+        return { statusCode: 200, headers: CORS_HEADERS, body: '' };
     }
 
     if (event.httpMethod !== 'GET') {
-        return { statusCode: 405, body: 'Method Not Allowed' };
+        return { statusCode: 405, headers: CORS_HEADERS, body: '{"error":"Method Not Allowed"}' };
     }
 
-    // Проверка пароля на сервере
-    const token = event.headers['x-dashboard-token'];
-    if (!token || token !== process.env.DASHBOARD_PASSWORD) {
-        return { statusCode: 401, body: JSON.stringify({ error: 'Unauthorized' }) };
+    // Проверяем токен из заголовка Authorization: Bearer <token>
+    const authHeader = event.headers['authorization'] || event.headers['Authorization'] || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+    if (!isValidToken(token)) {
+        return {
+            statusCode: 401,
+            headers: CORS_HEADERS,
+            body: '{"error":"Unauthorized"}',
+        };
     }
 
     try {
         const now = new Date();
-        const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-        // 1. Покупки за 30 дней - берём реальную сумму из БД
-        const { data: purchases } = await supabase
-            .from('purchases')
-            .select('email, track_ids, utm_source, product_name, amount, created_at')
-            .gte('created_at', thirtyDaysAgo)
-            .order('created_at', { ascending: false });
+        // Параллельно тянем все данные
+        const [
+            purchasesResult,
+            guestsResult,
+            progressResult,
+            demoEventsResult,
+            demoEventsSourceResult,
+        ] = await Promise.all([
+            // Все покупки за 30 дней
+            supabase
+                .from('purchases')
+                .select('email, amount, product, utm_source, created_at')
+                .gte('created_at', thirtyDaysAgo)
+                .order('created_at', { ascending: false }),
 
-        // 2. Гости (лиды через форму) за 30 дней
-        const { data: guests } = await supabase
-            .from('donna_guests')
-            .select('email, utm_source, created_at')
-            .gte('created_at', thirtyDaysAgo)
-            .order('created_at', { ascending: false });
+            // Гости через форму (email-база)
+            supabase
+                .from('donna_guests')
+                .select('email, created_at', { count: 'exact' }),
 
-        // 3. Общее количество гостей (вся база)
-        const { count: totalGuests } = await supabase
-            .from('donna_guests')
-            .select('*', { count: 'exact', head: true });
+            // Часы прослушивания (все токены)
+            supabase
+                .from('listening_progress')
+                .select('token, seconds'),
 
-        // 4. Прогресс прослушивания
-        const { data: progress } = await supabase
-            .from('listening_progress')
-            .select('token, seconds');
+            // Демо события за 30 дней — общие цифры
+            supabase
+                .from('demo_events')
+                .select('event')
+                .gte('created_at', thirtyDaysAgo),
 
-        // 5. События демо-плеера за 30 дней
-        const { data: demoEvents } = await supabase
-            .from('demo_events')
-            .select('event, source, created_at')
-            .gte('created_at', thirtyDaysAgo);
+            // Демо события с разбивкой по источнику
+            supabase
+                .from('demo_events')
+                .select('event, source')
+                .gte('created_at', thirtyDaysAgo),
+        ]);
 
-        // Считаем события демо по типу и источнику
+        // Подсчёт демо-событий (общий)
+        const demoEvents = demoEventsResult.data || [];
         const demo = {
             pageviews: { total: 0, paid: 0, referral: 0, pinterest: 0, organic: 0 },
             plays:     { total: 0, paid: 0, referral: 0, pinterest: 0, organic: 0 },
             leads:     { total: 0, paid: 0, referral: 0, pinterest: 0, organic: 0 },
         };
 
-        if (demoEvents) {
-            demoEvents.forEach(e => {
-                const bucket = e.event === 'pageview' ? demo.pageviews
-                             : e.event === 'play' ? demo.plays
-                             : e.event === 'lead' ? demo.leads : null;
-                if (!bucket) return;
-                bucket.total++;
-                if (e.source === 'paid') bucket.paid++;
-                else if (e.source === 'referral') bucket.referral++;
-                else if (e.source === 'pinterest') bucket.pinterest++;
-                else bucket.organic++;
-            });
+        for (const e of (demoEventsSourceResult.data || [])) {
+            const src = e.source || 'organic';
+            const srcKey = ['paid', 'referral', 'pinterest'].includes(src) ? src : 'organic';
+
+            if (e.event === 'pageview') {
+                demo.pageviews.total++;
+                demo.pageviews[srcKey]++;
+            } else if (e.event === 'play') {
+                demo.plays.total++;
+                demo.plays[srcKey]++;
+            } else if (e.event === 'lead') {
+                demo.leads.total++;
+                demo.leads[srcKey]++;
+            }
         }
 
-        // Считаем метрики
-        const purchaseCount = purchases?.length || 0;
-        const guestCount = guests?.length || 0;
+        // Покупки
+        const purchases = purchasesResult.data || [];
+        const revenue = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const avgCheck = purchases.length > 0 ? Math.round(revenue / purchases.length) : 0;
 
-        // Выручка - маппинг продуктов к ценам
-        const PRICES = {
-            'step1': 150,
-            'checkup': 25,
-            'combo': 55,
-            'step1_deep': 310,
-            'step1_cycle': 650,
-            'album': 350,
-        };
+        const referralPurchases = purchases.filter(p =>
+            (p.utm_source || '').includes('referral')
+        ).length;
+        const referralPercent = purchases.length > 0
+            ? Math.round((referralPurchases / purchases.length) * 100)
+            : 0;
 
-        let totalRevenue = 0;
-        const salesList = [];
+        // Последние 10 продаж для таблицы
+        const sales = purchases.slice(0, 10).map(p => ({
+            product: p.product || 'Ступень 1',
+            amount: p.amount || 0,
+            source: p.utm_source || 'organic',
+            date: p.created_at,
+        }));
 
-        if (purchases) {
-            purchases.forEach(p => {
-                // Берём реальную сумму из Stripe через БД
-                const price = p.amount || 0;
-                totalRevenue += price;
-                salesList.push({
-                    product: p.product_name || 'Ступень 1',
-                    amount: price,
-                    source: p.utm_source || 'direct',
-                    date: p.created_at,
-                });
-            });
-        }
+        // Часы прослушивания
+        const allSeconds = (progressResult.data || []).reduce((sum, r) => sum + (r.seconds || 0), 0);
+        const totalHours = Math.round(allSeconds / 3600);
 
-        // Средний чек
-        const avgCheck = purchaseCount > 0 ? Math.round(totalRevenue / purchaseCount) : 0;
-
-        // Источники трафика - гости
-        const sourceGuests = { instagram: 0, referral: 0, pinterest: 0, organic: 0 };
-        if (guests) {
-            guests.forEach(g => {
-                const src = g.utm_source || 'organic';
-                if (src.includes('instagram') || src.includes('facebook')) sourceGuests.instagram++;
-                else if (src.includes('referral') || src.includes('invite')) sourceGuests.referral++;
-                else if (src.includes('pinterest')) sourceGuests.pinterest++;
-                else sourceGuests.organic++;
-            });
-        }
-
-        // Источники трафика - покупки
-        const sourcePurchases = { instagram: 0, referral: 0, pinterest: 0, organic: 0 };
-        if (purchases) {
-            purchases.forEach(p => {
-                const src = p.utm_source || 'direct';
-                if (src.includes('instagram') || src.includes('facebook')) sourcePurchases.instagram++;
-                else if (src.includes('referral') || src.includes('invite')) sourcePurchases.referral++;
-                else if (src.includes('pinterest')) sourcePurchases.pinterest++;
-                else sourcePurchases.organic++;
-            });
-        }
-
-        // Общие часы прослушивания
-        let totalSeconds = 0;
-        if (progress) {
-            progress.forEach(p => { totalSeconds += p.seconds || 0; });
-        }
-        const totalHours = Math.round(totalSeconds / 3600 * 10) / 10;
-
-        // Доля реферального трафика
-        const totalGuestCount = guestCount || 1;
-        const referralPercent = Math.round((sourceGuests.referral / totalGuestCount) * 100);
+        // Конверсия ступень 1 → 2 (пользователи кто купил ст.2)
+        // Пока нет отдельной таблицы — считаем через product
+        const step2Buyers = purchases.filter(p => (p.product || '').includes('Ступень 2')).length;
+        const step1Buyers = purchases.filter(p => (p.product || '').includes('Ступень 1')).length;
+        const retentionPercent = step1Buyers > 0
+            ? Math.round((step2Buyers / step1Buyers) * 100)
+            : 0;
 
         return {
             statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
-            },
+            headers: CORS_HEADERS,
             body: JSON.stringify({
-                period: '30d',
                 updated: now.toISOString(),
-
-                // Воронка
+                revenue,
+                avgCheck,
+                referralPercent,
+                emailBase: guestsResult.count || 0,
+                demo,
                 funnel: {
-                    leads: guestCount,
-                    purchases: purchaseCount,
+                    purchases: purchases.length,
+                    leads: demo.leads.total,
                     hours: totalHours,
+                    retentionPercent,
                 },
-
-                // Ключевые метрики
-                revenue: totalRevenue,
-                avgCheck: avgCheck,
-                emailBase: totalGuests || 0,
-                referralPercent: referralPercent,
-
-                // Источники - гости
-                sourceGuests: sourceGuests,
-
-                // Источники - покупки
-                sourcePurchases: sourcePurchases,
-
-                // Последние продажи
-                sales: salesList.slice(0, 10),
-
-                // События демо-плеера
-                demo: demo,
+                sales,
             }),
         };
 
     } catch (err) {
-        console.error('Dashboard data error:', err);
+        console.error('dashboard-data error:', err);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: 'Server error' }),
+            headers: CORS_HEADERS,
+            body: '{"error":"Server error"}',
         };
     }
 };
