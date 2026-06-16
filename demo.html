@@ -1,743 +1,901 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Баланс стихий — Екатерина Донна</title>
-
-  <!-- Facebook Pixel -->
-  <script>
-  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-  document,'script','https://connect.facebook.net/en_US/fbevents.js');
-  fbq('init', '570014464378584');
-  </script>
-  <noscript><img height="1" width="1" style="display:none"
-  src="https://www.facebook.com/tr?id=570014464378584&ev=PageView&noscript=1"/></noscript>
-  <!-- End Facebook Pixel -->
-
-  <!-- UTM + Instagram WebView -->
-  <script>
-  (function() {
-    var params = new URLSearchParams(window.location.search);
-    var source = params.get('utm_source') || 'direct';
-    window.TRAFFIC_SOURCE = source;
-
-    // PageView с источником
-    if (typeof fbq !== 'undefined') fbq('track', 'PageView', { traffic_source: source });
-
-    // Instagram WebView баннер
-    var ua = navigator.userAgent || '';
-    if (ua.indexOf('Instagram') > -1 || ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1) {
-      document.addEventListener('DOMContentLoaded', function() {
-        var banner = document.createElement('div');
-        banner.style.cssText = [
-          'position:fixed','top:0','left:0','right:0','z-index:99999',
-          'background:rgba(13,15,38,0.97)','backdrop-filter:blur(12px)',
-          'border-bottom:1px solid rgba(212,175,55,0.25)',
-          'padding:12px 20px','display:flex','align-items:center',
-          'justify-content:space-between','gap:12px'
-        ].join(';');
-        banner.innerHTML = [
-          '<p style="margin:0;font-family:Outfit,sans-serif;font-size:12px;',
-          'font-weight:300;color:rgba(248,250,252,0.8);line-height:1.4;">',
-          'Для комфортного прослушивания<br>открой в браузере</p>',
-          '<a href="' + window.location.href + '" target="_blank" rel="noopener"',
-          ' style="flex-shrink:0;background:#d4af37;color:#0f1123;padding:8px 16px;',
-          'border-radius:8px;text-decoration:none;font-family:Outfit,sans-serif;',
-          'font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;',
-          'white-space:nowrap;">Открыть</a>'
-        ].join('');
-        document.body.insertBefore(banner, document.body.firstChild);
-      });
-    }
-  })();
-  </script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard · Donna</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      height: 100%;
-      background: #151933;
-      color: rgba(248,250,252,0.95);
+    :root {
+      --bg:       #0c0e1a;
+      --surface:  #131627;
+      --border:   rgba(212,175,55,0.12);
+      --gold:     #d4af37;
+      --gold-dim: rgba(212,175,55,0.45);
+      --text:     rgba(248,250,252,0.9);
+      --muted:    rgba(248,250,252,0.35);
+      --green:    #4ade80;
+      --yellow:   #fbbf24;
+      --red:      #f87171;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Outfit', sans-serif;
       font-weight: 300;
+      min-height: 100vh;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── HEADER ── */
+    .dash-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 32px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .dash-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .dash-logo-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .dash-logo-name {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: 18px;
+      color: var(--gold);
+    }
+
+    .dash-meta {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .dash-updated {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── LAYOUT ── */
+    .dash-body {
+      padding: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 14px;
+    }
+
+    /* ── FUNNEL ── */
+    .funnel-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 24px;
+    }
+
+    .funnel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .funnel-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    .funnel-period {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .funnel-stages {
+      display: flex;
+      gap: 0;
+      align-items: stretch;
+    }
+
+    .funnel-stage {
+      flex: 1;
+      position: relative;
+    }
+
+    .funnel-stage + .funnel-stage::before {
+      content: '→';
+      position: absolute;
+      left: -14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      z-index: 1;
+    }
+
+    .funnel-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 16px;
+      height: 100%;
+      margin: 0 10px;
+    }
+
+    .funnel-stage:first-child .funnel-card { margin-left: 0; }
+    .funnel-stage:last-child .funnel-card { margin-right: 0; }
+
+    .funnel-stage-label {
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .funnel-stage-name {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 14px;
+      line-height: 1.3;
+    }
+
+    .funnel-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--gold);
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .funnel-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .funnel-conv {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .conv-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .conv-dot.green { background: var(--green); }
+    .conv-dot.yellow { background: var(--yellow); }
+    .conv-dot.red { background: var(--red); }
+    .conv-dot.muted { background: var(--muted); }
+
+    .conv-value.green { color: var(--green); }
+    .conv-value.yellow { color: var(--yellow); }
+    .conv-value.red { color: var(--red); }
+    .conv-value.muted { color: var(--muted); }
+
+    .funnel-bar-bg {
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      margin-top: 10px;
       overflow: hidden;
     }
 
-    #bg-canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
+    .funnel-bar-fill {
       height: 100%;
-      pointer-events: none;
-      z-index: 0;
+      border-radius: 2px;
+      background: var(--gold);
+      opacity: 0.6;
+      transition: width 1s ease;
     }
 
-    .screen {
-      position: relative;
-      z-index: 1;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      max-width: 480px;
-      margin: 0 auto;
-      padding: 0 28px;
+    /* ── GRID 3 ── */
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
     }
 
-    .header {
-      padding: 40px 0 0;
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .funnel-stages { flex-direction: column; gap: 12px; }
+      .funnel-stage + .funnel-stage::before { display: none; }
+      .funnel-card { margin: 0; }
+    }
+
+    /* ── STAT CARD ── */
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 20px;
+    }
+
+    .stat-card-label {
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .stat-card-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 32px;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-card-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .stat-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-family: 'DM Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 100px;
+      margin-top: 10px;
+    }
+
+    .stat-card-badge.green { background: rgba(74,222,128,0.1); color: var(--green); }
+    .stat-card-badge.yellow { background: rgba(251,191,36,0.1); color: var(--yellow); }
+    .stat-card-badge.red { background: rgba(248,113,113,0.1); color: var(--red); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
-    .logo-img {
-      height: 32px;
-      object-fit: contain;
-      filter: drop-shadow(0 0 8px rgba(212,175,55,0.3));
-    }
-
-    .site-link {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10px;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: rgba(248,250,252,0.4);
-      text-decoration: none;
-      padding: 7px 14px;
-      border: 1px solid rgba(212,175,55,0.2);
-      border-radius: 40px;
-      font-family: 'Outfit', sans-serif;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .site-link:hover { color: rgba(248,250,252,0.8); border-color: rgba(212,175,55,0.4); }
-
-    .center {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    /* Реферальная плашка */
-    .referral-badge {
-      display: none;
-      background: rgba(212,175,55,0.08);
-      border: 1px solid rgba(212,175,55,0.2);
-      border-radius: 12px;
-      padding: 12px 20px;
-      margin-bottom: 24px;
-      width: 100%;
-    }
-
-    .referral-badge.visible { display: block; }
-
-    .referral-badge p {
-      font-size: 12px;
-      font-weight: 300;
-      color: rgba(248,250,252,0.6);
-      line-height: 1.6;
-    }
-
-    .referral-badge span {
+    .table-title {
       font-family: 'Fraunces', serif;
       font-weight: 200;
-      font-size: 13px;
-      color: rgba(248,250,252,0.85);
+      font-size: 17px;
     }
 
-    .sphere-wrap {
-      width: 96px;
-      height: 96px;
-      border-radius: 50%;
-      border: 1px solid rgba(212,175,55,0.3);
-      overflow: hidden;
-      margin-bottom: 28px;
-      animation: sphereBreathe 4s ease-in-out infinite;
-      flex-shrink: 0;
-    }
-
-    @keyframes sphereBreathe {
-      0%   { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
-      50%  { box-shadow: 0 0 50px rgba(212,175,55,0.35), 0 0 90px rgba(212,175,55,0.15); }
-      100% { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
-    }
-
-    #sphere-canvas { width: 96px; height: 96px; border-radius: 50%; display: block; }
-
-    .track-eyebrow {
-      font-size: 10px;
-      letter-spacing: 0.28em;
-      text-transform: uppercase;
-      color: #d4af37;
-      margin-bottom: 12px;
-      opacity: 0.8;
-    }
-
-    .track-title {
-      font-family: 'Fraunces', serif;
-      font-weight: 200;
-      font-size: clamp(28px, 7vw, 40px);
-      letter-spacing: -0.01em;
-      line-height: 1.1;
-      margin-bottom: 6px;
-    }
-
-    .track-author {
-      font-size: 12px;
-      color: rgba(248,250,252,0.4);
-      letter-spacing: 0.12em;
-      margin-bottom: 36px;
-    }
-
-    .waveform {
+    table {
       width: 100%;
-      height: 44px;
-      margin-bottom: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
+      border-collapse: collapse;
     }
 
-    .wave-bar {
-      width: 3px;
-      border-radius: 2px;
-      background: rgba(212,175,55,0.12);
-      transition: background 0.3s;
-      flex-shrink: 0;
-    }
-
-    .wave-bar.played { background: rgba(212,175,55,0.5); }
-    .wave-bar.active { background: #d4af37; }
-
-    .progress-row {
-      width: 100%;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 36px;
-    }
-
-    .time {
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      color: rgba(248,250,252,0.35);
-      flex-shrink: 0;
-      width: 36px;
-    }
-
-    .time-end { text-align: right; }
-
-    .progress-track {
-      flex: 1;
-      height: 2px;
-      background: rgba(212,175,55,0.12);
-      border-radius: 2px;
-      cursor: pointer;
-      position: relative;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: #d4af37;
-      border-radius: 2px;
-      width: 0%;
-      transition: width 0.5s linear;
-      pointer-events: none;
-    }
-
-    .progress-thumb {
-      position: absolute;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #d4af37;
-      left: 0%;
-      transition: left 0.5s linear;
-      pointer-events: none;
-    }
-
-    .controls {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 32px;
-      margin-bottom: 48px;
-    }
-
-    .btn-skip {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: rgba(248,250,252,0.3);
-      transition: color 0.2s;
-    }
-
-    .btn-skip:hover { color: rgba(248,250,252,0.7); }
-
-    .btn-play {
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      border: 1px solid rgba(212,175,55,0.4);
-      background: rgba(212,175,55,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #d4af37;
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    .btn-play:hover { background: rgba(212,175,55,0.16); }
-    .btn-play:active { transform: scale(0.96); }
-
-    .purchase { width: 100%; }
-
-    .purchase-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      padding: 16px;
-      border-radius: 8px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
+    th {
+      font-size: 9px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.4s, background 0.4s, transform 0.1s;
+      color: var(--muted);
+      text-align: left;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 400;
     }
 
-    .purchase-btn.locked {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(212,175,55,0.15);
-      color: rgba(248,250,252,0.25);
-      pointer-events: none;
+    td {
+      padding: 14px 20px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: var(--text);
     }
 
-    .purchase-btn.unlocked {
-      background: #d4af37;
-      color: #0f1123;
-      pointer-events: all;
-      animation: unlock-in 0.8s cubic-bezier(0.22,1,0.36,1) forwards;
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .td-product {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      font-size: 13px;
+      color: var(--text);
     }
 
-    .purchase-btn.unlocked:hover { opacity: 0.9; transform: translateY(-1px); }
+    .td-amount { color: var(--gold); }
 
-    @keyframes unlock-in {
-      0%   { opacity: 0; transform: translateY(8px); }
-      100% { opacity: 1; transform: translateY(0); }
+    .badge-source {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 100px;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
-    .purchase-note {
-      text-align: center;
+    .badge-source.paid { background: rgba(212,175,55,0.1); color: var(--gold); }
+    .badge-source.referral { background: rgba(74,222,128,0.1); color: var(--green); }
+    .badge-source.organic { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+    /* ── NORMS ── */
+    .norms-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 22px 20px;
+    }
+
+    .norm-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 12px;
+    }
+
+    .norm-row:last-child { border-bottom: none; }
+
+    .norm-name {
+      font-size: 12px;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .norm-range {
+      font-family: 'DM Mono', monospace;
       font-size: 11px;
-      color: rgba(248,250,252,0.3);
-      margin-top: 10px;
-      letter-spacing: 0.06em;
-      opacity: 0;
-      transition: opacity 0.6s;
+      color: var(--muted);
+      white-space: nowrap;
     }
 
-    .purchase-note.visible { opacity: 1; }
+    .norm-status {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      padding: 2px 8px;
+      border-radius: 100px;
+      white-space: nowrap;
+    }
 
-    audio { display: none; }
+    .norm-status.wait { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+    /* ── PLACEHOLDER ── */
+    .placeholder-note {
+      text-align: center;
+      padding: 28px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
   </style>
 </head>
 <body>
 
-  <canvas id="bg-canvas"></canvas>
+  <!-- HEADER -->
+  <header class="dash-header">
+    <div class="dash-logo">
+      <div class="dash-logo-dot"></div>
+      <div class="dash-logo-name">Donna · Dashboard</div>
+    </div>
+    <div class="dash-meta">The Lineup · Internal</div>
+    <div class="dash-updated">Обновлено: —</div>
+  </header>
 
-  <div class="screen">
+  <div class="dash-body">
 
-    <header class="header">
-      <img class="logo-img"
-        src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
-        alt="Ekaterina Donna" />
-      <a href="https://ekaterina-donnat.com/?from=demo" class="site-link">
-        На сайт
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-          <path d="M2 8L8 2M8 2H4M8 2v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </a>
-    </header>
-
-    <div class="center">
-
-      <!-- Реферальная плашка - показывается только при utm_source=referral -->
-      <div class="referral-badge" id="referral-badge">
-        <p><span>Тебе это прислал(а) близкий человек.</span><br>Просто нажми play - и позволь себе выдохнуть.</p>
-      </div>
-
-      <div class="sphere-wrap">
-        <canvas id="sphere-canvas" width="192" height="192"></canvas>
-      </div>
-
-      <div class="track-eyebrow">Авторская нейроакустика · Демо</div>
-      <h1 class="track-title">Баланс стихий</h1>
-      <div class="track-author">Екатерина Донна</div>
-
-      <div class="waveform" id="waveform"></div>
-
-      <div class="progress-row">
-        <span class="time" id="time-cur">0:00</span>
-        <div class="progress-track" id="progress-track" onclick="seekAudio(event)">
-          <div class="progress-fill" id="progress-fill"></div>
-          <div class="progress-thumb" id="progress-thumb"></div>
+    <!-- ВОРОНКА AIDA -->
+    <div>
+      <div class="section-label">Воронка · AIDA</div>
+      <div class="funnel-wrap">
+        <div class="funnel-header">
+          <div class="funnel-title">Путь клиента</div>
+          <div class="funnel-period">Последние 30 дней</div>
         </div>
-        <span class="time time-end" id="time-total">21:00</span>
+
+        <div class="funnel-stages">
+
+          <!-- ATTENTION -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Attention</div>
+              <div class="funnel-stage-name">Клики из рекламы</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">переходов</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">— € / клик</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:100%"></div></div>
+            </div>
+          </div>
+
+          <!-- INTEREST -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Interest</div>
+              <div class="funnel-stage-name">Нажали play</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">прослушиваний</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 30-50%</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- DESIRE -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Desire</div>
+              <div class="funnel-stage-name">3 минуты прослушано</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">тёплых лидов</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 40-60%</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- ACTION -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Action</div>
+              <div class="funnel-stage-name">Купили ступень 1</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">покупок</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 3-8%</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+          <!-- RETENTION -->
+          <div class="funnel-stage">
+            <div class="funnel-card">
+              <div class="funnel-stage-label">Retention</div>
+              <div class="funnel-stage-name">Часы в плеере</div>
+              <div class="funnel-num">—</div>
+              <div class="funnel-sub">накоплено часов</div>
+              <div class="funnel-conv">
+                <div class="conv-dot muted"></div>
+                <span class="conv-value muted">норма 20-35% → ст.2</span>
+              </div>
+              <div class="funnel-bar-bg"><div class="funnel-bar-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- КЛЮЧЕВЫЕ МЕТРИКИ -->
+    <div>
+      <div class="section-label">Ключевые метрики</div>
+      <div class="grid-3">
+
+        <div class="stat-card">
+          <div class="stat-card-label">Выручка · месяц</div>
+          <div class="stat-card-value">— €</div>
+          <div class="stat-card-sub">Через воронку</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">ROAS · реклама</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Цель: 2.0+</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Email база</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Гостей через форму</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Стоимость лида</div>
+          <div class="stat-card-value">— €</div>
+          <div class="stat-card-sub">Цель: &lt; 1.00 €</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">FB API pending</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Сарафан vs реклама</div>
+          <div class="stat-card-value">—%</div>
+          <div class="stat-card-sub">Доля реферального трафика</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Средний чек</div>
+          <div class="stat-card-value">— €</div>
+          <div class="stat-card-sub">Все продукты</div>
+          <div class="stat-card-badge muted" style="background:rgba(255,255,255,0.05);color:var(--muted);">Ждём данных</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ПРОДАЖИ + НОРМЫ -->
+    <div class="grid-2">
+
+      <!-- ПОСЛЕДНИЕ ПРОДАЖИ -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">Последние продажи</div>
+        </div>
+        <div class="placeholder-note">Продажи появятся после первой оплаты через Stripe</div>
       </div>
 
-      <div class="controls">
-        <button class="btn-skip" onclick="skipBack()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M11 5L6 9l5 4V5z"/>
-            <path d="M18 5l-5 4 5 4V5z"/>
-            <line x1="6" y1="19" x2="18" y2="19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
+      <!-- НОРМЫ КОНВЕРСИИ -->
+      <div class="norms-wrap">
+        <div class="section-label" style="margin-bottom:16px;">Нормы конверсии · ориентир</div>
 
-        <button class="btn-play" id="btn-play" onclick="togglePlay()">
-          <svg id="icon-play" width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
-            <path d="M5 3.5l14 7.5-14 7.5V3.5z"/>
-          </svg>
-          <svg id="icon-pause" width="22" height="22" viewBox="0 0 22 22" fill="currentColor" style="display:none">
-            <rect x="5" y="3" width="4" height="16" rx="1"/>
-            <rect x="13" y="3" width="4" height="16" rx="1"/>
-          </svg>
-        </button>
+        <div class="norm-row">
+          <div class="norm-name">Клик → Play</div>
+          <div class="norm-range">30 – 50%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
 
-        <button class="btn-skip" onclick="skipForward()">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13 5l5 4-5 4V5z"/>
-            <path d="M6 5l5 4-5 4V5z"/>
-            <line x1="6" y1="19" x2="18" y2="19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </button>
-      </div>
+        <div class="norm-row">
+          <div class="norm-name">Play → 3 мин (Lead)</div>
+          <div class="norm-range">40 – 60%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
 
-      <div class="purchase">
-        <button class="purchase-btn locked" id="purchase-btn" onclick="goToPurchase()">
-          <svg id="lock-icon" width="13" height="13" viewBox="0 0 14 14" fill="none">
-            <rect x="3" y="6" width="8" height="7" rx="1" stroke="currentColor" stroke-width="1.2"/>
-            <path d="M5 6V4.5a2 2 0 014 0V6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-          </svg>
-          <span id="purchase-label">Ступень 1 · 150€</span>
-        </button>
-        <div class="purchase-note" id="purchase-note">Полный курс · 4 ступени · прогрессивная глубина</div>
+        <div class="norm-row">
+          <div class="norm-name">Lead → Покупка (холодный)</div>
+          <div class="norm-range">3 – 8%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Lead → Покупка (тёплый)</div>
+          <div class="norm-range">10 – 20%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Ступень 1 → Ступень 2</div>
+          <div class="norm-range">20 – 35%</div>
+          <div class="norm-status wait">Ждём</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">Стоимость клика · EU</div>
+          <div class="norm-range">0.40 – 0.80 €</div>
+          <div class="norm-status wait">FB API pending</div>
+        </div>
+
+        <div class="norm-row">
+          <div class="norm-name">ROAS · цель</div>
+          <div class="norm-range">2.0+</div>
+          <div class="norm-status wait">FB API pending</div>
+        </div>
+
       </div>
 
     </div>
+
+    <!-- ИСТОЧНИКИ ТРАФИКА -->
+    <div>
+      <div class="section-label">Источники трафика</div>
+      <div class="grid-3">
+
+        <div class="stat-card">
+          <div class="stat-card-label">Реклама · Instagram / FB</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">utm_source=instagram</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Сарафан · invite</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">utm_source=referral</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-label">Органика · сайт</div>
+          <div class="stat-card-value">—</div>
+          <div class="stat-card-sub">Прямые заходы</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="text-align:center;padding-bottom:16px;">
+      <div style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.1em;">
+        The Lineup · Internal Tool · ekaterina-donnat.com
+      </div>
+    </div>
+
   </div>
 
-  <audio id="audio-demo"
-    src="https://audio.ekaterina-donnat.com/promo/water_energy.mp3"
-    preload="none">
-  </audio>
-
   <script>
-  (function() {
+    // Защита паролем через сервер
+    // Токен хранится в sessionStorage и передаётся в каждый запрос данных
+    var DASH_TOKEN = null;
 
-    // UTM источник
-    var source = window.TRAFFIC_SOURCE || 'direct';
+    (function() {
+      var isPreview = window.location.hostname === 'localhost'
+                   || window.location.hostname.indexOf('claude') > -1
+                   || window.location.hostname.indexOf('anthropic') > -1;
+      if (isPreview) { DASH_TOKEN = 'preview'; return; }
 
-    // Трекер событий в Supabase
-    function trackDemo(eventName) {
-      fetch('/.netlify/functions/track-demo', {
+      var stored = sessionStorage.getItem('dash_token');
+      if (stored) { DASH_TOKEN = stored; return; }
+
+      var input = prompt('Пароль:');
+      if (!input) {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
+        return;
+      }
+
+      fetch('/.netlify/functions/dashboard-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: eventName, source: source })
-      }).catch(function() {});
-    }
-
-    // Pageview
-    trackDemo('pageview');
-    var isReferral = source === 'referral';
-
-    // Показываем реферальную плашку
-    if (isReferral) {
-      document.getElementById('referral-badge').classList.add('visible');
-    }
-
-    // ── СФЕРА ────────────────────────────────────────────────────────────
-    var sc = document.getElementById('sphere-canvas');
-    var sCtx = sc.getContext('2d');
-    var SW = 192, SH = 192;
-    var sAngle = 0;
-
-    var rings = [
-      { color: 'rgba(212,175,55,0.7)', width: 1.5 },
-      { color: 'rgba(212,175,55,0.35)', width: 1 },
-      { color: 'rgba(180,160,220,0.5)', width: 1.2 },
-      { color: 'rgba(212,175,55,0.2)', width: 0.8 },
-    ];
-
-    function drawSphere() {
-      sCtx.clearRect(0, 0, SW, SH);
-      sCtx.save();
-      sCtx.beginPath();
-      sCtx.arc(SW/2, SH/2, SW/2-1, 0, Math.PI*2);
-      sCtx.clip();
-      sCtx.fillStyle = '#0d1030';
-      sCtx.fillRect(0, 0, SW, SH);
-
-      var grd = sCtx.createRadialGradient(SW*0.35, SH*0.3, 0, SW/2, SH/2, SW/2);
-      grd.addColorStop(0, 'rgba(212,175,55,0.18)');
-      grd.addColorStop(0.5, 'transparent');
-      grd.addColorStop(1, 'rgba(75,0,130,0.25)');
-      sCtx.fillStyle = grd;
-      sCtx.fillRect(0, 0, SW, SH);
-
-      var cx = SW/2, cy = SH/2, r = SW/2-2;
-      for (var i = 0; i < 7; i++) {
-        var latAngle = -Math.PI/2 + Math.PI*(i/7);
-        var ringR = Math.cos(latAngle)*r;
-        var ringY = cy + Math.sin(latAngle)*r;
-        var rotOffset = sAngle*(i%2===0?1:-0.7)+i*0.4;
-        var ri = rings[i % rings.length];
-        sCtx.save();
-        sCtx.translate(cx, ringY);
-        sCtx.scale(1, 0.22);
-        sCtx.beginPath();
-        sCtx.arc(0, 0, Math.abs(ringR), 0, Math.PI*2);
-        sCtx.strokeStyle = ri.color;
-        sCtx.lineWidth = ri.width*(1+0.3*Math.cos(latAngle));
-        sCtx.stroke();
-        var dotCount = Math.floor(Math.abs(ringR)/12);
-        for (var d = 0; d < dotCount; d++) {
-          var dAngle = (d/dotCount)*Math.PI*2+rotOffset;
-          sCtx.beginPath();
-          sCtx.arc(Math.cos(dAngle)*Math.abs(ringR), Math.sin(dAngle)*Math.abs(ringR), 1.2, 0, Math.PI*2);
-          sCtx.fillStyle = 'rgba(248,245,235,0.85)';
-          sCtx.fill();
+        body: JSON.stringify({ password: input })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.ok && data.token) {
+          DASH_TOKEN = data.token;
+          sessionStorage.setItem('dash_token', data.token);
+        } else {
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Доступ закрыт</div>';
         }
-        sCtx.restore();
-      }
+      }).catch(function() {
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Outfit,sans-serif;color:rgba(248,250,252,0.4);font-size:13px;letter-spacing:0.1em;">Ошибка сервера</div>';
+      });
+    })();
 
-      var shine = sCtx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
-      shine.addColorStop(0, 'rgba(255,255,255,0.07)');
-      shine.addColorStop(0.4, 'transparent');
-      sCtx.fillStyle = shine;
-      sCtx.fillRect(0, 0, SW, SH);
-      sCtx.restore();
+    // Обновляем время
+    var updatedEl = document.querySelector('.dash-updated');
+    if (updatedEl) {
+      updatedEl.textContent = 'Обновлено: ' + new Date().toLocaleString('ru-RU', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
     }
 
-    // ── ФОНОВЫЙ CANVAS ────────────────────────────────────────────────────
-    var bgCanvas = document.getElementById('bg-canvas');
-    var bCtx = bgCanvas.getContext('2d');
-    var BW, BH, gradPhase = 0;
-    var mouseX = -1000, mouseY = -1000;
-
-    function resizeBg() {
-      BW = bgCanvas.width = window.innerWidth;
-      BH = bgCanvas.height = window.innerHeight;
-    }
-
-    document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
-    document.addEventListener('mouseleave', function() { mouseX = -1000; mouseY = -1000; });
-
-    var PARTICLE_COUNT = 60;
-    var particles = [];
-
-    function initParticles() {
-      particles = [];
-      for (var i = 0; i < PARTICLE_COUNT; i++) {
-        particles.push({
-          x: Math.random()*BW, y: Math.random()*BH,
-          r: Math.random()*2+0.6,
-          opacity: Math.random()*0.6+0.2,
-          speedX: (Math.random()-0.5)*0.2,
-          speedY: (Math.random()-0.5)*0.2,
-          opacitySpeed: (Math.random()-0.5)*0.004,
+    // Загружаем данные из Supabase через dashboard-data.js
+    (async function loadDashboard() {
+      try {
+        var res = await fetch('/.netlify/functions/dashboard-data', {
+          headers: DASH_TOKEN ? { 'Authorization': 'Bearer ' + DASH_TOKEN } : {}
         });
-      }
-    }
+        if (!res.ok) return;
+        var d = await res.json();
 
-    function drawBg() {
-      bCtx.clearRect(0, 0, BW, BH);
-      gradPhase += 0.003;
-      var cx1 = BW*0.5 + Math.sin(gradPhase*0.7)*BW*0.15;
-      var cy1 = BH*0.15 + Math.cos(gradPhase*0.5)*BH*0.08;
-      var grd = bCtx.createRadialGradient(cx1, cy1, 0, BW/2, BH/2, BH*0.9);
-      grd.addColorStop(0, 'rgba(40,45,92,0.95)');
-      grd.addColorStop(0.4, 'rgba(21,25,51,0.85)');
-      grd.addColorStop(1, 'rgba(10,12,30,0.9)');
-      bCtx.fillStyle = grd;
-      bCtx.fillRect(0, 0, BW, BH);
-
-      if (mouseX > 0) {
-        var mgrd = bCtx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 160);
-        mgrd.addColorStop(0, 'rgba(212,175,55,0.08)');
-        mgrd.addColorStop(1, 'transparent');
-        bCtx.fillStyle = mgrd;
-        bCtx.fillRect(0, 0, BW, BH);
-      }
-
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        p.x += p.speedX; p.y += p.speedY; p.opacity += p.opacitySpeed;
-        if (mouseX > 0) {
-          var dx = mouseX-p.x, dy = mouseY-p.y;
-          var dist = Math.sqrt(dx*dx+dy*dy);
-          if (dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
-        }
-        if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
-        if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
-        if (p.x < 0) p.x = BW; if (p.x > BW) p.x = 0;
-        if (p.y < 0) p.y = BH; if (p.y > BH) p.y = 0;
-        bCtx.beginPath();
-        bCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-        bCtx.fillStyle = 'rgba(212,175,55,'+p.opacity+')';
-        bCtx.fill();
-      }
-    }
-
-    // ── ПЛЕЕР ────────────────────────────────────────────────────────────
-    var audio = document.getElementById('audio-demo');
-    var isPlaying = false;
-    var unlocked = false;
-    var BARS = 56;
-    var wf = document.getElementById('waveform');
-
-    for (var i = 0; i < BARS; i++) {
-      var h = 8 + Math.random()*28;
-      var bar = document.createElement('div');
-      bar.className = 'wave-bar';
-      bar.style.height = h + 'px';
-      wf.appendChild(bar);
-    }
-
-    window.togglePlay = function() {
-      if (isPlaying) {
-        audio.pause();
-        setPlaying(false);
-      } else {
-        audio.play().catch(function(){});
-        setPlaying(true);
-
-        // FB Pixel ViewContent + Supabase при первом нажатии play
-        if (!window._fbViewFired) {
-          window._fbViewFired = true;
-          trackDemo('play');
-          if (typeof fbq !== 'undefined') fbq('track', 'ViewContent', {
-            content_name: 'demo_track',
-            traffic_source: source
+        // Обновляем время из сервера
+        if (updatedEl && d.updated) {
+          updatedEl.textContent = 'Обновлено: ' + new Date(d.updated).toLocaleString('ru-RU', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
           });
         }
-      }
-    };
 
-    function setPlaying(v) {
-      isPlaying = v;
-      document.getElementById('icon-play').style.display = v ? 'none' : 'block';
-      document.getElementById('icon-pause').style.display = v ? 'block' : 'none';
-    }
+        // Воронка AIDA
+        var stages = document.querySelectorAll('.funnel-stage');
+        if (stages.length >= 5) {
+          // Attention - открыли демо
+          stages[0].querySelector('.funnel-num').textContent = d.demo.pageviews.total;
+          stages[0].querySelector('.funnel-sub').textContent = 'переходов';
 
-    window.skipBack = function() { audio.currentTime = Math.max(0, audio.currentTime-15); };
-    window.skipForward = function() { audio.currentTime = Math.min(audio.duration||0, audio.currentTime+15); };
+          // Interest - нажали play
+          stages[1].querySelector('.funnel-num').textContent = d.demo.plays.total;
+          if (d.demo.pageviews.total > 0) {
+            var playRate = Math.round((d.demo.plays.total / d.demo.pageviews.total) * 100);
+            var playConv = stages[1].querySelector('.funnel-conv');
+            var playDot = playConv.querySelector('.conv-dot');
+            var playVal = playConv.querySelector('.conv-value');
+            playVal.textContent = playRate + '% · норма 30-50%';
+            var playColor = playRate >= 50 ? 'green' : playRate >= 30 ? 'yellow' : 'red';
+            playDot.className = 'conv-dot ' + playColor;
+            playVal.className = 'conv-value ' + playColor;
+            stages[1].querySelector('.funnel-bar-fill').style.width = Math.round((d.demo.plays.total / d.demo.pageviews.total) * 100) + '%';
+          }
 
-    window.seekAudio = function(e) {
-      var track = document.getElementById('progress-track');
-      var rect = track.getBoundingClientRect();
-      var pct = (e.clientX-rect.left)/rect.width;
-      if (audio.duration) audio.currentTime = pct*audio.duration;
-    };
+          // Desire - 3 минуты (Lead)
+          stages[2].querySelector('.funnel-num').textContent = d.demo.leads.total;
+          if (d.demo.plays.total > 0) {
+            var leadRate = Math.round((d.demo.leads.total / d.demo.plays.total) * 100);
+            var leadConv = stages[2].querySelector('.funnel-conv');
+            var leadDot = leadConv.querySelector('.conv-dot');
+            var leadVal = leadConv.querySelector('.conv-value');
+            leadVal.textContent = leadRate + '% · норма 40-60%';
+            var leadColor = leadRate >= 60 ? 'green' : leadRate >= 40 ? 'yellow' : 'red';
+            leadDot.className = 'conv-dot ' + leadColor;
+            leadVal.className = 'conv-value ' + leadColor;
+            stages[2].querySelector('.funnel-bar-fill').style.width = Math.round((d.demo.leads.total / d.demo.pageviews.total) * 100) + '%';
+          }
 
-    function formatTime(s) {
-      if (isNaN(s)) return '0:00';
-      var m = Math.floor(s/60), sec = Math.floor(s%60);
-      return m+':'+(sec<10?'0':'')+sec;
-    }
+          // Action - покупки
+          stages[3].querySelector('.funnel-num').textContent = d.funnel.purchases;
+          if (d.demo.leads.total > 0) {
+            var convRate = Math.round((d.funnel.purchases / d.demo.leads.total) * 100);
+            var convEl = stages[3].querySelector('.funnel-conv');
+            var dot = convEl.querySelector('.conv-dot');
+            var val = convEl.querySelector('.conv-value');
+            val.textContent = convRate + '% · норма 3-8%';
+            var color = convRate >= 8 ? 'green' : convRate >= 3 ? 'yellow' : 'red';
+            dot.className = 'conv-dot ' + color;
+            val.className = 'conv-value ' + color;
+            stages[3].querySelector('.funnel-bar-fill').style.width = Math.round((d.funnel.purchases / d.demo.pageviews.total) * 100) + '%';
+          }
 
-    audio.addEventListener('timeupdate', function() {
-      var pct = audio.duration ? (audio.currentTime/audio.duration)*100 : 0;
-      document.getElementById('progress-fill').style.width = pct+'%';
-      document.getElementById('progress-thumb').style.left = pct+'%';
-      document.getElementById('time-cur').textContent = formatTime(audio.currentTime);
+          // Retention - часы
+          stages[4].querySelector('.funnel-num').textContent = d.funnel.hours + 'ч';
 
-      var bars = wf.querySelectorAll('.wave-bar');
-      var idx = Math.floor((audio.currentTime/(audio.duration||1))*BARS);
-      bars.forEach(function(b, i) {
-        b.classList.remove('played','active');
-        if (i < idx) b.classList.add('played');
-        if (i === idx) b.classList.add('active');
-      });
+          // Бар Attention всегда 100%
+          stages[0].querySelector('.funnel-bar-fill').style.width = '100%';
+        }
 
-      // FB Pixel Lead + Supabase на 3 минутах
-      if (!window._fbLeadFired && audio.currentTime >= 180) {
-        window._fbLeadFired = true;
-        trackDemo('lead');
-        if (typeof fbq !== 'undefined') fbq('track', 'Lead', {
-          traffic_source: source
+        // Ключевые метрики
+        var statCards = document.querySelectorAll('.stat-card');
+        // Выручка
+        statCards[0].querySelector('.stat-card-value').textContent = d.revenue + ' €';
+        if (d.revenue > 0) {
+          statCards[0].querySelector('.stat-card-badge').textContent = 'Активно';
+          statCards[0].querySelector('.stat-card-badge').className = 'stat-card-badge green';
+        }
+
+        // Email база
+        statCards[2].querySelector('.stat-card-value').textContent = d.emailBase;
+        if (d.emailBase > 0) {
+          statCards[2].querySelector('.stat-card-badge').textContent = d.emailBase + ' контактов';
+          statCards[2].querySelector('.stat-card-badge').className = 'stat-card-badge green';
+        }
+
+        // Сарафан %
+        statCards[4].querySelector('.stat-card-value').textContent = d.referralPercent + '%';
+
+        // Средний чек
+        statCards[5].querySelector('.stat-card-value').textContent = d.avgCheck + ' €';
+
+        // Источники трафика - показываем прослушивания демо
+        document.querySelectorAll('.stat-card').forEach(function(card) {
+          var label = card.querySelector('.stat-card-label')?.textContent || '';
+          var valEl = card.querySelector('.stat-card-value');
+          var subEl = card.querySelector('.stat-card-sub');
+          if (label.includes('Instagram')) {
+            valEl.textContent = d.demo.plays.paid;
+            subEl.textContent = d.demo.pageviews.paid + ' визитов · ' + d.demo.plays.paid + ' play';
+          }
+          if (label.includes('invite')) {
+            valEl.textContent = d.demo.plays.referral;
+            subEl.textContent = d.demo.pageviews.referral + ' визитов · ' + d.demo.plays.referral + ' play';
+          }
+          if (label.includes('Pinterest')) {
+            valEl.textContent = d.demo.plays.pinterest;
+            subEl.textContent = d.demo.pageviews.pinterest + ' визитов · ' + d.demo.plays.pinterest + ' play';
+          }
+          if (label.includes('Органика')) {
+            valEl.textContent = d.demo.plays.organic;
+            subEl.textContent = d.demo.pageviews.organic + ' визитов · ' + d.demo.plays.organic + ' play';
+          }
         });
+
+        // Последние продажи
+        if (d.sales && d.sales.length > 0) {
+          var tableWrap = document.querySelector('.table-wrap');
+          var placeholder = tableWrap.querySelector('.placeholder-note');
+          if (placeholder) placeholder.remove();
+
+          var table = document.createElement('table');
+          table.innerHTML = '<thead><tr>' +
+            '<th>Продукт</th><th>Сумма</th><th>Источник</th><th>Дата</th>' +
+            '</tr></thead><tbody></tbody>';
+
+          var tbody = table.querySelector('tbody');
+          d.sales.forEach(function(sale) {
+            var srcClass = 'organic';
+            if (sale.source.includes('instagram') || sale.source.includes('facebook')) srcClass = 'paid';
+            else if (sale.source.includes('referral')) srcClass = 'referral';
+
+            var srcLabel = srcClass === 'paid' ? 'Реклама' : srcClass === 'referral' ? 'Сарафан' : 'Органика';
+
+            var date = new Date(sale.date);
+            var dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+              '<td class="td-product">' + sale.product + '</td>' +
+              '<td class="td-amount">' + sale.amount + ' €</td>' +
+              '<td><span class="badge-source ' + srcClass + '">' + srcLabel + '</span></td>' +
+              '<td>' + dateStr + '</td>';
+            tbody.appendChild(tr);
+          });
+
+          tableWrap.appendChild(table);
+        }
+
+        // Нормы конверсии - обновляем статусы
+        if (d.funnel.leads > 0) {
+          var normRows = document.querySelectorAll('.norm-row');
+          // Lead → Покупка (холодный) - строка 3
+          if (normRows[2]) {
+            var convPurchase = Math.round((d.funnel.purchases / d.funnel.leads) * 100);
+            var normStatus = normRows[2].querySelector('.norm-status');
+            normStatus.textContent = convPurchase + '%';
+            normStatus.className = 'norm-status ' + (convPurchase >= 8 ? 'green' : convPurchase >= 3 ? 'yellow' : 'red');
+            normStatus.style.background = convPurchase >= 8 ? 'rgba(74,222,128,0.1)' : convPurchase >= 3 ? 'rgba(251,191,36,0.1)' : 'rgba(248,113,113,0.1)';
+            normStatus.style.color = convPurchase >= 8 ? 'var(--green)' : convPurchase >= 3 ? 'var(--yellow)' : 'var(--red)';
+          }
+        }
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
       }
-
-      // Разблокировка кнопки на 90%
-      if (!unlocked && audio.duration && audio.currentTime/audio.duration > 0.9) unlock();
-    });
-
-    audio.addEventListener('loadedmetadata', function() {
-      document.getElementById('time-total').textContent = formatTime(audio.duration);
-    });
-
-    audio.addEventListener('ended', function() { setPlaying(false); unlock(); });
-
-    function unlock() {
-      if (unlocked) return;
-      unlocked = true;
-      var btn = document.getElementById('purchase-btn');
-      btn.classList.remove('locked');
-      btn.classList.add('unlocked');
-      document.getElementById('lock-icon').style.display = 'none';
-      document.getElementById('purchase-label').textContent = 'Перейти к ступени 1 · 150€';
-      document.getElementById('purchase-note').classList.add('visible');
-    }
-
-    window.goToPurchase = function() {
-      // Программная проверка - не только CSS
-      if (!unlocked) return;
-      window.location.href = 'https://ekaterina-donnat.com/?from=demo&utm_source=' + source + '#buy';
-    };
-
-    // ── LOOP ─────────────────────────────────────────────────────────────
-    function loop() {
-      sAngle += 0.004;
-      drawSphere();
-      drawBg();
-      requestAnimationFrame(loop);
-    }
-
-    resizeBg();
-    initParticles();
-    window.addEventListener('resize', function() { resizeBg(); initParticles(); });
-    loop();
-
-  })();
+    })();
   </script>
 
 </body>
