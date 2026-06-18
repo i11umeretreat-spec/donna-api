@@ -61,7 +61,6 @@
             margin-bottom: 16px;
         }
 
-        /* orbit canvas sits behind sphere */
         #orbit-canvas {
             position: absolute;
             top: 50%; left: 50%;
@@ -83,11 +82,6 @@
             animation: sphereBreathe var(--breath-duration, 4s) ease-in-out infinite;
         }
 
-        /* Класс добавляется mood-engine во время блока «Грудь».
-           CSS-анимация перестраивается на ритм 4/6 через --breath-duration.
-           Transition на animation-duration невозможен — интерполяция идёт
-           через JS (easeInOutSine) который меняет CSS custom property каждый
-           timeupdate (~250 мс), что даёт плавный визуальный переход. */
         .sphere-wrap.breath-sync {
             border-color: rgba(212,175,55,0.45);
         }
@@ -235,6 +229,24 @@
         }
 
         .bonus-btn:hover { background: rgba(212,175,55,0.18); }
+        .bonus-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+        /* ─── BONUS OVERLAY ─── */
+        .bonus-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(13,14,26,0.85);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            animation: fadeIn 0.8s ease forwards;
+        }
+        .bonus-overlay-title { font-family: 'Fraunces', serif; font-weight: 200; font-size: 22px; color: #f0eae1; text-align: center; }
+        .bonus-overlay-sub { font-size: 12px; color: rgba(212,175,55,0.6); letter-spacing: 0.14em; }
+        .bonus-overlay-close { margin-top: 24px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(248,250,252,0.3); background: none; border: none; font-family: 'Outfit', sans-serif; cursor: pointer; }
 
         /* ─── TRANSITION OVERLAY ─── */
         .transition-overlay {
@@ -251,13 +263,8 @@
             transition: background 1.2s ease;
         }
 
-        .transition-overlay.visible {
-            display: flex;
-        }
-
-        .transition-overlay.dark {
-            background: rgba(13,14,26,0.92);
-        }
+        .transition-overlay.visible { display: flex; }
+        .transition-overlay.dark { background: rgba(13,14,26,0.92); }
 
         .transition-content {
             opacity: 0;
@@ -265,10 +272,7 @@
             transition: opacity 0.8s ease, transform 0.8s ease;
         }
 
-        .transition-content.visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .transition-content.visible { opacity: 1; transform: translateY(0); }
 
         .transition-label {
             font-size: 10px;
@@ -296,7 +300,8 @@
         }
 
         .transition-btn {
-            display: inline-flex;
+            display: flex;
+            justify-content: center;
             align-items: center;
             gap: 10px;
             padding: 15px 36px;
@@ -313,7 +318,6 @@
             text-decoration: none;
             transition: opacity 0.2s;
             margin-bottom: 16px;
-            display: block;
             width: 100%;
             max-width: 280px;
             text-align: center;
@@ -335,7 +339,7 @@
 
         .transition-skip:hover { color: rgba(248,250,252,0.5); }
 
-        /* ─── REST OF STYLES (unchanged) ─── */
+        /* ─── REST OF STYLES ─── */
         .app-subtitle {
             font-weight: 200;
             font-size: 10px;
@@ -563,7 +567,6 @@
     <canvas id="bg-canvas"></canvas>
 
     <div class="app-wrap">
-
         <header class="app-header">
             <img class="logo-img"
                 src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
@@ -591,10 +594,8 @@
                 <span id="loading-text">Подготавливаем пространство...</span>
             </div>
         </div>
-
     </div>
 
-    <!-- MILESTONE TOAST -->
     <div class="milestone-toast" id="milestone-toast">
         <div class="toast-label" id="toast-label"></div>
         <div class="toast-title" id="toast-title"></div>
@@ -602,7 +603,6 @@
         <button class="toast-close" onclick="closeToast()">Закрыть</button>
     </div>
 
-    <!-- TRANSITION OVERLAY — появляется после последнего трека ступени -->
     <div class="transition-overlay" id="transition-overlay">
         <div class="transition-content" id="transition-content">
             <div class="transition-label" id="transition-label">Следующая ступень</div>
@@ -614,26 +614,19 @@
     </div>
 
     <audio id="mainAudio" playsinline preload="none"></audio>
-    <!-- Переходное аудио Екатерины — раскомментировать когда запишет:
-    <audio id="audio-transition" preload="auto"></audio>
-    -->
 
     <script>
     // ── КОНФИГ ПОРОГОВ ────────────────────────────────────────────────────────
-    var THRESHOLD_REMINDER = 5 * 3600;  // 5 часов в секундах
-    var THRESHOLD_BONUS    = 10 * 3600; // 10 часов в секундах
-    // URL бонусного трека — заменить когда Екатерина запишет:
+    var THRESHOLD_REMINDER = 5 * 3600;
+    var THRESHOLD_BONUS    = 10 * 3600;
     var BONUS_TRACK_URL = null;
 
-    // ── STRIPE ССЫЛКИ ПО СТУПЕНЯМ ────────────────────────────────────────────
-    // Заменить на реальные Stripe Payment Links когда ступени будут готовы:
     var STRIPE_LINKS = {
-        2: null, // 'https://buy.stripe.com/xxxx' — ступень 2
-        3: null, // 'https://buy.stripe.com/xxxx' — ступень 3
-        4: null, // 'https://buy.stripe.com/xxxx' — ступень 4
+        2: null,
+        3: null,
+        4: null,
     };
 
-    // Тексты переходов между ступенями
     var TRANSITION_COPY = {
         ru: {
             1: { label: 'Первая ступень завершена', title: 'Ты прошла этот круг', text: 'На следующей глубине тебя ждёт кое-что, до чего мы ещё не добирались. Я рада что ты готова.' },
@@ -647,11 +640,9 @@
         },
     };
 
-    // Текущая ступень (определяется по трекам из Supabase)
     var currentStep = 1;
     var transitionShown = false;
 
-    // ── ЛОГИКА ПОСЛЕДНЕГО ТРЕКА (по сценарию Джейми) ────────────────────────
     function showTransition(step) {
         if (transitionShown) return;
         transitionShown = true;
@@ -661,28 +652,20 @@
         var copy = (TRANSITION_COPY[currentLang] || TRANSITION_COPY.ru)[step] || TRANSITION_COPY.ru[1];
         var stripeLink = STRIPE_LINKS[step + 1];
 
-        // Наполняем оверлей
         document.getElementById('transition-label').textContent = copy.label;
         document.getElementById('transition-title').textContent = copy.title;
         document.getElementById('transition-text').textContent = copy.text;
         var btn = document.getElementById('transition-btn');
         btn.href = stripeLink || 'https://ekaterina-donnat.com/#buy';
 
-        // Затемняем экран
         overlay.classList.add('visible');
         requestAnimationFrame(function() {
             overlay.classList.add('dark');
-            // Пока нет записи Екатерины — тишина. Когда запишет, раскомментировать:
-            // audio.src = 'https://audio.ekaterina-donnat.com/transitions/step' + step + '.mp3';
-            // audio.load(); audio.play().catch(function(){});
-
-            // Показываем контент
             setTimeout(function() {
                 contentEl.classList.add('visible');
             }, 600);
         });
 
-        // Флаг в Supabase — тихо, после показа
         if (currentToken && currentToken !== LINEUP_MODE_TOKEN) {
             fetch('/.netlify/functions/upsell-flag', {
                 method: 'POST',
@@ -701,17 +684,15 @@
     }
 
     // ── ПРОГРЕСС ──────────────────────────────────────────────────────────────
-    var totalSeconds = 0;       // накопленные секунды
-    var sessionSeconds = 0;     // секунды текущей сессии (для Supabase flush)
+    var totalSeconds = 0;
+    var sessionSeconds = 0;
     var reminderShown = false;
     var bonusShown = false;
     var currentToken = null;
     var isDemo = false;
-
     var LS_KEY = 'donna_listen_seconds';
 
     function loadProgress() {
-        // localStorage для всех — базовое хранилище
         var stored = parseInt(localStorage.getItem(LS_KEY) || '0', 10);
         totalSeconds = isNaN(stored) ? 0 : stored;
     }
@@ -720,7 +701,6 @@
         localStorage.setItem(LS_KEY, String(totalSeconds));
     }
 
-    // Supabase upsert — только для авторизованных
     async function saveProgressRemote() {
         if (!currentToken || isDemo) return;
         try {
@@ -729,10 +709,9 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: currentToken, seconds: totalSeconds }),
             });
-        } catch(e) { /* тихий фейл */ }
+        } catch(e) {}
     }
 
-    // Загрузка прогресса из Supabase при старте
     async function loadProgressRemote() {
         if (!currentToken || isDemo) return;
         try {
@@ -742,7 +721,7 @@
                 totalSeconds = Math.max(totalSeconds, data.seconds);
                 saveProgressLocal();
             }
-        } catch(e) { /* тихий фейл */ }
+        } catch(e) {}
     }
 
     function addListenedSeconds(secs) {
@@ -752,7 +731,6 @@
         updateOrbit();
         checkMilestones();
 
-        // Flush в Supabase каждые 30 секунд накопленных
         if (sessionSeconds >= 30) {
             sessionSeconds = 0;
             saveProgressRemote();
@@ -762,11 +740,7 @@
     function checkMilestones() {
         if (!reminderShown && totalSeconds >= THRESHOLD_REMINDER) {
             reminderShown = true;
-            showToast(
-                'Ты в практике',
-                'Уже 5 часов глубинной работы',
-                'Следующая ступень откроет новый уровень. Ты готова идти дальше?'
-            );
+            showToast('Ты в практике', 'Уже 5 часов глубинной работы', 'Следующая ступень откроет новый уровень. Ты готова идти дальше?');
         }
         if (!bonusShown && totalSeconds >= THRESHOLD_BONUS) {
             bonusShown = true;
@@ -786,7 +760,6 @@
         hint.classList.toggle('milestone', totalSeconds >= THRESHOLD_REMINDER);
     }
 
-    // ── TOAST ─────────────────────────────────────────────────────────────────
     function showToast(label, title, text) {
         document.getElementById('toast-label').textContent = label;
         document.getElementById('toast-title').textContent = title;
@@ -800,7 +773,6 @@
         document.getElementById('milestone-toast').classList.remove('visible');
     }
 
-    // ── BONUS CARD ────────────────────────────────────────────────────────────
     function showBonusCard() {
         var container = document.getElementById('app-content');
         var existing = document.getElementById('bonus-card');
@@ -818,37 +790,29 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                     Послушать
                    </button>`
-                : `<div class="bonus-btn" style="opacity:0.4;pointer-events:none;">Скоро появится</div>`
+                : `<div class="bonus-btn disabled">Скоро появится</div>`
             }`;
 
         container.insertBefore(card, container.firstChild);
-
-        showToast(
-            'Только для тебя',
-            'Десять часов наедине с собой',
-            'Екатерина оставила здесь кое-что особенное. Смотри выше.'
-        );
+        showToast('Только для тебя', 'Десять часов наедине с собой', 'Екатерина оставила здесь кое-что особенное. Смотри выше.');
     }
 
-    // ── БОНУСНЫЙ ТРЕК ────────────────────────────────────────────────────────
     function playBonusTrack() {
         if (!BONUS_TRACK_URL) return;
-        // Останавливаем текущий трек
         if (isPlaying) {
             audio.pause();
             isPlaying = false;
             if (currentCard) currentCard.classList.remove('active');
         }
-        // Затемняем экран
         var overlay = document.createElement('div');
         overlay.id = 'bonus-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(13,14,26,0.85);z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;animation:fadeIn 0.8s ease forwards;';
+        overlay.className = 'bonus-overlay';
         overlay.innerHTML = `
-            <div style="font-family:'Fraunces',serif;font-weight:200;font-size:22px;color:#f0eae1;text-align:center;">Секретный трек</div>
-            <div style="font-size:12px;color:rgba(212,175,55,0.6);letter-spacing:0.14em;">Екатерина Донна</div>
-            <button onclick="closeBonusOverlay()" style="margin-top:24px;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(248,250,252,0.3);background:none;border:none;font-family:'Outfit',sans-serif;cursor:pointer;">Закрыть</button>`;
+            <div class="bonus-overlay-title">Секретный трек</div>
+            <div class="bonus-overlay-sub">Екатерина Донна</div>
+            <button class="bonus-overlay-close" onclick="closeBonusOverlay()">Закрыть</button>`;
         document.body.appendChild(overlay);
-        // Запускаем бонусный трек
+        
         audio.src = BONUS_TRACK_URL;
         audio.load();
         audio.play().catch(function(e) { console.error(e); });
@@ -861,10 +825,7 @@
     }
 
     // ── ORBIT CANVAS ──────────────────────────────────────────────────────────
-    var orbitCanvas = null;
-    var oCtx = null;
-    var orbitProgress = 0; // 0..1
-    var orbitPulse = 0;
+    var orbitCanvas = null, oCtx = null, orbitProgress = 0, orbitPulse = 0;
 
     function initOrbit() {
         orbitCanvas = document.getElementById('orbit-canvas');
@@ -881,7 +842,6 @@
         oCtx.clearRect(0, 0, W, H);
         var cx = W/2, cy = H/2, r = 58;
 
-        // track - едва видимое кольцо
         oCtx.beginPath();
         oCtx.arc(cx, cy, r, 0, Math.PI*2);
         oCtx.strokeStyle = 'rgba(212,175,55,0.08)';
@@ -890,17 +850,13 @@
 
         if (orbitProgress <= 0) return;
 
-        // фаза 1: 0-50% (до напоминания) - тонкая приглушённая дуга
-        // фаза 2: 50-100% (после напоминания) - ярче, с пульсацией
         var phase2 = orbitProgress >= 0.5;
         orbitPulse += 0.04;
         var pulse = phase2 ? (0.7 + 0.3 * Math.sin(orbitPulse)) : 1;
         var alpha = phase2 ? (0.6 + 0.3 * Math.sin(orbitPulse)) : 0.35;
         var lineW = phase2 ? 2 : 1.5;
-
         var endAngle = -Math.PI/2 + orbitProgress * Math.PI*2;
 
-        // glow под дугой
         if (phase2) {
             oCtx.beginPath();
             oCtx.arc(cx, cy, r, -Math.PI/2, endAngle);
@@ -910,7 +866,6 @@
             oCtx.stroke();
         }
 
-        // основная дуга
         oCtx.beginPath();
         oCtx.arc(cx, cy, r, -Math.PI/2, endAngle);
         oCtx.strokeStyle = 'rgba(212,175,55,' + alpha + ')';
@@ -918,7 +873,6 @@
         oCtx.lineCap = 'round';
         oCtx.stroke();
 
-        // точка на конце дуги
         var dotX = cx + r * Math.cos(endAngle);
         var dotY = cy + r * Math.sin(endAngle);
         oCtx.beginPath();
@@ -926,7 +880,6 @@
         oCtx.fillStyle = 'rgba(212,175,55,' + (alpha * pulse) + ')';
         oCtx.fill();
 
-        // на 100% — вспышка
         if (orbitProgress >= 1) {
             oCtx.beginPath();
             oCtx.arc(cx, cy, r, 0, Math.PI*2);
@@ -1060,10 +1013,7 @@
         }
     }
 
-    // ── MAIN LOOP ─────────────────────────────────────────────────────────────
     function loop() {
-        // Скорость вращения: mood-engine пишет сюда во время breath sync,
-        // при обычном воспроизведении — стандартные 0.004
         var rotSpeed = (window.moodConfig && window.moodConfig.breathSyncRotation != null)
             ? window.moodConfig.breathSyncRotation
             : 0.004;
@@ -1074,7 +1024,7 @@
         requestAnimationFrame(loop);
     }
 
-    // ── ПЛЕЕР ЛОГИКА (не тронута) ─────────────────────────────────────────────
+    // ── ПЛЕЕР ЛОГИКА ──────────────────────────────────────────────────────────
     const audio = document.getElementById('mainAudio');
     let currentCard = null;
     let isPlaying = false;
@@ -1214,7 +1164,6 @@
         }
     });
 
-    // Глобальный список треков для проверки последнего
     var allTracks = [];
 
     function renderTracks(tracks, allowDownload, showUpsell) {
@@ -1274,7 +1223,6 @@
             if (card) { card.classList.add('active'); currentCard = card; }
         }
 
-        // Показать бонус если уже достигнут
         if (totalSeconds >= THRESHOLD_BONUS) showBonusCard();
     }
 
@@ -1317,7 +1265,6 @@
             currentCard.querySelector('.progress-fill').style.width = percent + '%';
             currentCard.querySelector('.current-time').textContent = formatTime(audio.currentTime);
 
-            // Трекер: добавляем реальные секунды с момента прошлого апдейта
             const now = audio.currentTime;
             if (lastTimeUpdate > 0 && isPlaying) {
                 const delta = now - lastTimeUpdate;
@@ -1337,7 +1284,6 @@
         }
         saveProgressRemote();
 
-        // Последний трек = последний элемент массива allTracks
         var trackId = currentCard ? currentCard.getAttribute('data-track-id') : null;
         var isLast = allTracks.length > 0 && trackId === allTracks[allTracks.length - 1].id;
         if (isLast) {
@@ -1391,7 +1337,7 @@
             alert(t('errorDownload'));
         } finally {
             btn.classList.remove('loading');
-            btn.innerHTML = '<svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor;"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
+            btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
         }
     }
     </script>
