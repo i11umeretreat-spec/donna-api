@@ -80,7 +80,16 @@
             border-radius: 50%;
             border: 1px solid rgba(212,175,55,0.3);
             overflow: hidden;
-            animation: sphereBreathe 4s ease-in-out infinite;
+            animation: sphereBreathe var(--breath-duration, 4s) ease-in-out infinite;
+        }
+
+        /* Класс добавляется mood-engine во время блока «Грудь».
+           CSS-анимация перестраивается на ритм 4/6 через --breath-duration.
+           Transition на animation-duration невозможен — интерполяция идёт
+           через JS (easeInOutSine) который меняет CSS custom property каждый
+           timeupdate (~250 мс), что даёт плавный визуальный переход. */
+        .sphere-wrap.breath-sync {
+            border-color: rgba(212,175,55,0.45);
         }
 
         @keyframes sphereBreathe {
@@ -1053,7 +1062,12 @@
 
     // ── MAIN LOOP ─────────────────────────────────────────────────────────────
     function loop() {
-        sAngle += 0.004;
+        // Скорость вращения: mood-engine пишет сюда во время breath sync,
+        // при обычном воспроизведении — стандартные 0.004
+        var rotSpeed = (window.moodConfig && window.moodConfig.breathSyncRotation != null)
+            ? window.moodConfig.breathSyncRotation
+            : 0.004;
+        sAngle += rotSpeed;
         drawSphere();
         drawOrbit();
         drawBg();
