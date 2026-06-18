@@ -204,6 +204,43 @@
       margin-bottom: 36px;
     }
 
+    /* Плашка приветствия */
+    .welcome-indicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+
+    .welcome-indicator.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .welcome-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #d4af37;
+      animation: welcomePulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes welcomePulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .welcome-label {
+      font-size: 11px;
+      color: rgba(248,250,252,0.45);
+      letter-spacing: 0.08em;
+      font-style: italic;
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+    }
+
     .waveform {
       width: 100%;
       height: 44px;
@@ -392,7 +429,7 @@
 
       <!-- Реферальная плашка - показывается только при utm_source=referral -->
       <div class="referral-badge" id="referral-badge">
-        <p><span>Тебе это прислал(а) близкий человек.</span><br>Просто нажми play - и позволь себе выдохнуть.</p>
+        <p><span>Тебе это прислал(а) близкий человек.</span><br>Просто нажми play, и позволь себе выдохнуть.</p>
       </div>
 
       <div class="sphere-wrap">
@@ -402,6 +439,12 @@
       <div class="track-eyebrow">Авторская нейроакустика · Демо</div>
       <h1 class="track-title">Баланс стихий</h1>
       <div class="track-author">Екатерина Донна</div>
+
+      <!-- Индикатор приветствия — виден только пока играет welcome -->
+      <div class="welcome-indicator" id="welcome-indicator">
+        <div class="welcome-dot"></div>
+        <span class="welcome-label">Приветствие от Екатерины</span>
+      </div>
 
       <div class="waveform" id="waveform"></div>
 
@@ -457,12 +500,18 @@
   </div>
 
   <!-- CTA-оверлей: мягкое приглашение после значимой паузы -->
-  <!-- Текст согласовать с Катей -->
   <div class="donna-cta-overlay">
     <div class="cta-text">Ты остановился именно здесь. В полной версии есть продолжение.</div>
     <a class="cta-link" href="https://ekaterina-donnat.com/?from=demo-pause">Послушать полностью</a>
   </div>
 
+  <!-- Приветственное аудио от Екатерины -->
+  <audio id="audio-welcome"
+    src="https://audio.ekaterina-donnat.com/promo/welcome.mp3"
+    preload="none">
+  </audio>
+
+  <!-- Основной демо-трек -->
   <audio id="audio-demo"
     src="https://audio.ekaterina-donnat.com/promo/water_energy.mp3"
     preload="none">
@@ -626,12 +675,16 @@
       }
     }
 
-    // ── ПЛЕЕР ────────────────────────────────────────────────────────────
+    // ── ПЛЕЕР С ПРИВЕТСТВИЕМ ─────────────────────────────────────────────
+    var welcomeAudio = document.getElementById('audio-welcome');
     var audio = document.getElementById('audio-demo');
     var isPlaying = false;
     var unlocked = false;
+    var welcomePlayed = false;
+    var inWelcome = false;
     var BARS = 56;
     var wf = document.getElementById('waveform');
+    var welcomeIndicator = document.getElementById('welcome-indicator');
 
     for (var i = 0; i < BARS; i++) {
       var h = 8 + Math.random()*28;
@@ -641,17 +694,41 @@
       wf.appendChild(bar);
     }
 
-    // Pause Detection — мягкий CTA после значимой паузы
+    // Pause Detection — мягкий CTA после значимой паузы (только на основном треке)
     if (typeof window.setupPauseDetection === 'function') {
       window.setupPauseDetection(audio);
     }
 
+    // Приветствие закончилось → запускаем основной трек
+    welcomeAudio.addEventListener('ended', function() {
+      inWelcome = false;
+      welcomePlayed = true;
+      welcomeIndicator.classList.remove('active');
+      audio.play().catch(function() {});
+    });
+
     window.togglePlay = function() {
       if (isPlaying) {
-        audio.pause();
+        // Пауза: останавливаем то, что сейчас играет
+        if (inWelcome) {
+          welcomeAudio.pause();
+        } else {
+          audio.pause();
+        }
         setPlaying(false);
       } else {
-        audio.play().catch(function(){});
+        // Play: если welcome ещё не играл, начинаем с него
+        if (!welcomePlayed && !inWelcome) {
+          inWelcome = true;
+          welcomeIndicator.classList.add('active');
+          welcomeAudio.play().catch(function() {});
+        } else if (inWelcome) {
+          // Возобновляем welcome после паузы
+          welcomeAudio.play().catch(function() {});
+        } else {
+          // Welcome уже прошёл, играем основной
+          audio.play().catch(function() {});
+        }
         setPlaying(true);
 
         // FB Pixel ViewContent + Supabase при первом нажатии play
@@ -672,37 +749,59 @@
       document.getElementById('icon-pause').style.display = v ? 'block' : 'none';
     }
 
-    window.skipBack = function() { audio.currentTime = Math.max(0, audio.currentTime-15); };
-    window.skipForward = function() { audio.currentTime = Math.min(audio.duration||0, audio.currentTime+15); };
+    window.skipBack = function() {
+      if (inWelcome) {
+        // Во время welcome: skip back перематывает welcome
+        welcomeAudio.currentTime = Math.max(0, welcomeAudio.currentTime - 15);
+      } else {
+        audio.currentTime = Math.max(0, audio.currentTime - 15);
+      }
+    };
+
+    window.skipForward = function() {
+      if (inWelcome) {
+        // Во время welcome: skip forward пропускает на основной трек
+        welcomeAudio.pause();
+        inWelcome = false;
+        welcomePlayed = true;
+        welcomeIndicator.classList.remove('active');
+        audio.play().catch(function() {});
+      } else {
+        audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15);
+      }
+    };
 
     window.seekAudio = function(e) {
+      // Перемотка работает только на основном треке
+      if (inWelcome) return;
       var track = document.getElementById('progress-track');
       var rect = track.getBoundingClientRect();
-      var pct = (e.clientX-rect.left)/rect.width;
-      if (audio.duration) audio.currentTime = pct*audio.duration;
+      var pct = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) audio.currentTime = pct * audio.duration;
     };
 
     function formatTime(s) {
       if (isNaN(s)) return '0:00';
-      var m = Math.floor(s/60), sec = Math.floor(s%60);
-      return m+':'+(sec<10?'0':'')+sec;
+      var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
+    // Прогресс-бар реагирует только на основной трек
     audio.addEventListener('timeupdate', function() {
-      var pct = audio.duration ? (audio.currentTime/audio.duration)*100 : 0;
-      document.getElementById('progress-fill').style.width = pct+'%';
-      document.getElementById('progress-thumb').style.left = pct+'%';
+      var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-thumb').style.left = pct + '%';
       document.getElementById('time-cur').textContent = formatTime(audio.currentTime);
 
       var bars = wf.querySelectorAll('.wave-bar');
-      var idx = Math.floor((audio.currentTime/(audio.duration||1))*BARS);
+      var idx = Math.floor((audio.currentTime / (audio.duration || 1)) * BARS);
       bars.forEach(function(b, i) {
-        b.classList.remove('played','active');
+        b.classList.remove('played', 'active');
         if (i < idx) b.classList.add('played');
         if (i === idx) b.classList.add('active');
       });
 
-      // FB Pixel Lead + Supabase на 3 минутах
+      // FB Pixel Lead + Supabase на 3 минутах основного трека
       if (!window._fbLeadFired && audio.currentTime >= 180) {
         window._fbLeadFired = true;
         trackDemo('lead');
@@ -712,7 +811,7 @@
       }
 
       // Разблокировка кнопки на 90%
-      if (!unlocked && audio.duration && audio.currentTime/audio.duration > 0.9) unlock();
+      if (!unlocked && audio.duration && audio.currentTime / audio.duration > 0.9) unlock();
     });
 
     audio.addEventListener('loadedmetadata', function() {
@@ -733,7 +832,6 @@
     }
 
     window.goToPurchase = function() {
-      // Программная проверка - не только CSS
       if (!unlocked) return;
       window.location.href = 'https://ekaterina-donnat.com/?from=demo&utm_source=' + source + '#buy';
     };
