@@ -456,6 +456,13 @@
     </div>
   </div>
 
+  <!-- CTA-оверлей: мягкое приглашение после значимой паузы -->
+  <!-- Текст согласовать с Катей -->
+  <div class="donna-cta-overlay">
+    <div class="cta-text">Ты остановился именно здесь. В полной версии есть продолжение.</div>
+    <a class="cta-link" href="https://ekaterina-donnat.com/?from=demo-pause">Послушать полностью</a>
+  </div>
+
   <audio id="audio-demo"
     src="https://audio.ekaterina-donnat.com/promo/water_energy.mp3"
     preload="none">
@@ -632,6 +639,11 @@
       bar.className = 'wave-bar';
       bar.style.height = h + 'px';
       wf.appendChild(bar);
+    }
+
+    // Pause Detection — мягкий CTA после значимой паузы
+    if (typeof window.setupPauseDetection === 'function') {
+      window.setupPauseDetection(audio);
     }
 
     window.togglePlay = function() {
