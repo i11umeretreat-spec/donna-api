@@ -195,6 +195,95 @@
     }
   }
 
+  // ─── Breath Sync ──────────────────────────────────────────────────────────
+  // Только для index.html (закрытый плеер).
+  // Когда аудио достигает блока «Грудь», синхронизирует пульс сферы
+  // с парасимпатическим ритмом дыхания: вдох 4 сек, выдох 6 сек.
+  //
+  // Таймкоды обновляются после финальной записи Кати — одной константой вверху.
+  // JS управляет только className и CSS custom property, не инлайн-стилями.
+
+  var BREATH_SYNC = {
+    start:   742,   // секунда начала блока «Грудь» (обновить после записи)
+    end:    1108,   // секунда конца блока «Грудь» (обновить после записи)
+    fadeIn:    8,   // секунд плавного входа в ритм 4/6
+    fadeOut:   8,   // секунд плавного выхода
+  };
+
+  // Длительности CSS-анимации sphereBreathe:
+  // обычный режим — 4 с (соответствует mood-профилям)
+  // breathing sync — 10 с (4 вдох + 6 выдох = один полный цикл)
+  var BREATH_DURATION_NORMAL  = 4;
+  var BREATH_DURATION_TARGET  = 10;
+
+  // Скорость вращения колец сферы (sAngle increment per frame)
+  var SPHERE_ROTATION_NORMAL  = 0.004;
+  var SPHERE_ROTATION_TARGET  = 0.001;
+
+  function easeInOutSine(t) {
+    return -(Math.cos(Math.PI * t) - 1) / 2;
+  }
+
+  function lerpBreath(a, b, t) {
+    return a + (b - a) * easeInOutSine(Math.max(0, Math.min(1, t)));
+  }
+
+  function initBreathSync() {
+    var audioEl = document.getElementById('mainAudio');
+    if (!audioEl) return; // не index.html — тихо выходим
+
+    var sphereWrap = document.querySelector('.sphere-wrap');
+    if (!sphereWrap) return;
+
+    var activeSync = false;
+
+    audioEl.addEventListener('timeupdate', function() {
+      var t = audioEl.currentTime;
+      var bs = BREATH_SYNC;
+
+      if (t < bs.start - bs.fadeIn || t > bs.end + bs.fadeOut) {
+        if (activeSync) {
+          activeSync = false;
+          sphereWrap.classList.remove('breath-sync');
+          document.documentElement.style.setProperty('--breath-duration', BREATH_DURATION_NORMAL + 's');
+          window.moodConfig.breathSyncRotation = SPHERE_ROTATION_NORMAL;
+        }
+        return;
+      }
+
+      activeSync = true;
+      sphereWrap.classList.add('breath-sync');
+
+      var progress;
+      if (t < bs.start) {
+        // Фейд-ин: до начала блока
+        progress = (t - (bs.start - bs.fadeIn)) / bs.fadeIn;
+      } else if (t > bs.end) {
+        // Фейд-аут: после конца блока
+        progress = 1 - (t - bs.end) / bs.fadeOut;
+      } else {
+        // Внутри блока — полный ритм
+        progress = 1;
+      }
+
+      var duration = lerpBreath(BREATH_DURATION_NORMAL, BREATH_DURATION_TARGET, progress);
+      var rotation = lerpBreath(SPHERE_ROTATION_NORMAL, SPHERE_ROTATION_TARGET, progress);
+
+      document.documentElement.style.setProperty('--breath-duration', duration.toFixed(2) + 's');
+      // Передаём скорость вращения в moodConfig — loop() в index.html читает отсюда
+      window.moodConfig.breathSyncRotation = rotation;
+    });
+
+    // Сброс при паузе
+    audioEl.addEventListener('pause', function() {
+      if (!activeSync) return;
+      sphereWrap.classList.remove('breath-sync');
+      document.documentElement.style.setProperty('--breath-duration', BREATH_DURATION_NORMAL + 's');
+      window.moodConfig.breathSyncRotation = SPHERE_ROTATION_NORMAL;
+      activeSync = false;
+    });
+  }
+
   // ─── Запуск ───────────────────────────────────────────────────────────────
 
   function init() {
@@ -223,5 +312,12 @@
   // Запускаем сразу — до DOMContentLoaded,
   // чтобы canvas мог прочитать moodConfig при инициализации
   init();
+
+  // BreathSync требует DOM (mainAudio, .sphere-wrap) — запускаем после его готовности
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBreathSync);
+  } else {
+    initBreathSync();
+  }
 
 })();
