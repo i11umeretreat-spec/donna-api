@@ -5,6 +5,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { TRACKS } = require('./_tracks');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -21,28 +22,9 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const STREAM_EXPIRY = 60 * 60 * 6;
-const DOWNLOAD_EXPIRY = 60 * 60 * 24;
-const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN || '';
-
-// Маппинг track-id → реальное имя файла в R2 + метаданные
-const TRACKS = {
-    'track-01': { file: 'release/money_freedom.mp3', title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза' },
-    'track-02': { file: 'release/negative_cleansing.mp3', title: 'Очищение от негативных программ', type: 'Сеанс самогипноза', duration: '51:12' },
-    'track-03': { file: 'release/be_yourself.mp3', title: 'Роскошь быть собой', type: 'Женская практика', duration: '24:41' },
-    'track-04': { file: 'release/true_confidence.mp3', title: 'Укрепление уверенности', type: 'Мягкие нейрокорректоры', duration: '29:57' },
-    'track-05': { file: 'release/happiness_creator.mp3', title: 'Творец своего счастья', type: 'Сеанс самогипноза', duration: '27:20' },
-    'track-06': { file: 'release/stop_fighting.mp3', title: 'Против апатии и прокрастинации', type: 'Гипномедитация', duration: '32:41' },
-    'track-07': { file: 'release/body_reboot.mp3', title: 'Перезапуск здоровья и молодости', type: 'Сеанс самогипноза', duration: '34:24' },
-    'track-08': { file: 'release/personal_boundaries.mp3', title: 'Личные границы', type: 'Гипномедитация', duration: '25:04' },
-    'track-09': { file: 'release/Shults_2.mp3', title: 'Расслабление по Шульцу', type: 'Самогипноз', duration: '40:32' },
-    'track-10': { file: 'release/crock.mp3', title: 'Крокодил: обнуление тревоги', type: 'Метафорический сеанс гипноза' },
-    'track-11': { file: 'release/immune_booster.mp3', title: 'Иммунный бустер', type: 'Аудиопрактика' },
-    // Добавить когда Катя загрузит:
-    'track-12': { file: 'release/weight_release.mp3', title: 'Сеанс самогипноза, снижение веса', type: 'Глубинная перестройка' },
-    // 'track-13': { file: 'release/three_totems.mp3', title: 'Три Тотема', type: 'Ресурсный транс' },
-    // 'track-14': { file: 'release/goals.mp3', title: 'Достижение целей', type: 'Активация целевого мышления' },
-};
+const STREAM_EXPIRY   = 60 * 45;       // 45 минут — достаточно для сессии, нельзя расшарить
+const DOWNLOAD_EXPIRY = 60 * 60 * 24;  // 24 часа — для скачивания нормально
+const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN; // без fallback на ''
 
 async function generateSignedUrl(trackId, type, expiry) {
     const track = TRACKS[trackId];
@@ -71,8 +53,8 @@ async function buildTrackList(trackIds) {
                 ]);
                 return {
                     id,
-                    title: track.title,
-                    type: track.type,
+                    title:    track.title,
+                    type:     track.type,
                     duration: track.duration || null,
                     streamUrl,
                     downloadUrl,
@@ -83,7 +65,7 @@ async function buildTrackList(trackIds) {
 
 exports.handler = async (event) => {
     const headers = {
-        'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
+        'Access-Control-Allow-Origin':  'https://app.ekaterina-donnat.com',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -98,8 +80,8 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'No token provided' }) };
     }
 
-    // Lineup Mode - все доступные треки
-    if (token === LINEUP_MODE_TOKEN) {
+    // Lineup Mode — переменная должна быть задана в Netlify env, иначе не пропускаем
+    if (LINEUP_MODE_TOKEN && token === LINEUP_MODE_TOKEN) {
         const allIds = Object.keys(TRACKS);
         const tracks = await buildTrackList(allIds);
         return {
