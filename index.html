@@ -560,6 +560,78 @@
         }
 
         .btn-secondary:hover { background: rgba(212,175,55,0.08); border-color: #d4af37; }
+
+        /* ─── ACCESS GATE ─── */
+        .access-gate {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 48px 24px;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+
+        .access-gate-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 1px solid rgba(212,175,55,0.2);
+            background: rgba(212,175,55,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .access-gate-title {
+            font-family: 'Fraunces', serif;
+            font-weight: 200;
+            font-size: 24px;
+            color: rgba(248,250,252,0.95);
+            line-height: 1.2;
+            margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .access-gate-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 300;
+            font-size: 13px;
+            line-height: 1.75;
+            color: rgba(248,250,252,0.45);
+            margin-bottom: 36px;
+        }
+
+        .access-gate-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 15px 24px;
+            background: #d4af37;
+            color: #151933;
+            border-radius: 8px;
+            text-decoration: none;
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            transition: opacity 0.2s, transform 0.2s;
+            margin-bottom: 20px;
+        }
+
+        .access-gate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .access-gate-hint {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 300;
+            font-size: 11px;
+            color: rgba(248,250,252,0.25);
+            line-height: 1.6;
+            letter-spacing: 0.02em;
+        }
     </style>
 </head>
 <body>
@@ -1133,8 +1205,18 @@
         }
 
         if (!token) {
-            isDemo = true;
-            renderTracks([DEMO_TRACK], false, true);
+            container.innerHTML = '<div class="access-gate">' +
+                '<div class="access-gate-icon">' +
+                    '<svg width="32" height="32" viewBox="0 0 32 32" fill="none">' +
+                        '<rect x="8" y="14" width="16" height="14" rx="2" stroke="rgba(212,175,55,0.5)" stroke-width="1.5"/>' +
+                        '<path d="M11 14v-4a5 5 0 0110 0v4" stroke="rgba(212,175,55,0.5)" stroke-width="1.5" stroke-linecap="round"/>' +
+                    '</svg>' +
+                '</div>' +
+                '<div class="access-gate-title">Доступ по персональной ссылке</div>' +
+                '<div class="access-gate-text">Ссылка на плеер приходит в письме после оплаты. Если вы уже купили программу, проверьте входящие.</div>' +
+                '<a href="https://app.ekaterina-donnat.com/demo" class="access-gate-btn">Послушать демо</a>' +
+                '<div class="access-gate-hint">Хотите попробовать перед покупкой? Демо доступно без регистрации.</div>' +
+            '</div>';
             return;
         }
 
