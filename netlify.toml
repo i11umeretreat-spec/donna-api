@@ -1,0 +1,12 @@
+[build]
+  command    = "npm audit --audit-level=critical"
+  functions  = "netlify/functions"
+  publish    = "."
+
+[functions]
+  node_bundler = "esbuild"
+
+# Если audit найдёт критические уязвимости — деплой падает.
+# Уровень "critical" (не "high") чтобы не ломать билд на уже известные
+# умеренные issues в AWS SDK или Supabase client.
+# Когда npm audit будет чистым — можно поднять до --audit-level=high.
