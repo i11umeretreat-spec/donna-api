@@ -21,7 +21,7 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN || '';
 
 // Маппинг track-id → реальный путь в R2
 const TRACK_FILES = {
@@ -69,7 +69,7 @@ exports.handler = async (event) => {
 
     // Lineup Mode - пропускаем без проверки
     if (token === LINEUP_MODE_TOKEN) {
-        console.log('🏄 Lineup Mode download:', trackId);
+
     } else {
         // Обычный клиент - проверяем в Supabase
         const { data: purchase, error } = await supabase
