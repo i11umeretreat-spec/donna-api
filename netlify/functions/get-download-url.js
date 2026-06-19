@@ -5,6 +5,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { TRACKS } = require('./_tracks');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -21,27 +22,11 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN || '';
-
-// Маппинг track-id → реальный путь в R2
-const TRACK_FILES = {
-    'track-01': 'release/money_freedom.mp3',
-    'track-02': 'release/negative_cleansing.mp3',
-    'track-03': 'release/be_yourself.mp3',
-    'track-04': 'release/true_confidence.mp3',
-    'track-05': 'release/happiness_creator.mp3',
-    'track-06': 'release/stop_fighting.mp3',
-    'track-07': 'release/body_reboot.mp3',
-    'track-08': 'release/personal_boundaries.mp3',
-    'track-09': 'release/Shults_2.mp3',
-    'track-10': 'release/crock.mp3',
-    'track-11': 'release/immune_booster.mp3',
-    'track-12': 'release/weight_release.mp3',
-};
+const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN; // без fallback на ''
 
 exports.handler = async (event) => {
     const headers = {
-        'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
+        'Access-Control-Allow-Origin':  'https://app.ekaterina-donnat.com',
         'Access-Control-Allow-Methods': 'POST',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -67,11 +52,9 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers, body: 'Missing token or trackId' };
     }
 
-    // Lineup Mode - пропускаем без проверки
-    if (token === LINEUP_MODE_TOKEN) {
-
-    } else {
-        // Обычный клиент - проверяем в Supabase
+    // Lineup Mode — переменная должна быть задана в Netlify env, иначе не пропускаем
+    if (!LINEUP_MODE_TOKEN || token !== LINEUP_MODE_TOKEN) {
+        // Обычный клиент — проверяем в Supabase
         const { data: purchase, error } = await supabase
             .from('purchases')
             .select('track_ids, email')
@@ -87,17 +70,19 @@ exports.handler = async (event) => {
         }
     }
 
-    // Проверяем что файл существует в маппинге
-    const filePath = TRACK_FILES[trackId];
-    if (!filePath) {
+    // Проверяем что трек существует в маппинге
+    const track = TRACKS[trackId];
+    if (!track) {
         return { statusCode: 404, headers, body: 'Track not found' };
     }
 
     // Генерируем подписанный URL на 24 часа
+    // Имя файла — читаемое название трека, а не "track-01.mp3"
+    const filename = `${track.title}.mp3`;
     const command = new GetObjectCommand({
         Bucket: BUCKET,
-        Key: filePath,
-        ResponseContentDisposition: `attachment; filename="${trackId}.mp3"`,
+        Key:    track.file,
+        ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`,
     });
 
     const signedUrl = await getSignedUrl(r2, command, { expiresIn: 86400 });
