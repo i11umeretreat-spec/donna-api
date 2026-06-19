@@ -23,7 +23,7 @@ const r2 = new S3Client({
 const BUCKET = process.env.R2_BUCKET_NAME;
 const STREAM_EXPIRY = 60 * 60 * 6;
 const DOWNLOAD_EXPIRY = 60 * 60 * 24;
-const LINEUP_MODE_TOKEN = 'lineup-dev-permanent';
+const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN || '';
 
 // Маппинг track-id → реальное имя файла в R2 + метаданные
 const TRACKS = {
