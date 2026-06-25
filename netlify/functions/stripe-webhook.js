@@ -165,7 +165,7 @@ async function sendEmail(email, token, product) {
     const playerUrl = `https://app.ekaterina-donnat.com?token=${token}`;
 
     await resend.emails.send({
-        from:    'Ekaterina Donna <hello@ekaterina-donnat.com>',
+        from:    'Ekaterina Donnat <hello@ekaterina-donnat.com>',
         to:      email,
         subject: `Твоя практика готова — ${product.name}`,
         html:    buildEmail(playerUrl, product),
