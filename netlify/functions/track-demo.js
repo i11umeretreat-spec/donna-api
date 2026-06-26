@@ -1,7 +1,4 @@
 // netlify/functions/track-demo.js
-// Лёгкий трекер событий демо-плеера
-// POST { event: 'pageview'|'play'|'lead', source: 'paid'|'referral'|'pinterest'|'organic' }
-
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -12,7 +9,6 @@ const supabase = createClient(
 const VALID_EVENTS  = ['pageview', 'play', 'lead'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
-// CORS — только наш домен
 const CORS_HEADERS = {
     'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -21,27 +17,47 @@ const CORS_HEADERS = {
 };
 
 exports.handler = async (event) => {
-    // Preflight — браузер отправляет перед реальным запросом
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers: CORS_HEADERS, body: '' };
     }
-
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, headers: CORS_HEADERS, body: '{"error":"Method Not Allowed"}' };
     }
 
     let body;
-    const { data, error } = await supabase
-    .from('demo_events')
-    .insert({
-        event: eventName,
-        source: safeSource,
-        created_at: new Date().toISOString(),
-    });
+    try {
+        body = JSON.parse(event.body);
+    } catch {
+        return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid JSON"}' };
+    }
 
-console.error('insert result:', JSON.stringify({ data, error }));
+    const { event: eventName, source } = body;
 
-if (error) {
-    console.error('track-demo supabase error:', error.message, error.code);
-    return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
-}
+    if (!VALID_EVENTS.includes(eventName)) {
+        return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid event"}' };
+    }
+
+    const safeSource = VALID_SOURCES.includes(source) ? source : 'organic';
+
+    try {
+        const { data, error } = await supabase
+            .from('demo_events')
+            .insert({
+                event: eventName,
+                source: safeSource,
+                created_at: new Date().toISOString(),
+            });
+
+        console.error('insert result:', JSON.stringify({ data, error }));
+
+        if (error) {
+            console.error('track-demo supabase error:', error.message, error.code);
+            return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
+        }
+
+        return { statusCode: 200, headers: CORS_HEADERS, body: '{"ok":true}' };
+    } catch (err) {
+        console.error('track-demo error:', err);
+        return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"Server error"}' };
+    }
+};
