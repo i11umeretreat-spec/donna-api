@@ -47,10 +47,7 @@ exports.handler = async (event) => {
                 source: safeSource,
                 created_at: new Date().toISOString(),
             });
-
-        console.error('insert result:', JSON.stringify({ data, error }));
-
-        if (error) {
+            if (error) {
             console.error('track-demo supabase error:', error.message, error.code);
             return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
         }
