@@ -32,31 +32,21 @@ exports.handler = async (event) => {
 
     let body;
     try {
-        body = JSON.parse(event.body);
-    } catch {
-        return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid JSON"}' };
+    const { error } = await supabase
+        .from('demo_events')
+        .insert({
+            event: eventName,
+            source: safeSource,
+            created_at: new Date().toISOString(),
+        });
+
+    if (error) {
+        console.error('track-demo supabase error:', error.message, error.code);
+        return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
     }
 
-    const { event: eventName, source } = body;
-
-    if (!VALID_EVENTS.includes(eventName)) {
-        return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid event"}' };
-    }
-
-    const safeSource = VALID_SOURCES.includes(source) ? source : 'organic';
-
-    try {
-        await supabase
-            .from('demo_events')
-            .insert({
-                event: eventName,
-                source: safeSource,
-                created_at: new Date().toISOString(),
-            });
-
-        return { statusCode: 200, headers: CORS_HEADERS, body: '{"ok":true}' };
-    } catch (err) {
-        console.error('track-demo error:', err);
-        return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"Server error"}' };
-    }
-};
+    return { statusCode: 200, headers: CORS_HEADERS, body: '{"ok":true}' };
+} catch (err) {
+    console.error('track-demo error:', err);
+    return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"Server error"}' };
+}
