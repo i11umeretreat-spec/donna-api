@@ -1,6 +1,9 @@
 // netlify/functions/verify-token.js
-// Проверяет токен в purchases и donna_guests
-// Возвращает подписанные URL с правильными путями к R2
+const Sentry = require('@sentry/serverless');
+Sentry.AWSLambda.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 0.2,
+});
 
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -21,12 +24,11 @@ const r2 = new S3Client({
     },
 });
 
-const BUCKET          = process.env.R2_BUCKET_NAME;
-const STREAM_EXPIRY   = 60 * 45;       // 45 минут — достаточно для сессии
-const DOWNLOAD_EXPIRY = 60 * 60 * 24;  // 24 часа — для скачивания
-const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN; // без fallback на ''
+const BUCKET = process.env.R2_BUCKET_NAME;
+const STREAM_EXPIRY = 60 * 45;
+const DOWNLOAD_EXPIRY = 60 * 60 * 24;
+const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN;
 
-// Пишем подозрительные события в security_log (fire-and-forget, не блокируем ответ)
 function logSecurityEvent(event, ip, details) {
     supabase
         .from('security_log')
@@ -66,20 +68,20 @@ async function buildTrackList(trackIds) {
                     generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY),
                 ]);
                 return {
-                    id:          id,
-                    title:       track.title,
-                    type:        track.type,
-                    duration:    track.duration || null,
-                    streamUrl:   results[0],
+                    id: id,
+                    title: track.title,
+                    type: track.type,
+                    duration: track.duration || null,
+                    streamUrl: results[0],
                     downloadUrl: results[1],
                 };
             })
     );
 }
 
-exports.handler = async function(event) {
+exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
     var headers = {
-        'Access-Control-Allow-Origin':  'https://app.ekaterina-donnat.com',
+        'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
         'Access-Control-Allow-Methods': 'GET',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -89,24 +91,22 @@ exports.handler = async function(event) {
     }
 
     var token = event.queryStringParameters && event.queryStringParameters.token;
-    var ip    = getClientIp(event);
+    var ip = getClientIp(event);
 
     if (!token) {
         return { statusCode: 400, headers: headers, body: JSON.stringify({ error: 'No token provided' }) };
     }
 
-    // Lineup Mode — переменная должна быть задана в Netlify env
     if (LINEUP_MODE_TOKEN && token === LINEUP_MODE_TOKEN) {
         var allIds = Object.keys(TRACKS);
         var tracks = await buildTrackList(allIds);
         return {
             statusCode: 200,
-            headers:    headers,
-            body:       JSON.stringify({ valid: true, type: 'lineup', email: 'dev@thelineup.design', tracks: tracks }),
+            headers: headers,
+            body: JSON.stringify({ valid: true, type: 'lineup', email: 'dev@thelineup.design', tracks: tracks }),
         };
     }
 
-    // 1. Ищем в покупках
     var purchaseResult = await supabase
         .from('purchases')
         .select('track_ids, email, created_at')
@@ -117,18 +117,17 @@ exports.handler = async function(event) {
         var purchaseTracks = await buildTrackList(purchaseResult.data.track_ids);
         return {
             statusCode: 200,
-            headers:    headers,
-            body:       JSON.stringify({
-                valid:       true,
-                type:        'purchase',
-                email:       purchaseResult.data.email,
-                tracks:      purchaseTracks,
+            headers: headers,
+            body: JSON.stringify({
+                valid: true,
+                type: 'purchase',
+                email: purchaseResult.data.email,
+                tracks: purchaseTracks,
                 purchasedAt: purchaseResult.data.created_at,
             }),
         };
     }
 
-    // 2. Ищем в гостях
     var guestResult = await supabase
         .from('donna_guests')
         .select('email, promo_track, created_at')
@@ -138,23 +137,21 @@ exports.handler = async function(event) {
     if (guestResult.data) {
         return {
             statusCode: 200,
-            headers:    headers,
-            body:       JSON.stringify({
-                valid:      true,
-                type:       'guest',
-                email:      guestResult.data.email,
-                tracks:     [],
+            headers: headers,
+            body: JSON.stringify({
+                valid: true,
+                type: 'guest',
+                email: guestResult.data.email,
+                tracks: [],
                 promoTrack: guestResult.data.promo_track,
             }),
         };
     }
 
-    // 3. Не нашли — логируем и возвращаем 403
-    // Первые 20 символов токена достаточно для диагностики, не храним полный
     logSecurityEvent('invalid_token', ip, {
         token_prefix: token.substring(0, 20),
-        user_agent:   event.headers['user-agent'] || 'unknown',
+        user_agent: event.headers['user-agent'] || 'unknown',
     });
 
     return { statusCode: 403, headers: headers, body: JSON.stringify({ error: 'Invalid or expired token' }) };
-};
+});
