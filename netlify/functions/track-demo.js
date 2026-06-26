@@ -31,22 +31,17 @@ exports.handler = async (event) => {
     }
 
     let body;
-    try {
-    const { error } = await supabase
-        .from('demo_events')
-        .insert({
-            event: eventName,
-            source: safeSource,
-            created_at: new Date().toISOString(),
-        });
+    const { data, error } = await supabase
+    .from('demo_events')
+    .insert({
+        event: eventName,
+        source: safeSource,
+        created_at: new Date().toISOString(),
+    });
 
-    if (error) {
-        console.error('track-demo supabase error:', error.message, error.code);
-        return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
-    }
+console.error('insert result:', JSON.stringify({ data, error }));
 
-    return { statusCode: 200, headers: CORS_HEADERS, body: '{"ok":true}' };
-} catch (err) {
-    console.error('track-demo error:', err);
-    return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"Server error"}' };
+if (error) {
+    console.error('track-demo supabase error:', error.message, error.code);
+    return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
 }
