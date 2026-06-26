@@ -1,6 +1,9 @@
 // netlify/functions/get-download-url.js
-// Генерирует подписанный URL для скачивания
-// Проверяет purchases + пропускает lineup-dev-permanent
+const Sentry = require('@sentry/serverless');
+Sentry.AWSLambda.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 0.2,
+});
 
 const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
@@ -22,11 +25,11 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN; // без fallback на ''
+const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN;
 
-exports.handler = async (event) => {
+exports.handler = Sentry.AWSLambda.wrapHandler(async (event) => {
     const headers = {
-        'Access-Control-Allow-Origin':  'https://app.ekaterina-donnat.com',
+        'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
         'Access-Control-Allow-Methods': 'POST',
         'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -52,9 +55,7 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers, body: 'Missing token or trackId' };
     }
 
-    // Lineup Mode — переменная должна быть задана в Netlify env, иначе не пропускаем
     if (!LINEUP_MODE_TOKEN || token !== LINEUP_MODE_TOKEN) {
-        // Обычный клиент — проверяем в Supabase
         const { data: purchase, error } = await supabase
             .from('purchases')
             .select('track_ids, email')
@@ -70,18 +71,15 @@ exports.handler = async (event) => {
         }
     }
 
-    // Проверяем что трек существует в маппинге
     const track = TRACKS[trackId];
     if (!track) {
         return { statusCode: 404, headers, body: 'Track not found' };
     }
 
-    // Генерируем подписанный URL на 24 часа
-    // Имя файла — читаемое название трека, а не "track-01.mp3"
     const filename = `${track.title}.mp3`;
     const command = new GetObjectCommand({
         Bucket: BUCKET,
-        Key:    track.file,
+        Key: track.file,
         ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`,
     });
 
@@ -92,4 +90,4 @@ exports.handler = async (event) => {
         headers,
         body: JSON.stringify({ url: signedUrl }),
     };
-};
+});
