@@ -204,19 +204,17 @@
       margin-bottom: 36px;
     }
 
-    /* Плашка приветствия */
-    .welcome-indicator {
-      display: none;
+    /* Кнопка приветствия — отдельная, необязательная */
+    .welcome-btn {
+      display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 16px;
-      opacity: 0;
-      transition: opacity 0.6s;
-    }
-
-    .welcome-indicator.active {
-      display: flex;
-      opacity: 1;
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font-family: inherit;
     }
 
     .welcome-dot {
@@ -224,6 +222,11 @@
       height: 6px;
       border-radius: 50%;
       background: #d4af37;
+      opacity: 0.4;
+      transition: opacity 0.3s;
+    }
+
+    .welcome-btn.playing .welcome-dot {
       animation: welcomePulse 1.5s ease-in-out infinite;
     }
 
@@ -239,7 +242,10 @@
       font-style: italic;
       font-family: 'Fraunces', serif;
       font-weight: 200;
+      transition: color 0.3s;
     }
+
+    .welcome-btn:hover .welcome-label { color: rgba(248,250,252,0.75); }
 
     .waveform {
       width: 100%;
@@ -440,11 +446,11 @@
       <h1 class="track-title">Баланс стихий</h1>
       <div class="track-author">Екатерина Донна</div>
 
-      <!-- Индикатор приветствия — виден только пока играет welcome -->
-      <div class="welcome-indicator" id="welcome-indicator">
-        <div class="welcome-dot"></div>
-        <span class="welcome-label">Приветствие от Екатерины</span>
-      </div>
+      <!-- Приветствие от Екатерины — отдельная необязательная кнопка -->
+      <button type="button" class="welcome-btn" id="welcome-btn" onclick="toggleWelcome()">
+        <span class="welcome-dot" id="welcome-dot"></span>
+        <span class="welcome-label" id="welcome-label">Послушать приветствие от Екатерины</span>
+      </button>
 
       <div class="waveform" id="waveform"></div>
 
@@ -523,12 +529,25 @@
     // UTM источник
     var source = window.TRAFFIC_SOURCE || 'direct';
 
+    // Идентификатор сессии — чтобы связывать pageview/play/lead одного посетителя
+    function getSessionId() {
+      var sid = sessionStorage.getItem('donna_session_id');
+      if (!sid) {
+        sid = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'sid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        sessionStorage.setItem('donna_session_id', sid);
+      }
+      return sid;
+    }
+    var sessionId = getSessionId();
+
     // Трекер событий в Supabase
     function trackDemo(eventName) {
       fetch('/.netlify/functions/track-demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: eventName, source: source })
+        body: JSON.stringify({ event: eventName, source: source, session_id: sessionId })
       }).catch(function() {});
     }
 
@@ -680,11 +699,11 @@
     var audio = document.getElementById('audio-demo');
     var isPlaying = false;
     var unlocked = false;
-    var welcomePlayed = false;
-    var inWelcome = false;
+    var welcomePlaying = false;
     var BARS = 56;
     var wf = document.getElementById('waveform');
-    var welcomeIndicator = document.getElementById('welcome-indicator');
+    var welcomeBtn = document.getElementById('welcome-btn');
+    var welcomeLabel = document.getElementById('welcome-label');
 
     for (var i = 0; i < BARS; i++) {
       var h = 8 + Math.random()*28;
@@ -699,36 +718,44 @@
       window.setupPauseDetection(audio);
     }
 
-    // Приветствие закончилось → запускаем основной трек
+    // Приветствие — отдельная, необязательная дорожка. Не блокирует и не запускает основной трек.
     welcomeAudio.addEventListener('ended', function() {
-      inWelcome = false;
-      welcomePlayed = true;
-      welcomeIndicator.classList.remove('active');
-      audio.play().catch(function() {});
+      setWelcomePlaying(false);
     });
+
+    window.toggleWelcome = function() {
+      if (welcomePlaying) {
+        welcomeAudio.pause();
+        setWelcomePlaying(false);
+        return;
+      }
+      // Не даём звучать двум дорожкам одновременно
+      if (isPlaying) {
+        audio.pause();
+        setPlaying(false);
+      }
+      welcomeAudio.play().catch(function() {});
+      setWelcomePlaying(true);
+      trackDemo('welcome_play');
+    };
+
+    function setWelcomePlaying(v) {
+      welcomePlaying = v;
+      welcomeBtn.classList.toggle('playing', v);
+      welcomeLabel.textContent = v ? 'Приветствие от Екатерины' : 'Послушать приветствие от Екатерины';
+    }
 
     window.togglePlay = function() {
       if (isPlaying) {
-        // Пауза: останавливаем то, что сейчас играет
-        if (inWelcome) {
-          welcomeAudio.pause();
-        } else {
-          audio.pause();
-        }
+        audio.pause();
         setPlaying(false);
       } else {
-        // Play: если welcome ещё не играл, начинаем с него
-        if (!welcomePlayed && !inWelcome) {
-          inWelcome = true;
-          welcomeIndicator.classList.add('active');
-          welcomeAudio.play().catch(function() {});
-        } else if (inWelcome) {
-          // Возобновляем welcome после паузы
-          welcomeAudio.play().catch(function() {});
-        } else {
-          // Welcome уже прошёл, играем основной
-          audio.play().catch(function() {});
+        // Не даём звучать двум дорожкам одновременно
+        if (welcomePlaying) {
+          welcomeAudio.pause();
+          setWelcomePlaying(false);
         }
+        audio.play().catch(function() {});
         setPlaying(true);
 
         // FB Pixel ViewContent + Supabase при первом нажатии play
@@ -750,30 +777,14 @@
     }
 
     window.skipBack = function() {
-      if (inWelcome) {
-        // Во время welcome: skip back перематывает welcome
-        welcomeAudio.currentTime = Math.max(0, welcomeAudio.currentTime - 15);
-      } else {
-        audio.currentTime = Math.max(0, audio.currentTime - 15);
-      }
+      audio.currentTime = Math.max(0, audio.currentTime - 15);
     };
 
     window.skipForward = function() {
-      if (inWelcome) {
-        // Во время welcome: skip forward пропускает на основной трек
-        welcomeAudio.pause();
-        inWelcome = false;
-        welcomePlayed = true;
-        welcomeIndicator.classList.remove('active');
-        audio.play().catch(function() {});
-      } else {
-        audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15);
-      }
+      audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + 15);
     };
 
     window.seekAudio = function(e) {
-      // Перемотка работает только на основном треке
-      if (inWelcome) return;
       var track = document.getElementById('progress-track');
       var rect = track.getBoundingClientRect();
       var pct = (e.clientX - rect.left) / rect.width;
