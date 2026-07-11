@@ -6,7 +6,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
-const VALID_EVENTS  = ['pageview', 'play', 'lead'];
+const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
 const CORS_HEADERS = {
@@ -31,13 +31,16 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid JSON"}' };
     }
 
-    const { event: eventName, source } = body;
+    const { event: eventName, source, session_id } = body;
 
     if (!VALID_EVENTS.includes(eventName)) {
         return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid event"}' };
     }
 
     const safeSource = VALID_SOURCES.includes(source) ? source : 'organic';
+    const safeSessionId = (typeof session_id === 'string' && session_id.length > 0)
+        ? session_id.slice(0, 100)
+        : null;
 
     try {
         const { data, error } = await supabase
@@ -45,6 +48,7 @@ exports.handler = async (event) => {
             .insert({
                 event: eventName,
                 source: safeSource,
+                session_id: safeSessionId,
                 created_at: new Date().toISOString(),
             });
             if (error) {
