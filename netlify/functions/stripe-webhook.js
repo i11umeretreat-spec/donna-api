@@ -2,7 +2,10 @@
 // Обрабатывает checkout.session.completed от Stripe
 // Создаёт токен, пишет в Supabase, отправляет письмо
 
-const stripe  = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// ВАЖНО: в Netlify задан STRIPE_SECRET_KEY_LIVE (и отдельно _TEST), общего
+// STRIPE_SECRET_KEY не существует. Вебхук игнорирует тестовые события ниже
+// (!stripeEvent.livemode), поэтому здесь всегда нужен live-ключ.
+const stripe  = require('stripe')(process.env.STRIPE_SECRET_KEY_LIVE);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto  = require('crypto');
@@ -15,51 +18,86 @@ const supabase = createClient(
 const resend  = new Resend(process.env.RESEND_API_KEY_KATYA);
 const R2_BASE = 'https://audio.ekaterina-donnat.com';
 
-// Маппинг Stripe Payment Link ID → треки + журнал
-const PRODUCTS = {
-    [process.env.STRIPE_STEP_1_ID]: {
-        track_ids: ['track-02', 'track-09', 'track-10', 'track-12'],
-        journal:   `${R2_BASE}/journals/donna_journal_telo.pdf`,
-        name:      'Возвращение в тело',
+// Маппинг Stripe Payment Link ID → треки + журнал + product_type
+//
+// ВАЖНО: собираем из массива и фильтруем неопределённые env-переменные,
+// а не строим объектный литерал напрямую. Раньше несколько ключей
+// одновременно ссылались на process.env.НЕ_СУЩЕСТВУЕТ → все они
+// превращались в один и тот же строковый ключ "undefined" и
+// перезаписывали друг друга (последний в списке побеждал молча).
+// На 31.07 в Netlify живёт только STRIPE_STEP_1_ID из всего списка —
+// остальные ID нужно добавить в env по мере создания ссылок в Stripe.
+const PRODUCT_DEFINITIONS = [
+    {
+        id:         process.env.STRIPE_STEP_1_ID,
+        track_ids:  ['track-02', 'track-09', 'track-10', 'track-12'],
+        journal:    `${R2_BASE}/journals/donna_journal_telo.pdf`,
+        name:       'Возвращение в тело',
+        product_type: 'step_1',
     },
-    [process.env.STRIPE_STEP_2_ID]: {
-        track_ids: ['track-03', 'track-04', 'track-08'],
-        journal:   `${R2_BASE}/journals/donna_journal_sterzhen.pdf`,
-        name:      'Внутренний стержень',
+    {
+        id:         process.env.STRIPE_STEP_2_ID,
+        track_ids:  ['track-03', 'track-04', 'track-08'],
+        journal:    `${R2_BASE}/journals/donna_journal_sterzhen.pdf`,
+        name:       'Внутренний стержень',
+        product_type: 'step_2',
     },
-    [process.env.STRIPE_STEP_3_ID]: {
-        track_ids: ['track-06', 'track-07', 'track-11', 'track-13'],
-        journal:   `${R2_BASE}/journals/donna_journal_impuls.pdf`,
-        name:      'Чистый импульс',
+    {
+        id:         process.env.STRIPE_STEP_3_ID,
+        track_ids:  ['track-06', 'track-07', 'track-11', 'track-13'],
+        journal:    `${R2_BASE}/journals/donna_journal_impuls.pdf`,
+        name:       'Чистый импульс',
+        product_type: 'step_3',
     },
-    [process.env.STRIPE_STEP_4_ID]: {
-        track_ids: ['track-01', 'track-05', 'track-14'],
-        journal:   `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
-        name:      'Масштаб и новая реальность',
+    {
+        id:         process.env.STRIPE_STEP_4_ID,
+        track_ids:  ['track-01', 'track-05', 'track-14'],
+        journal:    `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
+        name:       'Масштаб и новая реальность',
+        product_type: 'step_4',
     },
-    [process.env.STRIPE_ALBUM_ID]: {
-        track_ids: ['track-01','track-02','track-03','track-04','track-05',
-                    'track-06','track-07','track-08','track-09','track-10',
-                    'track-11','track-12','track-13','track-14'],
-        journal:   `${R2_BASE}/journals/donna_journal_complete.pdf`,
-        name:      'Полный альбом',
+    {
+        id:         process.env.STRIPE_ALBUM_ID,
+        track_ids:  ['track-01','track-02','track-03','track-04','track-05',
+                     'track-06','track-07','track-08','track-09','track-10',
+                     'track-11','track-12','track-13','track-14'],
+        journal:    `${R2_BASE}/journals/donna_journal_complete.pdf`,
+        name:       'Полный альбом',
+        product_type: 'full_album',
     },
-    [process.env.STRIPE_FLAGSHIP_ID]: {
-        track_ids: ['track-01', 'track-05', 'track-14'],
-        journal:   `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
-        name:      'Флагманский блок с разбором',
+    {
+        id:         process.env.STRIPE_FLAGSHIP_ID,
+        track_ids:  ['track-01', 'track-05', 'track-14'],
+        journal:    `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
+        name:       'Флагманский блок с разбором',
+        product_type: 'flagship',
     },
-    [process.env.STRIPE_CHECKUP_ID]: {
-        track_ids: [],
-        journal:   null,
-        name:      'Чек-ап сессия',
+    {
+        id:         process.env.STRIPE_CHECKUP_ID,
+        track_ids:  [],
+        journal:    null,
+        name:       'Чек-ап сессия',
+        product_type: null,
     },
-    [process.env.STRIPE_COMBO_ID]: {
-        track_ids: [],
-        journal:   null,
-        name:      'Комбо — трек и чек-ап',
+    {
+        id:         process.env.STRIPE_COMBO_ID,
+        track_ids:  [],
+        journal:    null,
+        name:       'Комбо — трек и чек-ап',
+        product_type: null,
     },
-};
+];
+
+const PRODUCTS = {};
+PRODUCT_DEFINITIONS.forEach(function(def) {
+    if (!def.id) return; // env-переменная ещё не задана — пропускаем, не коллизируем
+    PRODUCTS[def.id] = {
+        track_ids:    def.track_ids,
+        journal:      def.journal,
+        name:         def.name,
+        product_type: def.product_type,
+    };
+});
 
 // Fire-and-forget логирование подозрительных событий
 function logSecurityEvent(eventName, ip, details) {
@@ -141,6 +179,7 @@ exports.handler = async (event) => {
                 stripe_session_id: session.id,
                 utm_source:        utmSource,
                 product_name:      product.name,
+                product_type:      product.product_type,
                 amount:            amountPaid,
                 created_at:        new Date().toISOString(),
             });
