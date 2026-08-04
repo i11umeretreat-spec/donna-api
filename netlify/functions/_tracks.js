@@ -16,9 +16,10 @@ const TRACKS = {
     'track-10': { file: 'release/crock.mp3',              title: 'Крокодил: обнуление тревоги',          type: 'Метафорический сеанс гипноза' },
     'track-11': { file: 'release/immune_booster.mp3',     title: 'Иммунный бустер',                      type: 'Аудиопрактика' },
     'track-12': { file: 'release/weight_release.mp3',     title: 'Сеанс самогипноза, снижение веса',     type: 'Глубинная перестройка' },
-    // Раскомментировать после загрузки файлов в R2:
-    // 'track-13': { file: 'release/three_totems.mp3',   title: 'Три Тотема',         type: 'Ресурсный транс' },
-    // 'track-14': { file: 'release/goals.mp3',          title: 'Достижение целей',   type: 'Активация целевого мышления' },
+    'track-13': { file: 'release/three_totems.mp3',       title: 'Три Тотема',                           type: 'Ресурсный транс' },
+    'track-14': { file: 'release/goals.mp3',               title: 'Достижение целей',                     type: 'Активация целевого мышления' },
+    'track-15': { file: 'release/unlock_emotions.mp3',     title: 'Разблокировка целей и эмоций',         type: 'Эмоциональная разблокировка' },
+    'track-16': { file: 'release/inner_child.mp3',         title: 'Исцеление внутреннего ребёнка',        type: 'Работа с внутренним ребёнком' },
 };
 
 module.exports = { TRACKS };
