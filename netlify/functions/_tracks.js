@@ -20,6 +20,7 @@ const TRACKS = {
     'track-14': { file: 'release/goals.mp3',               title: 'Достижение целей',                     type: 'Активация целевого мышления' },
     'track-15': { file: 'release/unlock_emotions.mp3',     title: 'Разблокировка целей и эмоций',         type: 'Эмоциональная разблокировка' },
     'track-16': { file: 'release/inner_child.mp3',         title: 'Исцеление внутреннего ребёнка',        type: 'Работа с внутренним ребёнком' },
+    'flagship': { file: 'flagship/body_memory.mp3',         title: 'Память тела: код освобождения',        type: '8D нейроакустика',              duration: '26:36' },
 };
 
 module.exports = { TRACKS };

@@ -27,60 +27,64 @@ const R2_BASE = 'https://audio.ekaterina-donnat.com';
 // перезаписывали друг друга (последний в списке побеждал молча).
 // На 31.07 в Netlify живёт только STRIPE_STEP_1_ID из всего списка —
 // остальные ID нужно добавить в env по мере создания ссылок в Stripe.
+// 04.08: у каждой ступени теперь два Payment Link — база и с сопровождением
+// (150/370 у ступеней 1-3, 250/470 у ступени 4). Оба ведут на один и тот же
+// контент, отличается только сопровождающая сессия, поэтому оба ID из пары
+// маппятся на одно и то же определение продукта через ids: [...].
 const PRODUCT_DEFINITIONS = [
     {
-        id:         process.env.STRIPE_STEP_1_ID,
+        ids:        [process.env.STRIPE_STEP_1_BASE_ID, process.env.STRIPE_STEP_1_ESCORT_ID],
         track_ids:  ['track-02', 'track-09', 'track-10', 'track-12'],
         journal:    `${R2_BASE}/journals/donna_journal_telo.pdf`,
         name:       'Возвращение в тело',
         product_type: 'step_1',
     },
     {
-        id:         process.env.STRIPE_STEP_2_ID,
-        track_ids:  ['track-03', 'track-04', 'track-08'],
+        ids:        [process.env.STRIPE_STEP_2_BASE_ID, process.env.STRIPE_STEP_2_ESCORT_ID],
+        track_ids:  ['track-03', 'track-04', 'track-08', 'track-13'],
         journal:    `${R2_BASE}/journals/donna_journal_sterzhen.pdf`,
         name:       'Внутренний стержень',
         product_type: 'step_2',
     },
     {
-        id:         process.env.STRIPE_STEP_3_ID,
-        track_ids:  ['track-06', 'track-07', 'track-11', 'track-13'],
+        ids:        [process.env.STRIPE_STEP_3_BASE_ID, process.env.STRIPE_STEP_3_ESCORT_ID],
+        track_ids:  ['track-06', 'track-07', 'track-11', 'track-16'],
         journal:    `${R2_BASE}/journals/donna_journal_impuls.pdf`,
         name:       'Чистый импульс',
         product_type: 'step_3',
     },
     {
-        id:         process.env.STRIPE_STEP_4_ID,
-        track_ids:  ['track-01', 'track-05', 'track-14'],
+        ids:        [process.env.STRIPE_STEP_4_BASE_ID, process.env.STRIPE_STEP_4_ESCORT_ID],
+        track_ids:  ['track-01', 'track-05', 'track-14', 'track-15'],
         journal:    `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
         name:       'Масштаб и новая реальность',
         product_type: 'step_4',
     },
     {
-        id:         process.env.STRIPE_ALBUM_ID,
+        ids:        [process.env.STRIPE_ALBUM_ID],
         track_ids:  ['track-01','track-02','track-03','track-04','track-05',
                      'track-06','track-07','track-08','track-09','track-10',
-                     'track-11','track-12','track-13','track-14'],
+                     'track-11','track-12','track-13','track-14','track-15','track-16'],
         journal:    `${R2_BASE}/journals/donna_journal_complete.pdf`,
         name:       'Полный альбом',
         product_type: 'full_album',
     },
     {
-        id:         process.env.STRIPE_FLAGSHIP_ID,
-        track_ids:  ['track-01', 'track-05', 'track-14'],
-        journal:    `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
-        name:       'Флагманский блок с разбором',
+        ids:        [process.env.STRIPE_FLAGSHIP_ID],
+        track_ids:  ['flagship'],
+        journal:    null,
+        name:       'Память тела: код освобождения',
         product_type: 'flagship',
     },
     {
-        id:         process.env.STRIPE_CHECKUP_ID,
+        ids:        [process.env.STRIPE_CHECKUP_ID],
         track_ids:  [],
         journal:    null,
         name:       'Чек-ап сессия',
         product_type: null,
     },
     {
-        id:         process.env.STRIPE_COMBO_ID,
+        ids:        [process.env.STRIPE_COMBO_ID],
         track_ids:  [],
         journal:    null,
         name:       'Комбо — трек и чек-ап',
@@ -90,13 +94,15 @@ const PRODUCT_DEFINITIONS = [
 
 const PRODUCTS = {};
 PRODUCT_DEFINITIONS.forEach(function(def) {
-    if (!def.id) return; // env-переменная ещё не задана — пропускаем, не коллизируем
-    PRODUCTS[def.id] = {
-        track_ids:    def.track_ids,
-        journal:      def.journal,
-        name:         def.name,
-        product_type: def.product_type,
-    };
+    def.ids.forEach(function(id) {
+        if (!id) return; // env-переменная ещё не задана — пропускаем, не коллизируем
+        PRODUCTS[id] = {
+            track_ids:    def.track_ids,
+            journal:      def.journal,
+            name:         def.name,
+            product_type: def.product_type,
+        };
+    });
 });
 
 // Fire-and-forget логирование подозрительных событий
