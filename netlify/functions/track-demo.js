@@ -9,14 +9,30 @@ const supabase = createClient(
 const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
-const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-};
+// Хиро-блок живёт на ekaterina-donnat.com (Тильда), демо-плеер на
+// app.ekaterina-donnat.com — обоим нужен доступ к этой функции.
+// Не переключаем на '*': по чеклисту CORS должен быть на конкретные домены.
+const ALLOWED_ORIGINS = [
+    'https://app.ekaterina-donnat.com',
+    'https://ekaterina-donnat.com',
+];
+
+function corsHeaders(requestOrigin) {
+    const allowOrigin = ALLOWED_ORIGINS.includes(requestOrigin)
+        ? requestOrigin
+        : ALLOWED_ORIGINS[0];
+
+    return {
+        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Content-Type': 'application/json',
+    };
+}
 
 exports.handler = async (event) => {
+    const CORS_HEADERS = corsHeaders(event.headers.origin || event.headers.Origin);
+
     if (event.httpMethod === 'OPTIONS') {
         return { statusCode: 200, headers: CORS_HEADERS, body: '' };
     }

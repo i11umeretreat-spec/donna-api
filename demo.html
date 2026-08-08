@@ -547,11 +547,17 @@
     var sessionId = getSessionId();
 
     // Трекер событий в Supabase
+    // track-demo.js и dashboard-data.js понимают только paid/referral/pinterest/organic.
+    // Сырой utm_source (instagram, facebook и т.д.) нужно бакетировать перед отправкой,
+    // иначе dashboard-data.js молча схлопывает всё неопознанное в organic.
+    var SOURCE_BUCKET_MAP = { instagram: 'paid', facebook: 'paid', fb: 'paid', ig: 'paid' };
+
     function trackDemo(eventName) {
+      var bucketedSource = SOURCE_BUCKET_MAP[source.toLowerCase()] || source;
       fetch('/.netlify/functions/track-demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: eventName, source: source, session_id: sessionId })
+        body: JSON.stringify({ event: eventName, source: bucketedSource, session_id: sessionId })
       }).catch(function() {});
     }
 
