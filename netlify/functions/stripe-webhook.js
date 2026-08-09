@@ -172,6 +172,22 @@ exports.handler = async (event) => {
         return { statusCode: 400, body: 'Unknown product' };
     }
 
+    // Идемпотентность: Stripe может повторно доставить один и тот же вебхук
+    // (таймаут, 5xx, обрыв сети до подтверждения). Без этой проверки каждая
+    // повторная доставка создавала вторую запись в purchases с новым token
+    // и второе письмо тому же покупателю. Уникальный индекс на
+    // stripe_session_id в Supabase — вторая линия защиты от гонки, эта
+    // проверка — для понятного ответа 200 без падения в 500 от индекса.
+    const { data: existingPurchase } = await supabase
+        .from('purchases')
+        .select('token')
+        .eq('stripe_session_id', session.id)
+        .maybeSingle();
+
+    if (existingPurchase) {
+        return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
+    }
+
     const token      = crypto.randomUUID();
     const amountPaid = session.amount_total ? Math.round(session.amount_total / 100) : null;
     const utmSource  = session.metadata?.utm_source

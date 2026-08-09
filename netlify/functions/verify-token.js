@@ -109,11 +109,22 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
 
     var purchaseResult = await supabase
         .from('purchases')
-        .select('track_ids, email, created_at')
+        .select('track_ids, email, created_at, status, revoked_at')
         .eq('token', token)
-        .single();
+        .maybeSingle();
 
     if (purchaseResult.data) {
+        // Схема Supabase (status/revoked_at) существует с 05.08 именно под эту
+        // проверку — refund/chargeback/ручной revoke обязаны гасить доступ,
+        // а не только не давать выдавать. Раньше проверки не было вообще.
+        if (purchaseResult.data.status !== 'paid' || purchaseResult.data.revoked_at) {
+            logSecurityEvent('revoked_token_access', ip, {
+                token_prefix: token.substring(0, 20),
+                status: purchaseResult.data.status,
+            });
+            return { statusCode: 403, headers: headers, body: JSON.stringify({ error: 'Access revoked' }) };
+        }
+
         var purchaseTracks = await buildTrackList(purchaseResult.data.track_ids);
         return {
             statusCode: 200,
@@ -132,7 +143,7 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
         .from('donna_guests')
         .select('email, promo_track, created_at')
         .eq('token', token)
-        .single();
+        .maybeSingle();
 
     if (guestResult.data) {
         return {

@@ -5,15 +5,10 @@ Sentry.AWSLambda.init({
     tracesSampleRate: 0.2,
 });
 
-const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { TRACKS } = require('./_tracks');
-
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_KEY
-);
+const { getValidAccess, hasTrackAccess } = require('./_auth');
 
 const r2 = new S3Client({
     region: 'auto',
@@ -25,7 +20,10 @@ const r2 = new S3Client({
 });
 
 const BUCKET = process.env.R2_BUCKET_NAME;
-const LINEUP_MODE_TOKEN = process.env.LINEUP_MODE_TOKEN;
+// Было 86400 (24ч) — ссылку можно было переслать и она работала сутки.
+// Кнопка скачивания в плеере запрашивает URL заново по клику, поэтому
+// короткий срок не портит UX.
+const DOWNLOAD_EXPIRY = 60 * 60;
 
 exports.handler = Sentry.AWSLambda.wrapHandler(async (event) => {
     const headers = {
@@ -55,20 +53,9 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async (event) => {
         return { statusCode: 400, headers, body: 'Missing token or trackId' };
     }
 
-    if (!LINEUP_MODE_TOKEN || token !== LINEUP_MODE_TOKEN) {
-        const { data: purchase, error } = await supabase
-            .from('purchases')
-            .select('track_ids, email')
-            .eq('token', token)
-            .single();
-
-        if (error || !purchase) {
-            return { statusCode: 403, headers, body: 'Invalid token' };
-        }
-
-        if (!purchase.track_ids.includes(trackId)) {
-            return { statusCode: 403, headers, body: 'Track not purchased' };
-        }
+    const access = await getValidAccess(token);
+    if (!access || !hasTrackAccess(access, trackId)) {
+        return { statusCode: 403, headers, body: 'Invalid token or track not purchased' };
     }
 
     const track = TRACKS[trackId];
@@ -83,7 +70,7 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async (event) => {
         ResponseContentDisposition: `attachment; filename="${encodeURIComponent(filename)}"`,
     });
 
-    const signedUrl = await getSignedUrl(r2, command, { expiresIn: 86400 });
+    const signedUrl = await getSignedUrl(r2, command, { expiresIn: DOWNLOAD_EXPIRY });
 
     return {
         statusCode: 200,

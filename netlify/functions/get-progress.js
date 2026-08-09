@@ -1,8 +1,13 @@
 // netlify/functions/get-progress.js
 // Возвращает накопленные секунды прослушивания по токену
 // GET ?token=xxx
+//
+// Раньше принимала любой токен без сверки с purchases — можно было читать
+// прогресс по произвольной строке. Теперь токен обязан пройти getValidAccess.
 
 const { createClient } = require('@supabase/supabase-js');
+const { getValidAccess } = require('./_auth');
+const { corsHeaders, getOrigin } = require('./_cors');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -10,14 +15,25 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
+  const headers = corsHeaders(getOrigin(event), 'GET, OPTIONS');
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers, body: '' };
+  }
+
   if (event.httpMethod !== 'GET') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   const token = event.queryStringParameters?.token;
 
   if (!token) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'token required' }) };
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'token required' }) };
+  }
+
+  const access = await getValidAccess(token);
+  if (!access) {
+    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Invalid or revoked token' }) };
   }
 
   try {
@@ -25,16 +41,13 @@ exports.handler = async (event) => {
       .from('listening_progress')
       .select('seconds, updated_at')
       .eq('token', token)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = row not found, это нормально
-      throw error;
-    }
+    if (error) throw error;
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         seconds: data?.seconds || 0,
         updated_at: data?.updated_at || null,
@@ -43,9 +56,6 @@ exports.handler = async (event) => {
 
   } catch (err) {
     console.error('get-progress error:', err);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Server error' }),
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Server error' }) };
   }
 };
