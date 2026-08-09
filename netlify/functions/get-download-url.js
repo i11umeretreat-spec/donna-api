@@ -9,6 +9,7 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { TRACKS } = require('./_tracks');
 const { getValidAccess, hasTrackAccess } = require('./_auth');
+const { checkRateLimit, getClientIp } = require('./_rateLimit');
 
 const r2 = new S3Client({
     region: 'auto',
@@ -51,6 +52,12 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async (event) => {
 
     if (!token || !trackId) {
         return { statusCode: 400, headers, body: 'Missing token or trackId' };
+    }
+
+    const ip = getClientIp(event);
+    const allowed = await checkRateLimit('get-download-url:' + ip, 15, 60);
+    if (!allowed) {
+        return { statusCode: 429, headers, body: 'Too many requests' };
     }
 
     const access = await getValidAccess(token);

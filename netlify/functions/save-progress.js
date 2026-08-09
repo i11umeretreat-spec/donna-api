@@ -11,6 +11,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getValidAccess } = require('./_auth');
 const { corsHeaders, getOrigin } = require('./_cors');
+const { checkRateLimit, getClientIp } = require('./_rateLimit');
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -46,6 +47,12 @@ exports.handler = async (event) => {
 
   if (seconds < 0 || seconds > MAX_SECONDS) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid seconds value' }) };
+  }
+
+  const ip = getClientIp(event);
+  const allowed = await checkRateLimit('save-progress:' + ip, 20, 60);
+  if (!allowed) {
+    return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many requests' }) };
   }
 
   const access = await getValidAccess(token);

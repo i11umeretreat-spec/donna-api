@@ -9,6 +9,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { TRACKS } = require('./_tracks');
+const { checkRateLimit } = require('./_rateLimit');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -92,6 +93,14 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
 
     var token = event.queryStringParameters && event.queryStringParameters.token;
     var ip = getClientIp(event);
+
+    // Основная точка перебора токенов — лимит per-IP отдельно от общего
+    // Cloudflare WAF rule (тот считает все функции плеера вместе).
+    var allowed = await checkRateLimit('verify-token:' + ip, 20, 60);
+    if (!allowed) {
+        logSecurityEvent('rate_limited', ip, { endpoint: 'verify-token' });
+        return { statusCode: 429, headers: headers, body: JSON.stringify({ error: 'Too many requests' }) };
+    }
 
     if (!token) {
         return { statusCode: 400, headers: headers, body: JSON.stringify({ error: 'No token provided' }) };

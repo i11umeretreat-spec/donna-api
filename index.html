@@ -855,17 +855,17 @@
         var card = document.createElement('div');
         card.className = 'bonus-card visible';
         card.id = 'bonus-card';
-        card.innerHTML = `
-            <div class="bonus-label">Только для тебя</div>
-            <div class="bonus-title">Десять часов наедине с собой</div>
-            <div class="bonus-text">Екатерина оставила здесь секретный трек специально для этого момента.</div>
-            ${BONUS_TRACK_URL
-                ? `<button class="bonus-btn" onclick="playBonusTrack()">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    Послушать
-                   </button>`
-                : `<div class="bonus-btn disabled">Скоро появится</div>`
-            }`;
+        var bonusBtnHtml = BONUS_TRACK_URL
+            ? '<button class="bonus-btn" onclick="playBonusTrack()">' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+                'Послушать' +
+              '</button>'
+            : '<div class="bonus-btn disabled">Скоро появится</div>';
+        card.innerHTML =
+            '<div class="bonus-label">Только для тебя</div>' +
+            '<div class="bonus-title">Десять часов наедине с собой</div>' +
+            '<div class="bonus-text">Екатерина оставила здесь секретный трек специально для этого момента.</div>' +
+            bonusBtnHtml;
 
         container.insertBefore(card, container.firstChild);
         showToast('Только для тебя', 'Десять часов наедине с собой', 'Екатерина оставила здесь кое-что особенное. Смотри выше.');
@@ -881,10 +881,10 @@
         var overlay = document.createElement('div');
         overlay.id = 'bonus-overlay';
         overlay.className = 'bonus-overlay';
-        overlay.innerHTML = `
-            <div class="bonus-overlay-title">Секретный трек</div>
-            <div class="bonus-overlay-sub">Екатерина Донна</div>
-            <button class="bonus-overlay-close" onclick="closeBonusOverlay()">Закрыть</button>`;
+        overlay.innerHTML =
+            '<div class="bonus-overlay-title">Секретный трек</div>' +
+            '<div class="bonus-overlay-sub">Екатерина Донна</div>' +
+            '<button class="bonus-overlay-close" onclick="closeBonusOverlay()">Закрыть</button>';
         document.body.appendChild(overlay);
         
         audio.src = BONUS_TRACK_URL;
@@ -904,6 +904,11 @@
     function initOrbit() {
         orbitCanvas = document.getElementById('orbit-canvas');
         oCtx = orbitCanvas.getContext('2d');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var size = 128; // соответствует #orbit-canvas { width:128px; height:128px } в CSS
+        orbitCanvas.width = size * dpr;
+        orbitCanvas.height = size * dpr;
+        oCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     function updateOrbit() {
@@ -975,6 +980,15 @@
     function initSphere() {
         sc = document.getElementById('sphere-canvas');
         sCtx = sc.getContext('2d');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var displaySize = 80; // соответствует #sphere-canvas { width:80px; height:80px } в CSS
+        var backing = Math.round(displaySize * dpr);
+        sc.width = backing;
+        sc.height = backing;
+        // drawSphere() по-прежнему считает геометрию в исходном 160-юнитном
+        // пространстве (SW/SH внутри функции) — transform отображает его на
+        // реальное разрешение backing store вместо жёстко зашитого x2.
+        sCtx.setTransform(backing / 160, 0, 0, backing / 160, 0, 0);
     }
 
     function drawSphere() {

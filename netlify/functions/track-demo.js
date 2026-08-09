@@ -1,5 +1,6 @@
 // netlify/functions/track-demo.js
 const { createClient } = require('@supabase/supabase-js');
+const { checkRateLimit, getClientIp } = require('./_rateLimit');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -51,6 +52,15 @@ exports.handler = async (event) => {
 
     if (!VALID_EVENTS.includes(eventName)) {
         return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid event"}' };
+    }
+
+    // Публичная, без токена — более щедрый лимит: реклама на Instagram/FB
+    // может привести много одновременных слушателей демо с одного IP (NAT,
+    // офис, кампус), плюс несколько событий (pageview/play/lead) на сессию.
+    const ip = getClientIp(event);
+    const allowed = await checkRateLimit('track-demo:' + ip, 40, 60);
+    if (!allowed) {
+        return { statusCode: 429, headers: CORS_HEADERS, body: '{"error":"Too many requests"}' };
     }
 
     const safeSource = VALID_SOURCES.includes(source) ? source : 'organic';
