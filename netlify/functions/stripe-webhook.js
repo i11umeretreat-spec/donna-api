@@ -85,8 +85,11 @@ const PRODUCT_DEFINITIONS = [
         product_type: null,
     },
     {
+        // Метаданные товара в Stripe (prod_UdRLV49X6ee151) хранят track_ids:
+        // "track-09" — это Shults_2.mp3 / "Расслабление по Шульцу" в _tracks.js,
+        // трек Ступени 1. Продукт старый, появился ещё до разбивки на 4 ступени.
         ids:        [process.env.STRIPE_COMBO_ID],
-        track_ids:  [],
+        track_ids:  ['track-09'],
         journal:    null,
         name:       'Комбо — трек и чек-ап',
         product_type: null,
@@ -175,26 +178,30 @@ exports.handler = async (event) => {
                     || session.client_reference_id?.split('|')[1]
                     || 'direct';
 
-    // Сохраняем в Supabase только если есть треки
-    if (product.track_ids.length > 0) {
-        const { error } = await supabase
-            .from('purchases')
-            .insert({
-                token,
-                email:             customerEmail,
-                track_ids:         product.track_ids,
-                stripe_session_id: session.id,
-                utm_source:        utmSource,
-                product_name:      product.name,
-                product_type:      product.product_type,
-                amount:            amountPaid,
-                created_at:        new Date().toISOString(),
-            });
+    // Пишем в purchases для любой завершённой оплаты, включая продукты без
+    // треков (чек-ап). Раньше вставка пропускалась при пустом track_ids —
+    // из-за этого чек-ап-сессии не попадали ни в purchases, ни в аналитику
+    // дашборда, хотя оплата и письмо клиенту проходили нормально. Плеер эту
+    // разницу не путает: verify-token.js спокойно отдаёт пустой tracks: []
+    // для токена с track_ids: [], а письмо ниже само решает, показывать
+    // кнопку плеера или нет, через тот же product.track_ids.length.
+    const { error } = await supabase
+        .from('purchases')
+        .insert({
+            token,
+            email:             customerEmail,
+            track_ids:         product.track_ids,
+            stripe_session_id: session.id,
+            utm_source:        utmSource,
+            product_name:      product.name,
+            product_type:      product.product_type,
+            amount:            amountPaid,
+            created_at:        new Date().toISOString(),
+        });
 
-        if (error) {
-            console.error('Supabase insert error:', error.message);
-            return { statusCode: 500, body: 'Database error' };
-        }
+    if (error) {
+        console.error('Supabase insert error:', error.message);
+        return { statusCode: 500, body: 'Database error' };
     }
 
     try {

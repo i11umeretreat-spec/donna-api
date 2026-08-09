@@ -90,7 +90,7 @@ exports.handler = async (event) => {
             // Все покупки за 30 дней
             supabase
                 .from('purchases')
-                .select('email, amount, product, utm_source, created_at')
+                .select('email, amount, product_name, product_type, utm_source, created_at')
                 .gte('created_at', thirtyDaysAgo)
                 .order('created_at', { ascending: false }),
 
@@ -155,7 +155,7 @@ exports.handler = async (event) => {
 
         // Последние 10 продаж для таблицы
         const sales = purchases.slice(0, 10).map(p => ({
-            product: p.product || 'Ступень 1',
+            product: p.product_name || 'Ступень 1',
             amount: p.amount || 0,
             source: p.utm_source || 'organic',
             date: p.created_at,
@@ -167,8 +167,8 @@ exports.handler = async (event) => {
 
         // Конверсия ступень 1 → 2 (пользователи кто купил ст.2)
         // Пока нет отдельной таблицы — считаем через product
-        const step2Buyers = purchases.filter(p => (p.product || '').includes('Ступень 2')).length;
-        const step1Buyers = purchases.filter(p => (p.product || '').includes('Ступень 1')).length;
+        const step2Buyers = purchases.filter(p => p.product_type === 'step_2').length;
+        const step1Buyers = purchases.filter(p => p.product_type === 'step_1').length;
         const retentionPercent = step1Buyers > 0
             ? Math.round((step2Buyers / step1Buyers) * 100)
             : 0;
