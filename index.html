@@ -773,27 +773,29 @@
         localStorage.setItem(LS_KEY, String(totalSeconds));
     }
 
-    async function saveProgressRemote() {
-        if (!currentToken || isDemo) return;
-        try {
-            await fetch('/.netlify/functions/save-progress', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: currentToken, seconds: totalSeconds }),
-            });
-        } catch(e) {}
+    function saveProgressRemote() {
+        if (!currentToken || isDemo) return Promise.resolve();
+        return fetch('/.netlify/functions/save-progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: currentToken, seconds: totalSeconds }),
+        }).catch(function(e) {});
     }
 
-    async function loadProgressRemote() {
-        if (!currentToken || isDemo) return;
-        try {
-            var res = await fetch('/.netlify/functions/get-progress?token=' + currentToken);
-            var data = await res.json();
-            if (data && data.seconds) {
-                totalSeconds = Math.max(totalSeconds, data.seconds);
-                saveProgressLocal();
-            }
-        } catch(e) {}
+    function loadProgressRemote() {
+        if (!currentToken || isDemo) return Promise.resolve();
+        return fetch('/.netlify/functions/get-progress?token=' + encodeURIComponent(currentToken))
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data && data.seconds) {
+                    // Раньше Math.max(local, remote) позволял накрученному
+                    // localStorage перебить настоящий серверный прогресс.
+                    // Для авторизованного токена сервер — источник истины.
+                    totalSeconds = data.seconds;
+                    saveProgressLocal();
+                }
+            })
+            .catch(function(e) {});
     }
 
     function addListenedSeconds(secs) {
@@ -1034,8 +1036,14 @@
     }
 
     function resizeBg() {
-        BW = bgCanvas.width = window.innerWidth;
-        BH = bgCanvas.height = window.innerHeight;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        BW = window.innerWidth;
+        BH = window.innerHeight;
+        bgCanvas.width = BW * dpr;
+        bgCanvas.height = BH * dpr;
+        bgCanvas.style.width = BW + 'px';
+        bgCanvas.style.height = BH + 'px';
+        bCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     function initParticles() {
@@ -1074,7 +1082,7 @@
             if (mouseX > 0) {
                 var dx = mouseX-p.x, dy = mouseY-p.y;
                 var dist = Math.sqrt(dx*dx+dy*dy);
-                if (dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
+                if (dist > 0 && dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
             }
             if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
             if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
@@ -1085,7 +1093,11 @@
         }
     }
 
+    var animationRunning = false;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     function loop() {
+        if (!animationRunning) return;
         var rotSpeed = (window.moodConfig && window.moodConfig.breathSyncRotation != null)
             ? window.moodConfig.breathSyncRotation
             : 0.004;
@@ -1096,15 +1108,35 @@
         requestAnimationFrame(loop);
     }
 
-    // ── ПЛЕЕР ЛОГИКА ──────────────────────────────────────────────────────────
-    const audio = document.getElementById('mainAudio');
-    let currentCard = null;
-    let isPlaying = false;
-    let currentLang = 'ru';
-    let lastRenderArgs = null;
-    let lastTimeUpdate = 0;
+    function startAnimation() {
+        if (animationRunning) return;
+        // Один статичный кадр рисуем всегда, даже с prefers-reduced-motion —
+        // иначе сфера и фон остаются пустыми, а не просто неподвижными.
+        drawSphere();
+        drawOrbit();
+        drawBg();
+        if (reduceMotion) return;
+        animationRunning = true;
+        requestAnimationFrame(loop);
+    }
 
-    const i18n = {
+    function stopAnimation() {
+        animationRunning = false;
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) { stopAnimation(); } else { startAnimation(); }
+    });
+
+    // ── ПЛЕЕР ЛОГИКА ──────────────────────────────────────────────────────────
+    var audio = document.getElementById('mainAudio');
+    var currentCard = null;
+    var isPlaying = false;
+    var currentLang = 'ru';
+    var lastRenderArgs = null;
+    var lastTimeUpdate = 0;
+
+    var i18n = {
         ru: {
             subtitle: 'Глубинная работа с подсознанием',
             loading: 'Подготавливаем пространство...',
@@ -1133,6 +1165,9 @@
                 'track-12': { title: 'Сеанс самогипноза, снижение веса', type: 'Глубинная перестройка' },
                 'track-13': { title: 'Три Тотема', type: 'Ресурсный транс' },
                 'track-14': { title: 'Достижение целей', type: 'Активация целевого мышления' },
+                'track-15': { title: 'Разблокировка целей и эмоций', type: 'Эмоциональная разблокировка' },
+                'track-16': { title: 'Исцеление внутреннего ребёнка', type: 'Работа с внутренним ребёнком' },
+                'flagship': { title: 'Память тела: код освобождения', type: '8D нейроакустика' },
             },
         },
         fr: {
@@ -1163,6 +1198,9 @@
                 'track-12': { title: 'Séance d\'auto-hypnose, perte de poids', type: 'Restructuration profonde' },
                 'track-13': { title: 'Les Trois Totems', type: 'Transe ressourçante' },
                 'track-14': { title: 'Réalisation des objectifs', type: 'Activation de la pensée orientée vers le but' },
+                'track-15': { title: 'Déblocage des objectifs et des émotions', type: 'Libération émotionnelle' },
+                'track-16': { title: 'Guérison de l\'enfant intérieur', type: 'Travail avec l\'enfant intérieur' },
+                'flagship': { title: 'La mémoire du corps : le code de la libération', type: 'Neuroacoustique 8D' },
             },
         },
     };
@@ -1170,37 +1208,60 @@
     function t(key) { return i18n[currentLang][key]; }
     function tTrack(id) { return i18n[currentLang].tracks[id] || { title: id, type: '' }; }
 
+    // Сервер (verify-token.js → _tracks.js) — единый источник правды для RU:
+    // раньше плеер игнорировал track.title/track.type из ответа сервера и
+    // всегда брал название из локального словаря i18n, который тихо расходился
+    // с _tracks.js. Для RU теперь предпочитаем то, что реально прислал сервер;
+    // локальный словарь остаётся нужен для FR (сервер не локализует) и для
+    // DEMO_TRACK, у которого title/type нет вообще.
+    function trackDisplay(track) {
+        if (currentLang === 'ru' && track.title) {
+            return { title: track.title, type: track.type || '' };
+        }
+        return tTrack(track.id);
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function setLang(lang) {
         currentLang = lang;
         document.getElementById('lang-ru').classList.toggle('active', lang === 'ru');
         document.getElementById('lang-fr').classList.toggle('active', lang === 'fr');
         document.getElementById('header-subtitle').textContent = t('subtitle');
         document.documentElement.lang = lang;
-        if (lastRenderArgs) renderTracks(...lastRenderArgs);
+        if (lastRenderArgs) renderTracks.apply(null, lastRenderArgs);
     }
 
-    const DEMO_TRACK = {
+    var DEMO_TRACK = {
         id: 'water_energy',
         streamUrl: 'https://audio.ekaterina-donnat.com/promo/water_energy.mp3',
         duration: '21:00'
     };
 
-    const LINEUP_MODE_TOKEN = document.querySelector('meta[name="lineup-token"]')?.content || '';
+    var lineupMeta = document.querySelector('meta[name="lineup-token"]');
+    var LINEUP_MODE_TOKEN = (lineupMeta && lineupMeta.content) || '';
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    function initApp() {
         initSphere();
         initOrbit();
         initBg();
         loadProgress();
         updateOrbit();
         updateHint();
-        loop();
+        startAnimation();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        let token = urlParams.get('token');
-        const container = document.getElementById('app-content');
+        var urlParams = new URLSearchParams(window.location.search);
+        var token = urlParams.get('token');
+        var container = document.getElementById('app-content');
 
-        if (token === LINEUP_MODE_TOKEN) {
+        if (LINEUP_MODE_TOKEN && token === LINEUP_MODE_TOKEN) {
             currentToken = token;
         }
 
@@ -1221,87 +1282,103 @@
         }
 
         currentToken = token;
-        await loadProgressRemote();
-        updateOrbit();
-        updateHint();
 
-        try {
-            const response = await fetch('/.netlify/functions/verify-token?token=' + token);
-            const data = await response.json();
+        // Порядок важен: раньше loadProgressRemote() вызывался ДО подтверждения
+        // токена сервером — можно было использовать get-progress как token
+        // oracle. Теперь сначала verify-token, и только при valid:true — прогресс.
+        fetch('/.netlify/functions/verify-token?token=' + encodeURIComponent(token))
+            .then(function(response) {
+                return response.json().then(function(data) {
+                    return { ok: response.ok, data: data };
+                });
+            })
+            .then(function(result) {
+                if (!result.ok || !result.data.valid) {
+                    container.innerHTML = '<div class="system-message">' + t('errorToken') + '</div>';
+                    return;
+                }
 
-            if (!response.ok || !data.valid) {
-                container.innerHTML = `<div class="system-message">${t('errorToken')}</div>`;
-                return;
-            }
+                return loadProgressRemote().then(function() {
+                    updateOrbit();
+                    updateHint();
 
-            if (!data.tracks || data.tracks.length === 0) {
-                renderTracks([DEMO_TRACK], false, true);
-                return;
-            }
+                    if (!result.data.tracks || result.data.tracks.length === 0) {
+                        renderTracks([DEMO_TRACK], false, true);
+                        return;
+                    }
 
-            renderTracks(data.tracks, true, false);
+                    renderTracks(result.data.tracks, true, false);
+                });
+            })
+            .catch(function(error) {
+                container.innerHTML = '<div class="system-message">' + t('errorServer') + '</div>';
+            });
+    }
 
-        } catch (error) {
-            container.innerHTML = `<div class="system-message">${t('errorServer')}</div>`;
-        }
-    });
+    document.addEventListener('DOMContentLoaded', initApp);
 
     var allTracks = [];
 
     function renderTracks(tracks, allowDownload, showUpsell) {
         lastRenderArgs = [tracks, allowDownload, showUpsell];
         allTracks = tracks || [];
-        const container = document.getElementById('app-content');
-        const playingId = currentCard ? currentCard.getAttribute('data-track-id') : null;
+        var container = document.getElementById('app-content');
+        var playingId = currentCard ? currentCard.getAttribute('data-track-id') : null;
 
-        let html = '';
-        tracks.forEach(track => {
-            const tr = tTrack(track.id);
-            html += `
-            <div class="player-card" data-url="${track.streamUrl}" data-track-id="${track.id}">
-                <div class="card-top">
-                    <button class="play-btn" onclick="togglePlay(this.closest('.player-card'))">
-                        <svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        <svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                    </button>
-                    <div class="track-info">
-                        <div class="track-title">${tr.title}</div>
-                        <div class="track-meta">${tr.type}${track.duration ? ' · ' + track.duration : ''}</div>
-                    </div>
-                    ${allowDownload ? `
-                    <button class="download-btn" onclick="downloadTrack(this, '${track.id}')" title="${t('downloadTitle')}">
-                        <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-                    </button>` : ''}
-                </div>
-                <div class="progress-area">
-                    <span class="time current-time">0:00</span>
-                    <div class="progress-bar-wrap"
-                         onmousedown="startSeek(event, this)"
-                         ontouchstart="startSeek(event, this)">
-                        <div class="progress-track">
-                            <div class="progress-fill"></div>
-                        </div>
-                    </div>
-                    <span class="time total-time">${track.duration || '0:00'}</span>
-                </div>
-            </div>`;
+        var html = '';
+        tracks.forEach(function(track) {
+            var tr = trackDisplay(track);
+            var safeId = escapeHtml(track.id);
+            var safeUrl = escapeHtml(track.streamUrl);
+            var safeTitle = escapeHtml(tr.title);
+            var safeType = escapeHtml(tr.type);
+            var safeDuration = track.duration ? escapeHtml(track.duration) : '';
+            var downloadBtnHtml = allowDownload
+                ? '<button class="download-btn" onclick="downloadTrack(this, \'' + safeId + '\')" title="' + escapeHtml(t('downloadTitle')) + '">' +
+                    '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>' +
+                  '</button>'
+                : '';
+
+            html += '' +
+                '<div class="player-card" data-url="' + safeUrl + '" data-track-id="' + safeId + '">' +
+                    '<div class="card-top">' +
+                        '<button class="play-btn" onclick="togglePlay(this.closest(\'.player-card\'))">' +
+                            '<svg class="play-icon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>' +
+                            '<svg class="pause-icon" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>' +
+                        '</button>' +
+                        '<div class="track-info">' +
+                            '<div class="track-title">' + safeTitle + '</div>' +
+                            '<div class="track-meta">' + safeType + (safeDuration ? ' · ' + safeDuration : '') + '</div>' +
+                        '</div>' +
+                        downloadBtnHtml +
+                    '</div>' +
+                    '<div class="progress-area">' +
+                        '<span class="time current-time">0:00</span>' +
+                        '<div class="progress-bar-wrap" onmousedown="startSeek(event, this)" ontouchstart="startSeek(event, this)">' +
+                            '<div class="progress-track">' +
+                                '<div class="progress-fill"></div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<span class="time total-time">' + (safeDuration || '0:00') + '</span>' +
+                    '</div>' +
+                '</div>';
         });
 
         if (showUpsell) {
-            html += `
-            <div class="upsell-card">
-                <div class="upsell-label">${t('upsellLabel')}</div>
-                <div class="upsell-title">${t('upsellTitle')}</div>
-                <div class="upsell-text">${t('upsellText')}</div>
-                <a href="https://ekaterina-donnat.com" class="btn-primary" target="_blank">${t('upsellBtn1')}</a>
-                <a href="https://ekaterina-donnat.com/#checkup" class="btn-secondary" target="_blank">${t('upsellBtn2')}</a>
-            </div>`;
+            html += '' +
+                '<div class="upsell-card">' +
+                    '<div class="upsell-label">' + t('upsellLabel') + '</div>' +
+                    '<div class="upsell-title">' + t('upsellTitle') + '</div>' +
+                    '<div class="upsell-text">' + t('upsellText') + '</div>' +
+                    '<a href="https://ekaterina-donnat.com" class="btn-primary" target="_blank">' + t('upsellBtn1') + '</a>' +
+                    '<a href="https://ekaterina-donnat.com/#checkup" class="btn-secondary" target="_blank">' + t('upsellBtn2') + '</a>' +
+                '</div>';
         }
 
         container.innerHTML = html;
 
         if (playingId && isPlaying) {
-            const card = container.querySelector(`[data-track-id="${playingId}"]`);
+            var card = container.querySelector('[data-track-id="' + playingId + '"]');
             if (card) { card.classList.add('active'); currentCard = card; }
         }
 
@@ -1310,13 +1387,13 @@
 
     function formatTime(seconds) {
         if (isNaN(seconds) || seconds === Infinity) return '0:00';
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${m}:${s < 10 ? '0' : ''}${s}`;
+        var m = Math.floor(seconds / 60);
+        var s = Math.floor(seconds % 60);
+        return m + ':' + (s < 10 ? '0' : '') + s;
     }
 
     function togglePlay(card) {
-        const url = card.getAttribute('data-url');
+        var url = card.getAttribute('data-url');
         if (currentCard !== card) {
             if (currentCard) {
                 currentCard.classList.remove('active');
@@ -1326,38 +1403,38 @@
             currentCard = card;
             currentCard.classList.add('active');
             audio.src = url; audio.load();
-            audio.play().then(() => { isPlaying = true; }).catch(e => console.error(e));
+            audio.play().then(function() { isPlaying = true; }).catch(function(e) { console.error(e); });
         } else {
             if (isPlaying) {
                 audio.pause(); isPlaying = false; currentCard.classList.remove('active');
             } else {
-                audio.play().then(() => { isPlaying = true; currentCard.classList.add('active'); }).catch(e => console.error(e));
+                audio.play().then(function() { isPlaying = true; currentCard.classList.add('active'); }).catch(function(e) { console.error(e); });
             }
         }
     }
 
-    audio.addEventListener('loadedmetadata', () => {
+    audio.addEventListener('loadedmetadata', function() {
         if (currentCard && audio.duration && audio.duration !== Infinity)
             currentCard.querySelector('.total-time').textContent = formatTime(audio.duration);
     });
 
-    audio.addEventListener('timeupdate', () => {
+    audio.addEventListener('timeupdate', function() {
         if (audio.duration && audio.duration !== Infinity && currentCard) {
-            const percent = (audio.currentTime / audio.duration) * 100;
+            var percent = (audio.currentTime / audio.duration) * 100;
             currentCard.querySelector('.progress-fill').style.width = percent + '%';
             currentCard.querySelector('.current-time').textContent = formatTime(audio.currentTime);
 
-            const now = audio.currentTime;
+            var now = audio.currentTime;
             if (lastTimeUpdate > 0 && isPlaying) {
-                const delta = now - lastTimeUpdate;
+                var delta = now - lastTimeUpdate;
                 if (delta > 0 && delta < 2) addListenedSeconds(delta);
             }
             lastTimeUpdate = now;
         }
     });
 
-    audio.addEventListener('pause', () => { lastTimeUpdate = 0; });
-    audio.addEventListener('ended', () => {
+    audio.addEventListener('pause', function() { lastTimeUpdate = 0; });
+    audio.addEventListener('ended', function() {
         isPlaying = false; lastTimeUpdate = 0;
         if (currentCard) {
             currentCard.classList.remove('active');
@@ -1373,21 +1450,21 @@
         }
     });
 
-    let isSeeking = false;
+    var isSeeking = false;
 
     function seek(e, wrap) {
-        const card = wrap.closest('.player-card');
+        var card = wrap.closest('.player-card');
         if (card !== currentCard || !audio.duration || audio.duration === Infinity) return;
-        const rect = wrap.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        var rect = wrap.getBoundingClientRect();
+        var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        var pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
         audio.currentTime = pos * audio.duration;
     }
 
     function startSeek(e, wrap) {
         e.preventDefault(); isSeeking = true; seek(e, wrap);
-        const onMove = (ev) => { if (isSeeking) seek(ev, wrap); };
-        const onEnd = () => {
+        var onMove = function(ev) { if (isSeeking) seek(ev, wrap); };
+        var onEnd = function() {
             isSeeking = false;
             document.removeEventListener('mousemove', onMove);
             document.removeEventListener('mouseup', onEnd);
@@ -1400,27 +1477,31 @@
         document.addEventListener('touchend', onEnd);
     }
 
-    async function downloadTrack(btn, trackId) {
+    function downloadTrack(btn, trackId) {
         if (btn.classList.contains('loading')) return;
         btn.classList.add('loading');
         btn.innerHTML = '<div class="spin"></div>';
-        try {
-            const res = await fetch('/.netlify/functions/get-download-url', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: currentToken, trackId }),
+
+        fetch('/.netlify/functions/get-download-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: currentToken, trackId: trackId }),
+        })
+        .then(function(res) {
+            return res.json().then(function(data) {
+                if (!res.ok || !data.url) throw new Error('No URL');
+                var a = document.createElement('a');
+                a.href = data.url; a.download = ''; a.style.display = 'none';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
             });
-            const data = await res.json();
-            if (!res.ok || !data.url) throw new Error('No URL');
-            const a = document.createElement('a');
-            a.href = data.url; a.download = ''; a.style.display = 'none';
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        } catch (err) {
+        })
+        .catch(function(err) {
             alert(t('errorDownload'));
-        } finally {
+        })
+        .then(function() {
             btn.classList.remove('loading');
             btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>';
-        }
+        });
     }
     </script>
 </body>

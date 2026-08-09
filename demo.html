@@ -414,6 +414,63 @@
 
     .purchase-note.visible { opacity: 1; }
 
+    /* CTA-оверлей после паузы (mood-engine.js setupPauseDetection) — класс
+       .visible уже переключался в JS, но стилей для самого блока не было
+       вообще, поэтому оверлей никогда не показывался пользователю. */
+    .donna-cta-overlay {
+      position: fixed;
+      left: 50%;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      z-index: 60;
+      width: min(360px, calc(100% - 32px));
+      padding: 18px 22px;
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(13,15,35,0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 14px;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s cubic-bezier(0.22,1,0.36,1),
+                  transform 0.4s cubic-bezier(0.22,1,0.36,1);
+    }
+
+    .donna-cta-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .donna-cta-overlay .cta-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 300;
+      line-height: 1.5;
+      color: rgba(248,250,252,0.85);
+      margin-bottom: 12px;
+    }
+
+    .donna-cta-overlay .cta-link {
+      display: inline-block;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #d4af37;
+      text-decoration: none;
+      border: 1px solid rgba(212,175,55,0.4);
+      border-radius: 8px;
+      padding: 10px 22px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .donna-cta-overlay .cta-link:hover {
+      background: #d4af37;
+      color: #0f1123;
+    }
+
     audio { display: none; }
   </style>
 </head>
@@ -640,8 +697,14 @@
     var mouseX = -1000, mouseY = -1000;
 
     function resizeBg() {
-      BW = bgCanvas.width = window.innerWidth;
-      BH = bgCanvas.height = window.innerHeight;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      BW = window.innerWidth;
+      BH = window.innerHeight;
+      bgCanvas.width = BW * dpr;
+      bgCanvas.height = BH * dpr;
+      bgCanvas.style.width = BW + 'px';
+      bgCanvas.style.height = BH + 'px';
+      bCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
 
     document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
@@ -691,7 +754,7 @@
         if (mouseX > 0) {
           var dx = mouseX-p.x, dy = mouseY-p.y;
           var dist = Math.sqrt(dx*dx+dy*dy);
-          if (dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
+          if (dist > 0 && dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
         }
         if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
         if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
@@ -854,11 +917,22 @@
 
     window.goToPurchase = function() {
       if (!unlocked) return;
-      window.location.href = 'https://ekaterina-donnat.com/?from=demo&utm_source=' + source + '#buy';
+      // Было: конкатенация строки с сырым source — некорректные символы
+      // (& # и т.п.) в utm_source могли сломать итоговый URL. URLSearchParams
+      // сам экранирует значение.
+      var purchaseUrl = new URL('https://ekaterina-donnat.com/');
+      purchaseUrl.searchParams.set('from', 'demo');
+      purchaseUrl.searchParams.set('utm_source', source);
+      purchaseUrl.hash = 'buy';
+      window.location.href = purchaseUrl.toString();
     };
 
     // ── LOOP ─────────────────────────────────────────────────────────────
+    var animationRunning = false;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     function loop() {
+      if (!animationRunning) return;
       var mood = window.moodConfig || {};
       sAngle += (mood.pulseSpeed || 0.004);
       drawSphere();
@@ -866,10 +940,27 @@
       requestAnimationFrame(loop);
     }
 
+    function startAnimation() {
+      if (animationRunning) return;
+      drawSphere();
+      drawBg();
+      if (reduceMotion) return;
+      animationRunning = true;
+      requestAnimationFrame(loop);
+    }
+
+    function stopAnimation() {
+      animationRunning = false;
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) { stopAnimation(); } else { startAnimation(); }
+    });
+
     resizeBg();
     initParticles();
     window.addEventListener('resize', function() { resizeBg(); initParticles(); });
-    loop();
+    startAnimation();
 
   })();
   </script>
