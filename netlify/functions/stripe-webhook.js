@@ -148,6 +148,48 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: 'Test event ignored' };
     }
 
+    // Ревокация доступа при рефанде/чарджбэке. До этого патча status/
+    // revoked_at проверялись в verify-token.js/get-download-url.js/
+    // get-progress.js/save-progress.js/upsell-flag.js, но ничто не
+    // выставляло revoked_at — refund в Stripe никак не гасил доступ.
+    //
+    // ВАЖНО: сами эти типы событий сейчас НЕ подписаны ни на одном из двух
+    // webhook endpoint в Stripe (оба ведут на этот же URL и оба
+    // подписаны только на checkout.session.completed [+ payment_intent.succeeded
+    // у одного из них]) — код готов, но события физически не придут, пока
+    // charge.refunded/charge.dispute.created не добавлены в Stripe Dashboard.
+    if (stripeEvent.type === 'charge.refunded' || stripeEvent.type === 'charge.dispute.created') {
+        const chargeObject   = stripeEvent.data.object;
+        const paymentIntentId = chargeObject.payment_intent;
+
+        if (!paymentIntentId) {
+            return { statusCode: 200, body: JSON.stringify({ received: true }) };
+        }
+
+        const revokedReason = stripeEvent.type === 'charge.refunded' ? 'refunded' : 'dispute_created';
+
+        const { error: revokeError } = await supabase
+            .from('purchases')
+            .update({
+                status:          'revoked',
+                revoked_at:      new Date().toISOString(),
+                revoked_reason:  revokedReason,
+            })
+            .eq('stripe_payment_intent_id', paymentIntentId);
+
+        if (revokeError) {
+            console.error('Purchase revoke error:', revokeError.message);
+            return { statusCode: 500, body: 'Database error' };
+        }
+
+        logSecurityEvent('purchase_revoked', ip, {
+            payment_intent: paymentIntentId,
+            reason:         revokedReason,
+        });
+
+        return { statusCode: 200, body: JSON.stringify({ received: true, revoked: true }) };
+    }
+
     if (stripeEvent.type !== 'checkout.session.completed') {
         return { statusCode: 200, body: 'Event ignored' };
     }
@@ -173,16 +215,23 @@ exports.handler = async (event) => {
     }
 
     // Идемпотентность: Stripe может повторно доставить один и тот же вебхук
-    // (таймаут, 5xx, обрыв сети до подтверждения). Без этой проверки каждая
-    // повторная доставка создавала вторую запись в purchases с новым token
-    // и второе письмо тому же покупателю. Уникальный индекс на
-    // stripe_session_id в Supabase — вторая линия защиты от гонки, эта
-    // проверка — для понятного ответа 200 без падения в 500 от индекса.
-    const { data: existingPurchase } = await supabase
+    // (таймаут, 5xx, обрыв сети до подтверждения) — а сейчас в Stripe вообще
+    // зарегистрировано два webhook endpoint на один и этот же URL, оба
+    // подписаны на checkout.session.completed, так что КАЖДАЯ успешная оплата
+    // и так придёт минимум дважды уже сегодня, не только при ретраях.
+    // Уникальный индекс на stripe_session_id в Supabase — вторая линия
+    // защиты от гонки (см. обработку error.code 23505 ниже), эта проверка —
+    // для быстрого понятного ответа 200 без похода до insert.
+    const { data: existingPurchase, error: lookupError } = await supabase
         .from('purchases')
         .select('token')
         .eq('stripe_session_id', session.id)
         .maybeSingle();
+
+    if (lookupError) {
+        console.error('Existing purchase lookup error:', lookupError.message);
+        return { statusCode: 500, body: 'Database error' };
+    }
 
     if (existingPurchase) {
         return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
@@ -205,17 +254,28 @@ exports.handler = async (event) => {
         .from('purchases')
         .insert({
             token,
-            email:             customerEmail,
-            track_ids:         product.track_ids,
-            stripe_session_id: session.id,
-            utm_source:        utmSource,
-            product_name:      product.name,
-            product_type:      product.product_type,
-            amount:            amountPaid,
-            created_at:        new Date().toISOString(),
+            email:                     customerEmail,
+            track_ids:                 product.track_ids,
+            stripe_session_id:         session.id,
+            stripe_payment_intent_id:  session.payment_intent || null,
+            stripe_customer_id:        session.customer || null,
+            utm_source:                utmSource,
+            product_name:              product.name,
+            product_type:              product.product_type,
+            amount:                    amountPaid,
+            status:                    'paid',
+            created_at:                new Date().toISOString(),
         });
 
     if (error) {
+        // Гонка: два одновременных вебхука прошли lookup ДО того, как любой
+        // из них успел вставить строку — оба увидели "дубля нет" и оба
+        // попытались insert. Уникальный индекс на stripe_session_id отклонит
+        // второй insert с 23505 — это ожидаемо, а не ошибка сервера.
+        if (error.code === '23505') {
+            return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
+        }
+
         console.error('Supabase insert error:', error.message);
         return { statusCode: 500, body: 'Database error' };
     }
