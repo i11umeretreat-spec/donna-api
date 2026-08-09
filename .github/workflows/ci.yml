@@ -1,0 +1,60 @@
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  checks:
+    name: Syntax + ES5 gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: node scripts/ci-checks.js
+        run: node scripts/ci-checks.js
+
+  smoke-test:
+    name: Prod smoke test (post-deploy)
+    needs: checks
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Подождать деплой Netlify
+        # Netlify обычно публикует этот сайт за 15-30 сек. Фиксированная пауза,
+        # не идеальный синк, но простой и рабочий — GitHub Actions не подписан
+        # на события деплоя Netlify напрямую.
+        run: sleep 60
+
+      - name: Health check прод-эндпоинта
+        env:
+          HEALTH_CHECK_KEY: ${{ secrets.HEALTH_CHECK_KEY }}
+        run: |
+          if [ -z "$HEALTH_CHECK_KEY" ]; then
+            echo "::warning::HEALTH_CHECK_KEY не задан в GitHub Secrets — smoke test пропущен. Добавь секрет в Settings → Secrets → Actions, чтобы включить."
+            exit 0
+          fi
+
+          http_code=$(curl -s -o /tmp/health.json -w "%{http_code}" \
+            "https://app.ekaterina-donnat.com/.netlify/functions/health-check?key=$HEALTH_CHECK_KEY")
+
+          echo "HTTP $http_code"
+          cat /tmp/health.json
+          echo ""
+
+          if [ "$http_code" != "200" ]; then
+            echo "::error::Health check вернул HTTP $http_code вместо 200"
+            exit 1
+          fi
+
+          status=$(node -pe "JSON.parse(require('fs').readFileSync('/tmp/health.json','utf8')).status" 2>/dev/null)
+          if [ "$status" != "healthy" ]; then
+            echo "::error::Health check status: $status (ожидался healthy)"
+            exit 1
+          fi
+
+          echo "Прод здоров: database ok, storage ok."

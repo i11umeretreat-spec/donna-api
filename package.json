@@ -1,6 +1,9 @@
 {
   "name": "donna-api",
   "version": "1.0.0",
+  "scripts": {
+    "ci-check": "node scripts/ci-checks.js"
+  },
   "dependencies": {
     "@sentry/serverless": "^7.120.4",
     "@supabase/supabase-js": "^2.0.0",
