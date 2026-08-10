@@ -705,8 +705,13 @@
     // full_album/flagship не мапятся ни на одну ступень намеренно — у них нет
     // "следующей ступени", и showTransition для них не вызывается (см. guard
     // ниже, в audio 'ended').
+    // step_4 намеренно исключён из мапы: TRANSITION_COPY ниже определена
+    // только для шагов 1-3 (после Ступени 4 показывать "переход на
+    // следующую ступень" нечего — некуда). Если currentStep null,
+    // showTransition() не вызывается вовсе (см. guard isLast && currentStep
+    // в audio 'ended'), а не тихо откатывается на копирайт Ступени 1.
     function stepFromProductType(productType) {
-        var map = { step_1: 1, step_2: 2, step_3: 3, step_4: 4 };
+        var map = { step_1: 1, step_2: 2, step_3: 3 };
         return map[productType] || null;
     }
 
@@ -728,11 +733,15 @@
 
     function showTransition(step) {
         if (transitionShown) return;
+
+        var langCopy = TRANSITION_COPY[currentLang] || TRANSITION_COPY.ru;
+        var copy = langCopy[step];
+        if (!copy) return;
+
         transitionShown = true;
 
         var overlay = document.getElementById('transition-overlay');
         var contentEl = document.getElementById('transition-content');
-        var copy = (TRANSITION_COPY[currentLang] || TRANSITION_COPY.ru)[step] || TRANSITION_COPY.ru[1];
         var stripeLink = STRIPE_LINKS[step + 1];
 
         document.getElementById('transition-label').textContent = copy.label;
