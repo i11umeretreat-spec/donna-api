@@ -929,15 +929,16 @@
 
     // ── LOOP ─────────────────────────────────────────────────────────────
     var animationRunning = false;
+    var animationFrameId = null;
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function loop() {
-      if (!animationRunning) return;
+      if (!animationRunning) { animationFrameId = null; return; }
       var mood = window.moodConfig || {};
       sAngle += (mood.pulseSpeed || 0.004);
       drawSphere();
       drawBg();
-      requestAnimationFrame(loop);
+      animationFrameId = requestAnimationFrame(loop);
     }
 
     function startAnimation() {
@@ -946,11 +947,15 @@
       drawBg();
       if (reduceMotion) return;
       animationRunning = true;
-      requestAnimationFrame(loop);
+      animationFrameId = requestAnimationFrame(loop);
     }
 
     function stopAnimation() {
       animationRunning = false;
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
     }
 
     document.addEventListener('visibilitychange', function() {

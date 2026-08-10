@@ -118,7 +118,7 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
 
     var purchaseResult = await supabase
         .from('purchases')
-        .select('track_ids, email, created_at, status, revoked_at')
+        .select('track_ids, email, created_at, status, revoked_at, product_type')
         .eq('token', token)
         .maybeSingle();
 
@@ -144,6 +144,7 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
                 email: purchaseResult.data.email,
                 tracks: purchaseTracks,
                 purchasedAt: purchaseResult.data.created_at,
+                productType: purchaseResult.data.product_type,
             }),
         };
     }

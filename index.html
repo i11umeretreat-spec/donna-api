@@ -699,6 +699,17 @@
         4: null,
     };
 
+    // currentStep раньше никогда не обновлялся после инициализации (всегда 1),
+    // из-за чего showTransition() показывал копирайт и апсейл Ступени 1 после
+    // последнего трека любой ступени. Теперь берём productType из verify-token.
+    // full_album/flagship не мапятся ни на одну ступень намеренно — у них нет
+    // "следующей ступени", и showTransition для них не вызывается (см. guard
+    // ниже, в audio 'ended').
+    function stepFromProductType(productType) {
+        var map = { step_1: 1, step_2: 2, step_3: 3, step_4: 4 };
+        return map[productType] || null;
+    }
+
     var TRANSITION_COPY = {
         ru: {
             1: { label: 'Первая ступень завершена', title: 'Ты прошла этот круг', text: 'На следующей глубине тебя ждёт кое-что, до чего мы ещё не добирались. Я рада что ты готова.' },
@@ -1108,10 +1119,11 @@
     }
 
     var animationRunning = false;
+    var animationFrameId = null;
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function loop() {
-        if (!animationRunning) return;
+        if (!animationRunning) { animationFrameId = null; return; }
         var rotSpeed = (window.moodConfig && window.moodConfig.breathSyncRotation != null)
             ? window.moodConfig.breathSyncRotation
             : 0.004;
@@ -1119,7 +1131,7 @@
         drawSphere();
         drawOrbit();
         drawBg();
-        requestAnimationFrame(loop);
+        animationFrameId = requestAnimationFrame(loop);
     }
 
     function startAnimation() {
@@ -1131,11 +1143,15 @@
         drawBg();
         if (reduceMotion) return;
         animationRunning = true;
-        requestAnimationFrame(loop);
+        animationFrameId = requestAnimationFrame(loop);
     }
 
     function stopAnimation() {
         animationRunning = false;
+        if (animationFrameId !== null) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
     }
 
     document.addEventListener('visibilitychange', function() {
@@ -1295,11 +1311,13 @@
             return;
         }
 
-        currentToken = token;
-
         // Порядок важен: раньше loadProgressRemote() вызывался ДО подтверждения
         // токена сервером — можно было использовать get-progress как token
         // oracle. Теперь сначала verify-token, и только при valid:true — прогресс.
+        // currentToken тоже выставляется только после подтверждения (раньше
+        // присваивался до ответа сервера — не давало доступа само по себе,
+        // т.к. loadProgressRemote() всё равно ждал valid:true, но лишний
+        // невалидированный токен в состоянии ни к чему).
         fetch('/.netlify/functions/verify-token?token=' + encodeURIComponent(token))
             .then(function(response) {
                 return response.json().then(function(data) {
@@ -1310,6 +1328,11 @@
                 if (!result.ok || !result.data.valid) {
                     container.innerHTML = '<div class="system-message">' + t('errorToken') + '</div>';
                     return;
+                }
+
+                currentToken = token;
+                if (result.data.type === 'purchase') {
+                    currentStep = stepFromProductType(result.data.productType);
                 }
 
                 return loadProgressRemote().then(function() {
@@ -1459,7 +1482,7 @@
 
         var trackId = currentCard ? currentCard.getAttribute('data-track-id') : null;
         var isLast = allTracks.length > 0 && trackId === allTracks[allTracks.length - 1].id;
-        if (isLast) {
+        if (isLast && currentStep) {
             setTimeout(function() { showTransition(currentStep); }, 1200);
         }
     });
