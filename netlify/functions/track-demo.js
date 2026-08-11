@@ -7,7 +7,7 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
-const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play'];
+const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
 // Хиро-блок живёт на ekaterina-donnat.com (Тильда), демо-плеер на
