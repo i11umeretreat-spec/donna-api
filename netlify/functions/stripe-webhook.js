@@ -295,6 +295,10 @@ async function sendEmail(email, token, product) {
 
     await resend.emails.send({
         from:    'Ekaterina Donnat <hello@ekaterina-donnat.com>',
+        // Домен без MX: ответ на hello@ отскакивает. Ответы уводим
+        // в живой ящик Кати. Ответ клиента — ещё и сильнейший
+        // положительный сигнал для почтовых фильтров.
+        replyTo: 'ekaterina.donnat@gmail.com',
         to:      email,
         subject: `Твоя практика готова — ${product.name}`,
         html:    buildEmail(playerUrl, product),
