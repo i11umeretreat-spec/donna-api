@@ -85,11 +85,15 @@ const PRODUCT_DEFINITIONS = [
         product_type: null,
     },
     {
-        // Метаданные товара в Stripe (prod_UdRLV49X6ee151) хранят track_ids:
-        // "track-09" — это Shults_2.mp3 / "Расслабление по Шульцу" в _tracks.js,
-        // трек Ступени 1. Продукт старый, появился ещё до разбивки на 4 ступени.
+        // Трек комбо утверждён Катей 12.08: track-10, crock.mp3,
+        // "Крокодил: обнуление тревоги", 17 минут, Ступень 1.
+        // Выбран как самый короткий в линейке: человек слушает его целиком
+        // до встречи, а не откладывает на "когда будет сорок свободных минут".
+        // Раньше здесь стоял track-09 (Шульц, 40:32), при этом сайт обещал
+        // "трек на выбор", механики выбора не существует.
+        // Метаданные товара в Stripe обновлены синхронно.
         ids:        [process.env.STRIPE_COMBO_ID],
-        track_ids:  ['track-09'],
+        track_ids:  ['track-10'],
         journal:    null,
         name:       'Комбо — трек и чек-ап',
         product_type: null,
@@ -153,11 +157,10 @@ exports.handler = async (event) => {
     // get-progress.js/save-progress.js/upsell-flag.js, но ничто не
     // выставляло revoked_at — refund в Stripe никак не гасил доступ.
     //
-    // ВАЖНО: сами эти типы событий сейчас НЕ подписаны ни на одном из двух
-    // webhook endpoint в Stripe (оба ведут на этот же URL и оба
-    // подписаны только на checkout.session.completed [+ payment_intent.succeeded
-    // у одного из них]) — код готов, но события физически не придут, пока
-    // charge.refunded/charge.dispute.created не добавлены в Stripe Dashboard.
+    // Проверено 12.08 через API: эндпоинт один, адрес
+    // app.ekaterina-donnat.com/.netlify/functions/stripe-webhook,
+    // подписан на checkout.session.completed, charge.refunded
+    // и charge.dispute.created. События приходят.
     if (stripeEvent.type === 'charge.refunded' || stripeEvent.type === 'charge.dispute.created') {
         const chargeObject   = stripeEvent.data.object;
         const paymentIntentId = chargeObject.payment_intent;
