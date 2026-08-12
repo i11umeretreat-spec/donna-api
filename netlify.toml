@@ -14,3 +14,17 @@
 # Уровень "critical" (не "high") чтобы не ломать билд на уже известные
 # умеренные issues в AWS SDK или Supabase client.
 # Когда npm audit будет чистым — можно поднять до --audit-level=high.
+
+# Каталог продуктов. Netlify и так отдаёт /vybor для vybor.html,
+# но правило зафиксировано явно, чтобы поведение не зависело
+# от настроек Pretty URLs.
+[[redirects]]
+  from   = "/vybor"
+  to     = "/vybor.html"
+  status = 200
+
+# Логотип не меняется, кэшируем надолго
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

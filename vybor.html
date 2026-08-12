@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Выбор формата · Екатерина Донна</title>
+<meta name="description" content="Аудиопрактики Екатерины Донна: ступени программы, флагманская практика и полная коллекция.">
+<!-- Дубль товарного описания с основного сайта, в индекс не отдаём -->
+<meta name="robots" content="noindex, follow">
+<link rel="icon" href="/assets/logo-gold.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,200;9..144,300&family=Outfit:wght@300;400&display=swap');
+
+html, body { margin: 0; padding: 0; background: #151933; }
+</style>
+<style>
+  /*
+      Каталог продуктов. Отдельная страница, шрифты подключены в <head>.
+      Нужны: Fraunces 200 и 300, Outfit 300 и 400.
+      Значения взяты из design-tokens.md, ничего нового не введено.
+  */
+
+  .cat-outer {
+    box-sizing: border-box;
+    background: radial-gradient(circle at 50% 0%, #282d5c 0%, #151933 75%);
+    padding: 64px 24px 80px;
+    font-family: 'Outfit', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .cat-outer *, .cat-outer *::before, .cat-outer *::after { box-sizing: border-box; }
+
+  .cat-inner { max-width: 900px; margin: 0 auto; }
+
+  .cat-logo {
+    display: block;
+    width: 200px;
+    max-width: 60%;
+    height: auto;
+    margin: 0 auto 28px;
+  }
+
+  .cat-label {
+    font-weight: 300; font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: #d4af37;
+    text-align: center; margin-bottom: 14px;
+  }
+
+  .cat-title {
+    font-family: 'Fraunces', serif; font-weight: 200;
+    font-size: 34px; line-height: 1.2; letter-spacing: -0.02em;
+    color: rgba(248, 250, 252, 0.95);
+    text-align: center; margin: 0 0 12px;
+  }
+
+  .cat-sub {
+    font-weight: 300; font-size: 14px; line-height: 1.75;
+    color: rgba(248, 250, 252, 0.6);
+    text-align: center; max-width: 520px; margin: 0 auto 52px;
+  }
+
+  .cat-group-label {
+    font-weight: 300; font-size: 11px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: rgba(212, 175, 55, 0.5);
+    margin: 0 0 16px 4px;
+  }
+
+  .cat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 36px; }
+  .cat-grid-full { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 36px; }
+
+  @media (max-width: 720px) {
+    .cat-grid { grid-template-columns: 1fr; }
+    .cat-title { font-size: 28px; }
+    .cat-outer { padding: 48px 20px 64px; }
+  }
+
+  .cat-card {
+    background: rgba(13, 15, 35, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 20px;
+    padding: 28px 24px;
+    display: flex; flex-direction: column;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .cat-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(212, 175, 55, 0.35);
+    background: rgba(18, 20, 48, 0.9);
+    box-shadow: 0 20px 40px -22px rgba(212, 175, 55, 0.35);
+  }
+
+  @media (hover: none) {
+    .cat-card:hover { transform: none; box-shadow: none; }
+  }
+
+  .cat-card-accent { border-color: rgba(212, 175, 55, 0.3); }
+  .cat-card-accent:hover { border-color: rgba(212, 175, 55, 0.5); box-shadow: 0 28px 56px -12px rgba(212, 175, 55, 0.25); }
+
+  .cat-num {
+    font-family: 'Fraunces', serif; font-weight: 300; font-size: 11px;
+    letter-spacing: 0.3em; color: rgba(212, 175, 55, 0.55);
+    margin-bottom: 12px;
+  }
+
+  .cat-name {
+    font-family: 'Fraunces', serif; font-weight: 300;
+    font-size: 18px; line-height: 1.2; color: rgba(248, 250, 252, 0.95);
+    margin: 0 0 6px;
+    transition: color 0.3s ease;
+  }
+
+  .cat-card:hover .cat-name { color: #d4af37; }
+
+  .cat-desc {
+    font-weight: 300; font-size: 14px; line-height: 1.6;
+    color: rgba(248, 250, 252, 0.6);
+    margin: 0 0 20px; flex: 1;
+  }
+
+  .cat-buttons { display: flex; flex-direction: column; gap: 8px; }
+
+  /* Отдельная страница на Netlify, перекрашивания ссылок нет —
+     псевдосостояния с !important не нужны. */
+  .cat-btn {
+    text-decoration: none;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; min-height: 44px; padding: 0 16px;
+    border: 1px solid rgba(212, 175, 55, 0.25);
+    border-radius: 12px;
+    color: rgba(248, 250, 252, 0.85);
+    font-family: 'Outfit', sans-serif; font-weight: 400;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  .cat-btn:hover, .cat-btn:active {
+    background: rgba(212, 175, 55, 0.1);
+    border-color: #d4af37; color: #d4af37;
+  }
+
+  .cat-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
+
+  .cat-btn-primary {
+    background: rgba(212, 175, 55, 0.08);
+    border-color: rgba(212, 175, 55, 0.4);
+    color: #d4af37;
+  }
+
+  .cat-price {
+    font-family: 'Fraunces', serif; font-weight: 300;
+    font-size: 18px; letter-spacing: 0; text-transform: none;
+    flex: none;
+  }
+
+  .cat-note {
+    font-weight: 300; font-size: 14px; line-height: 1.6;
+    color: rgba(248, 250, 252, 0.4);
+    text-align: center; max-width: 560px; margin: 8px auto 0;
+  }
+
+  .cat-contact {
+    text-align: center; margin-top: 40px;
+    font-weight: 300; font-size: 14px; line-height: 1.6;
+    color: rgba(248, 250, 252, 0.6);
+  }
+
+  .cat-contact a {
+    color: rgba(212, 175, 55, 0.85);
+    text-decoration: none;
+  }
+  .cat-contact a:hover { text-decoration: underline; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cat-card, .cat-btn { transition: none; }
+    .cat-card:hover { transform: none; }
+  }
+
+  /* ---- Служебный режим: кнопки копирования ссылок ----
+     Включается параметром в адресе, скрипт вешает класс на .cat-outer.
+     Клиенту не показывается никогда. */
+
+  .cat-copy { display: none; }
+
+  .cat-outer.is-internal .cat-copy {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; min-height: 44px; padding: 0 14px; margin-top: 4px;
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    background: rgba(23, 27, 54, 0.55);
+    color: rgba(248, 250, 252, 0.6);
+    font-family: 'Outfit', sans-serif; font-weight: 300;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.3s ease, color 0.3s ease, background 0.3s ease;
+  }
+
+  .cat-outer.is-internal .cat-copy:hover {
+    border-color: rgba(212, 175, 55, 0.6);
+    color: #d4af37;
+    background: rgba(27, 31, 62, 0.85);
+  }
+
+  .cat-outer.is-internal .cat-copy.is-done {
+    border-style: solid;
+    border-color: #d4af37;
+    color: #d4af37;
+  }
+
+  .cat-internal-note { display: none; }
+
+  .cat-outer.is-internal .cat-internal-note {
+    display: block;
+    max-width: 560px; margin: 0 auto 40px;
+    padding: 14px 18px;
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    border-radius: 12px;
+    background: rgba(23, 27, 54, 0.55);
+    font-weight: 300; font-size: 14px; line-height: 1.6;
+    color: rgba(248, 250, 252, 0.6);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="cat-outer">
+  <div class="cat-inner">
+    <img class="cat-logo" src="/assets/logo-gold.webp" alt="Екатерина Донна" width="453" height="265">
+    <p class="cat-label">Аудиопрактики</p>
+    <h1 class="cat-title">Выбор формата</h1>
+    <p class="cat-sub">Каждая ступень это четыре практики и дневник состояний. Формат с сопровождением добавляет две онлайн-сессии по часу с Екатериной, до и после прохождения.</p>
+
+    <p class="cat-internal-note">Служебный режим. Кнопки копирования видны только по этому адресу, клиенту отправляйте адрес без параметра.</p>
+
+    <p class="cat-group-label">Знакомство</p>
+    <div class="cat-grid">
+      <article class="cat-card">
+        <div class="cat-num">Старт</div>
+        <h3 class="cat-name">Чек-ап сессия</h3>
+        <p class="cat-desc">Тридцать минут онлайн с Екатериной. Разбор запроса и понимание, с чего начинать.</p>
+        <div class="cat-buttons">
+        <a class="cat-btn cat-btn-primary" href="https://buy.stripe.com/14A3cudNdayocKb4eMasg0b" target="_blank" rel="noopener noreferrer"><span>Записаться</span><span class="cat-price">25&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/14A3cudNdayocKb4eMasg0b">Скопировать · Записаться</button>
+        </div>
+      </article>
+      <article class="cat-card">
+        <div class="cat-num">Быстрый старт</div>
+        <h3 class="cat-name">Трек и чек-ап</h3>
+        <p class="cat-desc">Практика «Крокодил: обнуление тревоги», семнадцать минут, и встреча на тридцать минут. Сначала опыт, потом разговор.</p>
+        <div class="cat-buttons">
+        <a class="cat-btn cat-btn-primary" href="https://buy.stripe.com/6oUfZg9wX4a0fWn26Easg0a" target="_blank" rel="noopener noreferrer"><span>Получить</span><span class="cat-price">55&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/6oUfZg9wX4a0fWn26Easg0a">Скопировать · Получить</button>
+        </div>
+      </article>
+    </div>
+
+    <p class="cat-group-label">Флагманская практика</p>
+    <div class="cat-grid-full">
+      <article class="cat-card cat-card-accent">
+        <div class="cat-num">8D нейроакустика · около 27 минут</div>
+        <h3 class="cat-name">Память тела: код освобождения</h3>
+        <p class="cat-desc">Сферический звук: голос движется вокруг Вас, и внимание само следует за ним вглубь. Самостоятельная практика, доступ открывается сразу после оплаты.</p>
+        <div class="cat-buttons">
+        <a class="cat-btn cat-btn-primary" href="https://buy.stripe.com/eVq8wOfVlbCs11t26Easg0d" target="_blank" rel="noopener noreferrer"><span>Получить практику</span><span class="cat-price">90&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/eVq8wOfVlbCs11t26Easg0d">Скопировать · Получить практику</button>
+        </div>
+      </article>
+    </div>
+
+    <p class="cat-group-label">Четыре ступени</p>
+    <div class="cat-grid">
+      <article class="cat-card">
+        <div class="cat-num">Ступень 01</div>
+        <h3 class="cat-name">Возвращение в тело</h3>
+        <p class="cat-desc">Телесное напряжение, тревога, сон</p>
+        <div class="cat-buttons">
+        <a class="cat-btn" href="https://buy.stripe.com/6oU8wOeRhgWM25x12Aasg0e" target="_blank" rel="noopener noreferrer"><span>Самостоятельно</span><span class="cat-price">150&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/6oU8wOeRhgWM25x12Aasg0e">Скопировать · Самостоятельно</button>
+        <a class="cat-btn" href="https://buy.stripe.com/fZuaEW6kLfSIfWn7qYasg0f" target="_blank" rel="noopener noreferrer"><span>С сопровождением</span><span class="cat-price">370&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/fZuaEW6kLfSIfWn7qYasg0f">Скопировать · С сопровождением</button>
+        </div>
+      </article>
+      <article class="cat-card">
+        <div class="cat-num">Ступень 02</div>
+        <h3 class="cat-name">Внутренний стержень</h3>
+        <p class="cat-desc">Опора, границы, уверенность</p>
+        <div class="cat-buttons">
+        <a class="cat-btn" href="https://buy.stripe.com/cNi8wOcJ935W9xZ7qYasg0g" target="_blank" rel="noopener noreferrer"><span>Самостоятельно</span><span class="cat-price">150&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/cNi8wOcJ935W9xZ7qYasg0g">Скопировать · Самостоятельно</button>
+        <a class="cat-btn" href="https://buy.stripe.com/6oU00i24v9uk7pRaDaasg0h" target="_blank" rel="noopener noreferrer"><span>С сопровождением</span><span class="cat-price">370&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/6oU00i24v9uk7pRaDaasg0h">Скопировать · С сопровождением</button>
+        </div>
+      </article>
+      <article class="cat-card">
+        <div class="cat-num">Ступень 03</div>
+        <h3 class="cat-name">Чистый импульс</h3>
+        <p class="cat-desc">Энергия действовать, внутренний ребёнок</p>
+        <div class="cat-buttons">
+        <a class="cat-btn" href="https://buy.stripe.com/fZudR85gH7mcaC33aIasg0i" target="_blank" rel="noopener noreferrer"><span>Самостоятельно</span><span class="cat-price">150&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/fZudR85gH7mcaC33aIasg0i">Скопировать · Самостоятельно</button>
+        <a class="cat-btn" href="https://buy.stripe.com/6oU00i8sTcGw25x12Aasg0j" target="_blank" rel="noopener noreferrer"><span>С сопровождением</span><span class="cat-price">370&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/6oU00i8sTcGw25x12Aasg0j">Скопировать · С сопровождением</button>
+        </div>
+      </article>
+      <article class="cat-card">
+        <div class="cat-num">Ступень 04</div>
+        <h3 class="cat-name">Масштаб и новая реальность</h3>
+        <p class="cat-desc">Деньги, цели, эмоции</p>
+        <div class="cat-buttons">
+        <a class="cat-btn" href="https://buy.stripe.com/9B600ieRhgWMeSjfXuasg0n" target="_blank" rel="noopener noreferrer"><span>Самостоятельно</span><span class="cat-price">250&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/9B600ieRhgWMeSjfXuasg0n">Скопировать · Самостоятельно</button>
+        <a class="cat-btn" href="https://buy.stripe.com/eVq7sK7oPeOEcKbfXuasg0o" target="_blank" rel="noopener noreferrer"><span>С сопровождением</span><span class="cat-price">470&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/eVq7sK7oPeOEcKbfXuasg0o">Скопировать · С сопровождением</button>
+        </div>
+      </article>
+    </div>
+
+    <p class="cat-group-label">Всё вместе</p>
+    <div class="cat-grid-full">
+      <article class="cat-card cat-card-accent">
+        <div class="cat-num">17 практик · 4 дневника</div>
+        <h3 class="cat-name">Полный альбом</h3>
+        <p class="cat-desc">Все четыре ступени и флагманская практика без доплаты, семнадцать записей вместе. Дневники состояний и чек-ап с Екатериной. Доступ навсегда.</p>
+        <div class="cat-buttons">
+        <a class="cat-btn cat-btn-primary" href="https://buy.stripe.com/28E7sKeRh5e439B7qYasg0m" target="_blank" rel="noopener noreferrer"><span>Получить коллекцию</span><span class="cat-price">550&nbsp;€</span></a>
+        <button type="button" class="cat-copy" data-link="https://buy.stripe.com/28E7sKeRh5e439B7qYasg0m">Скопировать · Получить коллекцию</button>
+        </div>
+      </article>
+    </div>
+
+    <p class="cat-note">Оплата проходит на защищённой странице Stripe. Ссылка на плеер приходит на почту, указанную при оплате, срока действия у неё нет.</p>
+
+    <p class="cat-contact">Вопросы по выбору формата: <a href="mailto:ekaterina.donnat@gmail.com">ekaterina.donnat@gmail.com</a></p>
+  </div>
+</div>
+<script>
+(function() {
+    /* Служебный режим включается параметром в адресе.
+       URLSearchParams нет в старых WebView, разбираем вручную. */
+    function getParam(name) {
+        var q = window.location.search;
+        if (!q || q.length < 2) return null;
+        var pairs = q.substring(1).split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var eq = pairs[i].indexOf('=');
+            var key = eq === -1 ? pairs[i] : pairs[i].substring(0, eq);
+            if (decodeURIComponent(key) !== name) continue;
+            return eq === -1 ? '' : decodeURIComponent(pairs[i].substring(eq + 1));
+        }
+        return null;
+    }
+
+    try {
+        if (getParam('k') !== '7KfbPIxci2IL') return;
+
+        var wrap = document.querySelector('.cat-outer');
+        if (!wrap) return;
+        wrap.className = wrap.className + ' is-internal';
+
+        function copy(text, btn) {
+            function done() {
+                var base = btn.className.replace(/\s*\bis-done\b/g, '');
+                btn.className = base + ' is-done';
+                var was = btn.getAttribute('data-label') || btn.innerHTML;
+                btn.setAttribute('data-label', was);
+                btn.innerHTML = 'Скопировано';
+                setTimeout(function() {
+                    btn.className = base;
+                    btn.innerHTML = btn.getAttribute('data-label');
+                }, 1600);
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done)['catch'](function() { fallback(text, done); });
+            } else {
+                fallback(text, done);
+            }
+        }
+
+        /* Резерв для старых браузеров и для Safari без защищённого контекста */
+        function fallback(text, done) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', 'readonly');
+            ta.style.position = 'absolute';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); done(); } catch (e) {}
+            document.body.removeChild(ta);
+        }
+
+        var btns = wrap.querySelectorAll('.cat-copy');
+        for (var b = 0; b < btns.length; b++) {
+            (function(btn) {
+                btn.addEventListener('click', function() {
+                    copy(btn.getAttribute('data-link'), btn);
+                });
+            })(btns[b]);
+        }
+    } catch (e) {}
+})();
+</script>
+</body>
+</html>
