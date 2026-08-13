@@ -90,7 +90,7 @@ exports.handler = async (event) => {
             // Все покупки за 30 дней
             supabase
                 .from('purchases')
-                .select('email, amount, product_name, product_type, utm_source, created_at')
+                .select('email, amount, product_name, product_type, utm_source, status, created_at')
                 .gte('created_at', thirtyDaysAgo)
                 .order('created_at', { ascending: false }),
 
@@ -141,8 +141,13 @@ exports.handler = async (event) => {
             }
         }
 
-        // Покупки
-        const purchases = purchasesResult.data || [];
+        // Покупки. Возвращённые исключаем: строка остаётся в базе
+        // со status 'revoked', но денег по ней нет. Раньше выручка
+        // считалась по всем строкам подряд, и после возврата дашборд
+        // показывал сумму, которой уже не существует.
+        const allPurchases = purchasesResult.data || [];
+        const purchases = allPurchases.filter(p => p.status !== 'revoked');
+        const refunded = allPurchases.length - purchases.length;
         const revenue = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
         const avgCheck = purchases.length > 0 ? Math.round(revenue / purchases.length) : 0;
 
@@ -179,6 +184,7 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 updated: now.toISOString(),
                 revenue,
+                refunded,
                 avgCheck,
                 referralPercent,
                 emailBase: guestsResult.count || 0,
