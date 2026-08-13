@@ -91,7 +91,7 @@ if (fs.existsSync(fnDir)) {
 }
 
 // ── 2. Инлайновые <script> в index.html / demo.html — синтаксис + ES5 ───────
-['index.html', 'demo.html', 'vybor.html'].forEach(function (file) {
+['index.html', 'demo.html', 'vybor.html', 'dashboard.html'].forEach(function (file) {
     const full = path.join(ROOT, file);
     if (!fs.existsSync(full)) return;
     const html = fs.readFileSync(full, 'utf8');
