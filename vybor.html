@@ -224,6 +224,51 @@ html, body { margin: 0; padding: 0; background: #151933; }
     color: rgba(248, 250, 252, 0.6);
     text-align: center;
   }
+
+  /* ---- Общие поверхности браузера ----
+     Блок футера стоит на всех страницах, поэтому правила отсюда
+     работают на весь сайт. Дефолтные системные элементы посреди
+     тёмно-золотой страницы выдают недоделанность сильнее,
+     чем любая мелочь в вёрстке. */
+
+  ::selection {
+    background: rgba(212, 175, 55, 0.28);
+    color: rgba(248, 250, 252, 0.95);
+  }
+
+  ::-moz-selection {
+    background: rgba(212, 175, 55, 0.28);
+    color: rgba(248, 250, 252, 0.95);
+  }
+
+  /* Firefox и современные браузеры */
+  html {
+    scrollbar-color: rgba(212, 175, 55, 0.35) rgba(13, 15, 35, 0.6);
+    scrollbar-width: thin;
+  }
+
+  /* WebKit: Safari, Chrome. На тач-устройствах полосу не рисуем,
+     там она системная и появляется только при скролле. */
+  @media (hover: hover) {
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(13, 15, 35, 0.6); }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.3);
+      border-radius: 999px;
+      border: 2px solid rgba(13, 15, 35, 0.6);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.5); }
+  }
+
+  /* Табличные цифры там, где числа меняются или стоят в столбик:
+     цены, длительности, таймер плеера. Пропорциональные цифры
+     при смене дрожат по ширине. */
+  .prem-price, .prem-price-cur, .prem-price-retail, .prem-price-saving,
+  .donna-flagship-price, .acc-duration, .step-number,
+  .cat-price, .ft-copy {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
 </style>
 </head>
 <body>
