@@ -301,7 +301,7 @@ async function sendEmail(email, token, product) {
         // Домен без MX: ответ на hello@ отскакивает. Ответы уводим
         // в живой ящик Кати. Ответ клиента — ещё и сильнейший
         // положительный сигнал для почтовых фильтров.
-        replyTo: 'ekaterina.donnat@gmail.com',
+        replyTo: 'swiss.hypnosis@gmail.com',
         to:      email,
         subject: `Твоя практика готова — ${product.name}`,
         html:    buildEmail(playerUrl, product),

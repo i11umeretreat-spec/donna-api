@@ -12,7 +12,7 @@ exports.handler = async function(event, context) {
         const response = await resend.emails.send({
             from: 'Екатерина Донна <hello@ekaterina-donnat.com>',
             // Домен без MX: ответ на hello@ отскакивает
-            replyTo: 'ekaterina.donnat@gmail.com',
+            replyTo: 'swiss.hypnosis@gmail.com',
             to: data.email,
             subject: data.subject || 'Твоя практика готова',
             html: data.htmlBody || '<p>Ссылка на твою практику внутри.</p>'

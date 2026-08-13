@@ -90,7 +90,7 @@ exports.handler = async (event) => {
         await resend.emails.send({
             from: 'Ekaterina Donna <hello@ekaterina-donnat.com>',
             // Домен без MX: ответ на hello@ отскакивает
-            replyTo: 'ekaterina.donnat@gmail.com',
+            replyTo: 'swiss.hypnosis@gmail.com',
             to: email,
             subject: 'Баланс стихий - твоя первая практика от Екатерины Донна',
             html: buildEmail(playerUrl),
