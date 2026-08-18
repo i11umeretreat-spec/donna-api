@@ -2,8 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <!-- DEV ONLY: удалить в проде или не добавлять -->
-    <!-- <meta name="lineup-token" content="lineup-dev-permanent"> -->
+    <!-- Lineup Mode (все треки без Supabase) включается мета-тегом
+         name="lineup-token" со значением из переменной окружения
+         LINEUP_MODE_TOKEN. В репозитории значение не хранится: оно
+         помечено секретом в Netlify, и сканер секретов роняет сборку,
+         даже если строка закомментирована. Для локальной отладки
+         добавлять мета-тег вручную и не коммитить. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Donna Audio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
