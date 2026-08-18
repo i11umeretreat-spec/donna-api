@@ -14,8 +14,8 @@ exports.handler = async function(event, context) {
             // Домен без MX: ответ на hello@ отскакивает
             replyTo: 'swiss.hypnosis@gmail.com',
             to: data.email,
-            subject: data.subject || 'Твоя практика готова',
-            html: data.htmlBody || '<p>Ссылка на твою практику внутри.</p>'
+            subject: data.subject || 'Ваша практика готова',
+            html: data.htmlBody || '<p>Ссылка на Вашу практику внутри.</p>'
         });
 
         return {

@@ -561,6 +561,93 @@
 
         .btn-secondary:hover { background: rgba(212,175,55,0.08); border-color: #d4af37; }
 
+        /* ─── ПАМЯТКА «КАК СЛУШАТЬ» ───
+           Раскрывающаяся карточка под списком практик. Свёрнута по умолчанию:
+           человек пришёл слушать, а не читать, памятка не должна стоять
+           между ним и кнопкой play.
+           Размеры по канону design-tokens.md: читаемый текст от 14px,
+           метка от 11px. В остальном файле встречаются 9px и 13px, это
+           старее канона и здесь намеренно не повторяется. */
+        .guide-card {
+            background: rgba(23, 27, 54, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(212, 175, 55, 0.12);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .guide-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            width: 100%;
+            min-height: 56px;
+            padding: 18px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            font-family: 'Fraunces', serif;
+            font-weight: 300;
+            font-size: 18px;
+            line-height: 1.2;
+            color: rgba(248, 250, 252, 0.95);
+            transition: color 0.3s ease;
+        }
+
+        .guide-toggle:hover { color: #d4af37; }
+        @media (hover: none) {
+            .guide-toggle:hover { color: rgba(248, 250, 252, 0.95); }
+        }
+
+        .guide-toggle:focus-visible {
+            outline: 2px solid #d4af37;
+            outline-offset: -2px;
+        }
+
+        .guide-chevron {
+            flex: none;
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: #d4af37;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: transform 0.3s ease;
+        }
+
+        .guide-card.open .guide-chevron { transform: rotate(180deg); }
+
+        .guide-body { padding: 0 20px 24px; }
+
+        .guide-section { margin-top: 20px; }
+        .guide-section:first-child { margin-top: 4px; }
+
+        .guide-heading {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 400;
+            font-size: 14px;
+            letter-spacing: 0.02em;
+            color: #d4af37;
+            margin-bottom: 6px;
+        }
+
+        .guide-text {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 300;
+            font-size: 14px;
+            line-height: 1.75;
+            letter-spacing: 0.02em;
+            color: rgba(248, 250, 252, 0.6);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .guide-chevron, .guide-toggle { transition: none; }
+        }
+
         /* ─── ACCESS GATE ─── */
         .access-gate {
             display: flex;
@@ -1188,6 +1275,48 @@
             upsellText: 'Открой для себя полную коллекцию нейропрактик или запишись на личный чек-ап к Екатерине для точечной работы с подсознанием.',
             upsellBtn1: 'Полная коллекция',
             upsellBtn2: 'Записаться на чек-ап',
+            // Памятка от Кати, дословно. Изменено только два вида вещей:
+            // сквозная нумерация (в присланном тексте пропущен пункт 3,
+            // сохранена только последовательность) и «вы» приведено
+            // к «Вы» по CONT-02, как в остальных её текстах.
+            //
+            // ТРИ МЕСТА ЖДУТ РЕШЕНИЯ КАТИ (CONT-03, обещание результата
+            // и скорости). Не правил сам, это её слова про её же метод:
+            //   1. «устойчивый результат приходит за две-три недели»
+            //   2. «первые изменения многие замечают уже после
+            //      одного-двух прослушиваний»
+            //   3. «с каждым разом будет отпускать напряжение быстрее
+            //      и погружаться глубже»
+            // Ещё одно место, помягче: «Если Вы у меня на сайте впервые»
+            // читается странно внутри плеера, куда попадают уже после
+            // покупки. На сайте и в письме та же фраза уместна.
+            guideTitle: 'Как слушать практики',
+            guide: [
+                {
+                    heading: 'Как часто',
+                    text: 'Идеально заниматься каждый день или через день. Одну практику стоит слушать пять-семь дней подряд: именно повторение закрепляет новое состояние, так устроена наша психика. Потом можно чередовать. Двух практик в день не нужно, лучше одна, но глубокая. Кто-то чувствует отклик уже после первого прослушивания, кому-то нужно больше времени, и это тоже нормально. Ориентируйтесь не на скорость, а на регулярность: за две-три недели практика обычно входит в ритм и становится частью дня.'
+                },
+                {
+                    heading: 'После практики',
+                    text: 'Дайте себе пять-десять минут покоя: выпейте воды, не берите сразу телефон. За руль и к активным делам возвращайтесь минут через десять-пятнадцать, когда почувствуете полную бодрость. Если слушали глубокую практику вечером, паузу лучше продлить или просто лечь спать, это самый мягкий вариант. Вообще вечер и время перед сном подходят лучше всего, а утренние сеансы хороши для энергии и ясности.'
+                },
+                {
+                    heading: 'Если тело откликнулось',
+                    text: 'Если после практики тянет в сон, или наоборот появился прилив сил, или подступили слёзы и яркие эмоции, не пугайтесь. Это хороший знак: процесс идёт, подсознание работает.'
+                },
+                {
+                    heading: 'Порядок ступеней',
+                    text: 'Ступени выстроены как путь, каждая опирается на предыдущую, поэтому идите по порядку. Внутри ступени четыре практики: первый круг слушайте по очереди, а дальше выбирайте по состоянию, по тому, что откликается именно сегодня.'
+                },
+                {
+                    heading: 'С чего начать',
+                    text: 'Если Вы только начинаете, начните с первой ступени. Или выберите практику под свой запрос. Когда есть тревога и ощущение внутреннего бега, Вам подойдёт практика на успокоение и опору. Когда усталость и пустота, начните с наполнения ресурсом. Когда тяжесть и чувство, что всё накопилось, выбирайте практику отпускания. Доверьтесь первому импульсу: Ваше подсознание уже знает, что ему нужно.'
+                },
+                {
+                    heading: 'Если мы уже работали вместе',
+                    text: 'Если Вы уже бывали у меня на сеансах, выбирайте свободно: знакомые практики или новые. Ваше подсознание помнит мой голос, и со знакомым звучанием многим проще расслабиться и остаться в практике.'
+                }
+            ],
             tracks: {
                 'water_energy': { title: 'Баланс стихий', type: 'Сеанс самогипноза · Энергетическое наполнение' },
                 'track-01': { title: 'Освобождение от денежных ограничений', type: 'Сессия самогипноза' },
@@ -1221,6 +1350,12 @@
             upsellText: 'Explorez la collection complète de neuro-pratiques ou réservez un bilan privé avec Ekaterina pour un travail ciblé avec votre inconscient.',
             upsellBtn1: 'Collection complète',
             upsellBtn2: 'Réserver un bilan',
+            // Перевода памятки нет: это авторский текст Кати, машинный
+            // перевод под её подписью недопустим (CONT-01). Пока null,
+            // блок во французской версии просто не рисуется. Когда будет
+            // перевод от Кати, заменить null на такой же массив, как в ru.
+            guideTitle: null,
+            guide: null,
             tracks: {
                 'water_energy': { title: 'L\'équilibre des éléments', type: 'Séance d\'auto-hypnose · Recharge énergétique' },
                 'track-01': { title: 'Libération des blocages financiers', type: 'Séance d\'auto-hypnose' },
@@ -1410,6 +1545,28 @@
                 '</div>';
         });
 
+        // Памятка показывается только купившим (allowDownload). В гостевом
+        // состоянии рисуется один демо-трек и апсейл, и разделы про порядок
+        // ступеней там говорили бы о том, чего у человека ещё нет.
+        var guide = allowDownload ? t('guide') : null;
+        if (guide && guide.length) {
+            var guideInner = '';
+            for (var gi = 0; gi < guide.length; gi++) {
+                guideInner += '<div class="guide-section">' +
+                        '<div class="guide-heading">' + escapeHtml(guide[gi].heading) + '</div>' +
+                        '<p class="guide-text">' + escapeHtml(guide[gi].text) + '</p>' +
+                    '</div>';
+            }
+            html += '' +
+                '<div class="guide-card" id="guide-card">' +
+                    '<button type="button" class="guide-toggle" id="guide-toggle" aria-expanded="false" aria-controls="guide-body" onclick="toggleGuide()">' +
+                        '<span>' + escapeHtml(t('guideTitle')) + '</span>' +
+                        '<svg class="guide-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 6l5 5 5-5"/></svg>' +
+                    '</button>' +
+                    '<div class="guide-body" id="guide-body" hidden>' + guideInner + '</div>' +
+                '</div>';
+        }
+
         if (showUpsell) {
             html += '' +
                 '<div class="upsell-card">' +
@@ -1429,6 +1586,21 @@
         }
 
         if (totalSeconds >= THRESHOLD_BONUS) showBonusCard();
+    }
+
+    // Раскрытие памятки. Второй аргумент classList.toggle и Element.closest
+    // намеренно не используются: обоих нет в старом Android WebView (CODE-03).
+    function toggleGuide() {
+        var card = document.getElementById('guide-card');
+        var btn  = document.getElementById('guide-toggle');
+        var body = document.getElementById('guide-body');
+        if (!card || !btn || !body) return;
+
+        var isOpen = btn.getAttribute('aria-expanded') === 'true';
+        btn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+        body.hidden = isOpen;
+        if (isOpen) { card.classList.remove('open'); }
+        else { card.classList.add('open'); }
     }
 
     function formatTime(seconds) {
