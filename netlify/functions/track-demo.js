@@ -7,8 +7,20 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
-const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play', 'demo_click'];
+// hero_preview_play добавлен 24.08: хиро-блок на сайте слал 'play', то есть
+// то же имя, что демо-плеер при запуске полной практики на 21 минуту.
+// В базе два разных действия лежали вперемешку и не различались, из-за чего
+// воронка «просмотр → play» считалась неверно. Старое имя оставлено в списке:
+// оно живёт в demo.html и в записях до 24.08.
+const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play', 'demo_click', 'hero_preview_play'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
+
+// Поверхность: сайт на Тильде или демо-плеер на app-поддомене.
+const VALID_SURFACES = ['site', 'player'];
+
+// Метка from из адреса. Белый список, а не произвольная строка: поле
+// приходит из публичного запроса, а в базу пишется сервисным ключом.
+const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal'];
 
 // Хиро-блок живёт на ekaterina-donnat.com (Тильда), демо-плеер на
 // app.ekaterina-donnat.com — обоим нужен доступ к этой функции.
@@ -48,7 +60,7 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid JSON"}' };
     }
 
-    const { event: eventName, source, session_id } = body;
+    const { event: eventName, source, session_id, surface, campaign } = body;
 
     if (!VALID_EVENTS.includes(eventName)) {
         return { statusCode: 400, headers: CORS_HEADERS, body: '{"error":"Invalid event"}' };
@@ -64,6 +76,11 @@ exports.handler = async (event) => {
     }
 
     const safeSource = VALID_SOURCES.includes(source) ? source : 'organic';
+    // Неизвестное значение не подменяем на дефолт, а обнуляем: лучше пустое
+    // поле, чем тихо неверная метка, из-за которой снова будем считать
+    // воронку на смешанных данных.
+    const safeSurface  = VALID_SURFACES.includes(surface) ? surface : null;
+    const safeCampaign = VALID_CAMPAIGNS.includes(campaign) ? campaign : null;
     const safeSessionId = (typeof session_id === 'string' && session_id.length > 0)
         ? session_id.slice(0, 100)
         : null;
@@ -75,6 +92,8 @@ exports.handler = async (event) => {
                 event: eventName,
                 source: safeSource,
                 session_id: safeSessionId,
+                surface: safeSurface,
+                campaign: safeCampaign,
                 created_at: new Date().toISOString(),
             });
             if (error) {

@@ -607,8 +607,38 @@
     // UTM источник
     var source = window.TRAFFIC_SOURCE || 'direct';
 
-    // Идентификатор сессии — чтобы связывать pageview/play/lead одного посетителя
+    /* Идентификатор сессии, чтобы связывать pageview/play/lead одного
+       посетителя.
+
+       С 24.08 принимаем sid из адреса. Причина: сайт живёт на
+       ekaterina-donnat.com, плеер на app-поддомене, а sessionStorage
+       у разных источников свой. Человек, перешедший с сайта на демо,
+       получал два разных идентификатора, путь «сайт → демо» не
+       прослеживался вообще, а уникальные сессии считались вдвойне.
+       Хиро-блок теперь передаёт свой sid параметром, здесь он
+       подхватывается и сохраняется. */
+    function getSidFromUrl() {
+      var q = window.location.search;
+      if (!q || q.length < 2) return null;
+      var pairs = q.substring(1).split('&');
+      for (var i = 0; i < pairs.length; i++) {
+        var eq = pairs[i].indexOf('=');
+        if (eq === -1) continue;
+        if (decodeURIComponent(pairs[i].substring(0, eq)) !== 'sid') continue;
+        var v = decodeURIComponent(pairs[i].substring(eq + 1).replace(/\+/g, ' '));
+        /* Значение приходит из публичного адреса, поэтому ограничиваем
+           длину и набор символов, прежде чем класть в хранилище. */
+        return (v && v.length <= 100 && /^[A-Za-z0-9._-]+$/.test(v)) ? v : null;
+      }
+      return null;
+    }
+
     function getSessionId() {
+      var fromUrl = getSidFromUrl();
+      if (fromUrl) {
+        try { sessionStorage.setItem('donna_session_id', fromUrl); } catch (e) {}
+        return fromUrl;
+      }
       var sid = sessionStorage.getItem('donna_session_id');
       if (!sid) {
         sid = (window.crypto && crypto.randomUUID)
@@ -626,12 +656,35 @@
     // иначе dashboard-data.js молча схлопывает всё неопознанное в organic.
     var SOURCE_BUCKET_MAP = { instagram: 'paid', facebook: 'paid', fb: 'paid', ig: 'paid' };
 
+    /* Метка кампании из адреса: с 24.08 её принимает track-demo.js
+       и кладёт в отдельную колонку. Раньше параметр from доезжал только
+       до Stripe при покупке, а в статистике визитов не было видно,
+       из какого письма пришёл человек. */
+    var CAMPAIGN_PARAM = (function() {
+      var q = window.location.search;
+      if (!q || q.length < 2) return null;
+      var pairs = q.substring(1).split('&');
+      for (var i = 0; i < pairs.length; i++) {
+        var eq = pairs[i].indexOf('=');
+        if (eq === -1) continue;
+        if (decodeURIComponent(pairs[i].substring(0, eq)) !== 'from') continue;
+        return decodeURIComponent(pairs[i].substring(eq + 1).replace(/\+/g, ' ')) || null;
+      }
+      return null;
+    })();
+
     function trackDemo(eventName) {
       var bucketedSource = SOURCE_BUCKET_MAP[source.toLowerCase()] || source;
       fetch('/.netlify/functions/track-demo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ event: eventName, source: bucketedSource, session_id: sessionId })
+        body: JSON.stringify({
+          event: eventName,
+          source: bucketedSource,
+          session_id: sessionId,
+          surface: 'player',
+          campaign: CAMPAIGN_PARAM
+        })
       }).catch(function() {});
     }
 
