@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>С чего начать · Екатерина Донна</title>
+<!--
+  ПРОТОТИП v2 · Подбор практики после демо
+  donna_diagnostika_prototype.html · 25.08
+
+  Изменения v2 после аудита:
+  1. Все кликабельные span заменены на button.
+  2. Другие пути переключают карточку результата на месте.
+  3. Тихий счётчик «3 из 9», прогресс кольцами остался главным.
+  4. Кнопка Назад: история ответов, пересчёт баллов с нуля,
+     сфера отдаёт кольцо обратно.
+  5. Флагман больше не перекрывает баллы. Опыт глубокой работы
+     это сигнал: результат по баллам, флагман тихой строкой.
+  6. Выбор живой встречи ведёт на чек-ап и подсказывает
+     направление по баллам. Формат и запрос разделены.
+  7. Ноль баллов ведёт на чек-ап с честным текстом,
+     а не молча в Ступень 1.
+  8. Фокус переводится на вопрос и на результат.
+  9. Тексты смягчены: пара минут вместо около минуты,
+     По Вашим ответам вместо Ваш путь, строка про подсказку.
+
+  Заглушки, как и раньше:
+  ТЕКСТЫ ВОПРОСОВ И ОПИСАНИЙ: каркас для Катиной правки.
+  ВАЖНО ДЛЯ КАТИ: описания веток обязаны соответствовать
+  фактическому составу четырёх треков каждой ступени.
+  Дисбаланс источников баллов между ветками тоже её зона:
+  у Ступени 3 пять источников, у четвёртой три.
+  КНОПКА РЕЗУЛЬТАТА ведёт на главную сайта, якоря уточним.
+  ОТПРАВКА ДАННЫХ ОТКЛЮЧЕНА, места помечены SEND-HOOK.
+
+  Правила: ES5, классы вместо инлайн-стилей, регистр Вы,
+  токены из design-tokens.md, без длинных тире.
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,200;9..144,300&family=Outfit:wght@300;400&display=swap');
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    background-color: #151933;
+    min-height: 100%;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    color: rgba(248, 250, 252, 0.85);
+    letter-spacing: 0.02em;
+    overflow-x: hidden;
+}
+
+::selection {
+    background: rgba(212, 175, 55, 0.35);
+    color: rgba(248, 250, 252, 0.95);
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #0f1123; }
+::-webkit-scrollbar-thumb {
+    background: rgba(212, 175, 55, 0.25);
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(212, 175, 55, 0.4); }
+
+button {
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.02em;
+    border: none;
+    background: none;
+    color: inherit;
+}
+
+.dg-wrap {
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 64px;
+}
+
+.dg-bg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.dg-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+/* ── Сфера ────────────────────────────────────────────────────── */
+
+.dg-sphere {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    margin: 8px auto 28px;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    transform: translateZ(0);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dg-sphere::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 128px; height: 128px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.4) 0%, transparent 70%);
+    transform: translate(-50%, -50%) scale(0.85) translateZ(0);
+    opacity: 0.25;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+    z-index: -1;
+}
+
+.dg-sphere.is-pulse::after {
+    transform: translate(-50%, -50%) scale(1.5) translateZ(0);
+    opacity: 0.7;
+}
+
+.dg-sphere.is-final {
+    transform: scale(1.12) translateZ(0);
+}
+
+.dg-sphere.is-final::after {
+    transform: translate(-50%, -50%) scale(2.1) translateZ(0);
+    opacity: 0.85;
+}
+
+#dg-canvas {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    display: block;
+}
+
+/* ── Экраны ───────────────────────────────────────────────────── */
+
+.dg-screen {
+    width: 100%;
+    opacity: 1;
+    transform: translateY(0) translateZ(0);
+    transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dg-screen.is-leaving {
+    opacity: 0;
+    transform: translateY(-10px) translateZ(0);
+}
+
+.dg-screen.is-entering {
+    opacity: 0;
+    transform: translateY(14px) translateZ(0);
+}
+
+.dg-hidden { display: none; }
+
+/* ── Интро ────────────────────────────────────────────────────── */
+
+.dg-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 200;
+    font-size: 34px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: rgba(248, 250, 252, 0.95);
+    margin-bottom: 16px;
+}
+
+.dg-intro-text {
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgba(248, 250, 252, 0.6);
+    max-width: 400px;
+    margin: 0 auto 12px;
+}
+
+.dg-intro-note {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(248, 250, 252, 0.4);
+    margin-bottom: 36px;
+}
+
+.dg-start-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 55px;
+    padding: 0 44px;
+    background: #d4af37;
+    color: #0f1123;
+    border-radius: 12px;
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dg-start-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.dg-start-btn:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 4px;
+}
+
+/* ── Вопрос ───────────────────────────────────────────────────── */
+
+.dg-counter {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+    color: rgba(248, 250, 252, 0.25);
+    margin-bottom: 14px;
+}
+
+.dg-question {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 22px;
+    line-height: 1.35;
+    letter-spacing: -0.02em;
+    color: rgba(248, 250, 252, 0.95);
+    max-width: 460px;
+    margin: 0 auto 28px;
+    outline: none;
+}
+
+.dg-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.dg-option {
+    width: 100%;
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 24px;
+    background: rgba(23, 27, 54, 0.55);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    border-radius: 12px;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(248, 250, 252, 0.85);
+    cursor: pointer;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dg-option.q-in {
+    animation: optIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.dg-option.q-in:nth-child(1) { animation-delay: 0.05s; }
+.dg-option.q-in:nth-child(2) { animation-delay: 0.13s; }
+.dg-option.q-in:nth-child(3) { animation-delay: 0.21s; }
+.dg-option.q-in:nth-child(4) { animation-delay: 0.29s; }
+.dg-option.q-in:nth-child(5) { animation-delay: 0.37s; }
+
+@keyframes optIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px) translateZ(0);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateZ(0);
+    }
+}
+
+.dg-option:hover {
+    background: rgba(27, 31, 62, 0.85);
+    border-color: rgba(212, 175, 55, 0.35);
+    transform: translateY(-2px) translateZ(0);
+}
+
+.dg-option:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 3px;
+}
+
+.dg-option.is-chosen {
+    background: rgba(212, 175, 55, 0.12);
+    border-color: rgba(212, 175, 55, 0.55);
+    color: rgba(248, 250, 252, 0.95);
+}
+
+.dg-option.is-dimmed {
+    opacity: 0.25;
+    pointer-events: none;
+}
+
+@media (hover: none) {
+    .dg-option:hover {
+        transform: none;
+        background: rgba(23, 27, 54, 0.55);
+        border-color: rgba(212, 175, 55, 0.15);
+    }
+    .dg-option.is-chosen {
+        background: rgba(212, 175, 55, 0.12);
+        border-color: rgba(212, 175, 55, 0.55);
+    }
+}
+
+.dg-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    margin-top: 20px;
+    padding: 10px 16px;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(248, 250, 252, 0.4);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dg-back:hover { color: rgba(248, 250, 252, 0.7); }
+
+.dg-back:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 2px;
+}
+
+.dg-back.dg-invisible { visibility: hidden; }
+
+/* ── Результат ────────────────────────────────────────────────── */
+
+.dg-result-label {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #d4af37;
+    margin-bottom: 20px;
+}
+
+.dg-result-card {
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 14px;
+    padding: 36px 28px 32px;
+    background: rgba(13, 15, 35, 0.8);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 20px;
+    transition: background 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dg-result-card:hover {
+    transform: translateY(-6px);
+    background: rgba(18, 20, 48, 0.9);
+    border-color: rgba(212, 175, 55, 0.55);
+    box-shadow: 0 20px 40px -22px rgba(212, 175, 55, 0.35);
+}
+
+@media (hover: none) {
+    .dg-result-card:hover {
+        transform: none;
+        box-shadow: none;
+        background: rgba(13, 15, 35, 0.8);
+        border-color: rgba(212, 175, 55, 0.35);
+    }
+}
+
+.dg-result-card.q-in {
+    animation: resultIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.35s backwards;
+}
+
+@keyframes resultIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97) translateZ(0);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1) translateZ(0);
+    }
+}
+
+.dg-result-name {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: rgba(248, 250, 252, 0.95);
+    margin-bottom: 14px;
+    outline: none;
+}
+
+.dg-result-desc {
+    font-size: 14px;
+    line-height: 1.75;
+    color: rgba(248, 250, 252, 0.6);
+    margin-bottom: 18px;
+}
+
+/* Дополнительная строка: направление для чек-апа
+   или мягкое упоминание флагмана */
+.dg-result-extra {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(248, 250, 252, 0.4);
+    margin-bottom: 22px;
+}
+
+.dg-result-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 55px;
+    padding: 0 36px;
+    background: #d4af37;
+    color: #0f1123;
+    border-radius: 12px;
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dg-result-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.dg-result-btn:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 4px;
+}
+
+.dg-result-note {
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(248, 250, 252, 0.4);
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+.dg-others {
+    width: 100%;
+    max-width: 440px;
+    margin: 24px auto 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.dg-others-label {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(248, 250, 252, 0.4);
+    margin-bottom: 10px;
+}
+
+.dg-other {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 6px;
+    min-height: 44px;
+    font-weight: 300;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(248, 250, 252, 0.6);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dg-other:hover { color: #d4af37; }
+
+.dg-other:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 2px;
+}
+
+.dg-other-sep {
+    color: rgba(248, 250, 252, 0.25);
+    padding: 0 4px;
+}
+
+.dg-restart {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 32px;
+    padding: 10px 16px;
+    min-height: 44px;
+    font-weight: 300;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(248, 250, 252, 0.4);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dg-restart:hover { color: rgba(248, 250, 252, 0.7); }
+
+.dg-restart:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 2px;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    .dg-screen,
+    .dg-sphere,
+    .dg-sphere::after,
+    .dg-option,
+    .dg-result-card { transition: none; }
+
+    .dg-option.q-in,
+    .dg-result-card.q-in { animation: none; }
+
+    .dg-sphere.is-final { transform: none; }
+}
+
+@media (max-width: 480px) {
+    .dg-wrap { padding-top: 32px; }
+    .dg-title { font-size: 28px; }
+    .dg-question { font-size: 18px; letter-spacing: -0.01em; }
+}
+</style>
+</head>
+<body>
+<div class="dg-wrap" id="dg-wrap">
+    <canvas class="dg-bg" id="dg-bg"></canvas>
+
+    <div class="dg-content">
+
+        <div class="dg-sphere" id="dg-sphere">
+            <canvas id="dg-canvas" width="256" height="256"></canvas>
+        </div>
+
+        <!-- Экран 1: интро -->
+        <div class="dg-screen" id="screen-intro">
+            <h1 class="dg-title">С чего начать</h1>
+            <p class="dg-intro-text">Девять коротких вопросов, пара минут. В конце подскажем, с чего Вам может быть удобно начать.</p>
+            <p class="dg-intro-note">Здесь нет правильных ответов.</p>
+            <button type="button" class="dg-start-btn" id="dg-start">Начать</button>
+        </div>
+
+        <!-- Экран 2: вопрос. Наполняется скриптом -->
+        <div class="dg-screen dg-hidden" id="screen-question">
+            <p class="dg-counter" id="dg-counter" aria-live="polite"></p>
+            <p class="dg-question" id="dg-question-text"></p>
+            <div class="dg-options" id="dg-options"></div>
+            <button type="button" class="dg-back dg-invisible" id="dg-back">Назад</button>
+        </div>
+
+        <!-- Экран 3: результат. Наполняется скриптом -->
+        <div class="dg-screen dg-hidden" id="screen-result">
+            <p class="dg-result-label">По Вашим ответам</p>
+            <div class="dg-result-card" id="dg-result-card">
+                <p class="dg-result-name" id="dg-result-name"></p>
+                <p class="dg-result-desc" id="dg-result-desc"></p>
+                <p class="dg-result-extra dg-hidden" id="dg-result-extra"></p>
+                <button type="button" class="dg-result-btn" id="dg-result-btn"></button>
+            </div>
+            <p class="dg-result-note">Это подсказка, а не вердикт. Выбрать можно любой путь.</p>
+            <div class="dg-others">
+                <p class="dg-others-label">Другие пути</p>
+                <div id="dg-others-list"></div>
+            </div>
+            <button type="button" class="dg-restart" id="dg-restart">Пройти заново</button>
+        </div>
+
+    </div>
+</div>
+
+<script>
+(function() {
+    'use strict';
+
+    /* ══ ДАННЫЕ ═══════════════════════════════════════════════════
+       Тексты это каркас для Кати. Баллы: ключи s1..s4 по ступеням.
+       flag: 'flagship' помечает сигнал опыта глубокой работы,
+       flag: 'checkup' помечает предпочтение живого формата.
+       Сигналы не перекрывают баллы, они меняют подачу результата.
+       Для Кати: источников баллов у веток разное количество,
+       s1 и s3 набирают чаще, чем s2 и s4. Балансировка за ней. */
+
+    var QUESTIONS = [
+        {
+            text: 'Что точнее всего описывает Ваше состояние сейчас?',
+            options: [
+                { label: 'Просыпаюсь уже без сил', scores: { s1: 1 } },
+                { label: 'Внутри как сжатая пружина', scores: { s1: 1 } },
+                { label: 'Мысли по кругу, голова не выключается', scores: { s3: 1 } },
+                { label: 'Силы есть, хочется большего', scores: { s4: 1 } },
+                { label: 'Сложно выбрать один вариант', scores: {} }
+            ]
+        },
+        {
+            text: 'Как Вам спится?',
+            options: [
+                { label: 'Долго не могу уснуть', scores: { s1: 1 } },
+                { label: 'Сплю, но не отдыхаю', scores: { s3: 1 } },
+                { label: 'Со сном всё в порядке', scores: {} }
+            ]
+        },
+        {
+            text: 'Легко ли Вам говорить нет?',
+            options: [
+                { label: 'Соглашаюсь, а потом жалею', scores: { s2: 1 } },
+                { label: 'Сначала думаю, что скажут другие', scores: { s2: 1 } },
+                { label: 'Умею, но каждый раз это дорого мне стоит', scores: { s2: 1, s3: 1 } },
+                { label: 'С этим у меня порядок', scores: {} }
+            ]
+        },
+        {
+            text: 'Как Вы разговариваете с собой?',
+            options: [
+                { label: 'Часто себя ругаю', scores: { s2: 1 } },
+                { label: 'Сравниваю себя с другими', scores: { s2: 1 } },
+                { label: 'В целом я на своей стороне', scores: {} }
+            ]
+        },
+        {
+            text: 'Есть ощущение, что жизнь идёт через усилие?',
+            options: [
+                { label: 'Да, будто всё через борьбу', scores: { s3: 1 } },
+                { label: 'Периодами', scores: { s3: 1 } },
+                { label: 'Нет, скорее легко', scores: {} }
+            ]
+        },
+        {
+            text: 'Что говорит Ваше тело?',
+            options: [
+                { label: 'Держит напряжение и не отпускает', scores: { s1: 1 } },
+                { label: 'Отзывается на переживания, то тут, то там', scores: { s3: 1 } },
+                { label: 'Тело спокойно', scores: {} }
+            ]
+        },
+        {
+            text: 'Что у Вас с желаниями и целями?',
+            options: [
+                { label: 'Хочу большего, но будто упираюсь в потолок', scores: { s4: 1 } },
+                { label: 'Хотеть почему-то страшно', scores: { s4: 1 } },
+                { label: 'Цели ясные, я к ним иду', scores: {} }
+            ]
+        },
+        {
+            text: 'Был ли у Вас опыт глубокой работы с собой?',
+            options: [
+                { label: 'Да, многое пройдено, но тело будто помнит старое', scores: {}, flag: 'flagship' },
+                { label: 'Был небольшой опыт', scores: {} },
+                { label: 'Только начинаю', scores: { s1: 1 } }
+            ]
+        },
+        {
+            text: 'Как Вам комфортнее начать?',
+            options: [
+                { label: 'Самостоятельно, в своём темпе', scores: {} },
+                { label: 'Сначала поговорить с живым человеком', scores: {}, flag: 'checkup' }
+            ]
+        }
+    ];
+
+    /* В продакшене кнопки поведут на якоря сайта и запись
+       на чек-ап. Пока все ведут на главную. */
+    var SITE = 'https://ekaterina-donnat.com/';
+
+    var RESULTS = {
+        s1: {
+            name: 'Возвращение в тело',
+            desc: 'Четыре практики про расслабление, сон и контакт с телом.',
+            btn: 'Подробнее о программе',
+            url: SITE
+        },
+        s2: {
+            name: 'Внутренний стержень',
+            desc: 'Четыре практики про личные границы, уверенность и опору на себя.',
+            btn: 'Подробнее о программе',
+            url: SITE
+        },
+        s3: {
+            name: 'Чистый импульс',
+            desc: 'Четыре практики про внутреннюю борьбу, усталость и восстановление.',
+            btn: 'Подробнее о программе',
+            url: SITE
+        },
+        s4: {
+            name: 'Масштаб и новая реальность',
+            desc: 'Четыре практики про цели, желания и привычные границы возможного.',
+            btn: 'Подробнее о программе',
+            url: SITE
+        },
+        flagship: {
+            name: 'Память тела: код освобождения',
+            desc: 'Глубокая практика в объёмном звучании. Для тех, кто уже прошёл серьёзную работу с собой.',
+            btn: 'Подробнее о практике',
+            url: SITE + '#pamyat-tela'
+        },
+        checkup: {
+            name: 'Чек-ап с Екатериной',
+            desc: 'Тридцать минут личного разговора онлайн. Вместе посмотрите, что происходит, и подберёте практику вручную.',
+            btn: 'Записаться на встречу',
+            url: SITE
+        }
+    };
+
+    var ORDER = ['s1', 's2', 's3', 's4'];
+
+    /* ══ СОСТОЯНИЕ ════════════════════════════════════════════════ */
+
+    var state = {
+        step: -1,
+        scores: { s1: 0, s2: 0, s3: 0, s4: 0 },
+        flagshipSignal: false,
+        checkupWish: false,
+        history: [],
+        locked: false
+    };
+
+    var reduceMotion = false;
+    try {
+        reduceMotion = window.matchMedia &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    } catch (e) {}
+
+    /* ══ СФЕРА ════════════════════════════════════════════════════ */
+
+    var sphereCanvas = document.getElementById('dg-canvas');
+    var sphereEl = document.getElementById('dg-sphere');
+    var sCtx = sphereCanvas.getContext('2d');
+    var SW = 256, SH = 256;
+    var sAngle = 0;
+    var ringsVisible = 1;
+    var ringTarget = 1;
+    var flash = 0;
+    var warmth = 0;
+
+    var RING_STYLES = [
+        { color: 'rgba(212,175,55,0.7)',  width: 1.5 },
+        { color: 'rgba(212,175,55,0.35)', width: 1   },
+        { color: 'rgba(180,160,220,0.5)', width: 1.2 },
+        { color: 'rgba(212,175,55,0.2)',  width: 0.8 }
+    ];
+
+    var MAX_RINGS = 10; /* интро плюс девять ответов */
+
+    function drawSphere() {
+        sCtx.clearRect(0, 0, SW, SH);
+        sCtx.save();
+        sCtx.beginPath();
+        sCtx.arc(SW / 2, SH / 2, SW / 2 - 1, 0, Math.PI * 2);
+        sCtx.clip();
+        sCtx.fillStyle = '#0d1030';
+        sCtx.fillRect(0, 0, SW, SH);
+
+        var grd = sCtx.createRadialGradient(SW * 0.35, SH * 0.3, 0, SW / 2, SH / 2, SW / 2);
+        grd.addColorStop(0, 'rgba(212,175,55,' + (0.1 + 0.1 * (ringsVisible / MAX_RINGS) + flash * 0.25) + ')');
+        grd.addColorStop(0.5, 'transparent');
+        grd.addColorStop(1, 'rgba(75,0,130,0.25)');
+        sCtx.fillStyle = grd;
+        sCtx.fillRect(0, 0, SW, SH);
+
+        var cx = SW / 2, cy = SH / 2, r = SW / 2 - 2;
+        var i, latAngle, ringR, ringY, rotOffset, ri, dotCount, d, dAngle;
+
+        for (i = 0; i < ringsVisible; i++) {
+            latAngle = -Math.PI / 2 + Math.PI * ((i + 0.5) / MAX_RINGS);
+            ringR = Math.cos(latAngle) * r;
+            ringY = cy + Math.sin(latAngle) * r;
+            rotOffset = sAngle * (i % 2 === 0 ? 1 : -0.7) + i * 0.4;
+            ri = RING_STYLES[i % RING_STYLES.length];
+
+            sCtx.save();
+            sCtx.translate(cx, ringY);
+            sCtx.scale(1, 0.22);
+            sCtx.beginPath();
+            sCtx.arc(0, 0, Math.abs(ringR), 0, Math.PI * 2);
+            sCtx.strokeStyle = ri.color;
+            sCtx.lineWidth = ri.width * (1 + 0.3 * Math.cos(latAngle)) + flash * 0.6;
+            sCtx.stroke();
+
+            dotCount = Math.floor(Math.abs(ringR) / 12);
+            for (d = 0; d < dotCount; d++) {
+                dAngle = (d / dotCount) * Math.PI * 2 + rotOffset;
+                sCtx.beginPath();
+                sCtx.arc(
+                    Math.cos(dAngle) * Math.abs(ringR),
+                    Math.sin(dAngle) * Math.abs(ringR),
+                    1.2, 0, Math.PI * 2
+                );
+                sCtx.fillStyle = 'rgba(248,245,235,0.85)';
+                sCtx.fill();
+            }
+            sCtx.restore();
+        }
+
+        var shine = sCtx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0, cx, cy, r);
+        shine.addColorStop(0, 'rgba(255,255,255,0.07)');
+        shine.addColorStop(0.4, 'transparent');
+        sCtx.fillStyle = shine;
+        sCtx.fillRect(0, 0, SW, SH);
+        sCtx.restore();
+    }
+
+    function syncRings() {
+        ringTarget = 1 + state.history.length;
+        if (ringTarget > MAX_RINGS) ringTarget = MAX_RINGS;
+        warmth = (ringTarget - 1) / (MAX_RINGS - 1);
+        if (ringsVisible > ringTarget) ringsVisible = ringTarget;
+        if (reduceMotion) {
+            ringsVisible = ringTarget;
+            flash = 0;
+            drawSphere();
+        }
+    }
+
+    function addRing() {
+        syncRings();
+        if (reduceMotion) return;
+        flash = 1;
+        try {
+            sphereEl.className = sphereEl.className.replace(/\s*\bis-pulse\b/g, '') + ' is-pulse';
+            setTimeout(function() {
+                sphereEl.className = sphereEl.className.replace(/\s*\bis-pulse\b/g, '');
+            }, 500);
+        } catch (e) {}
+    }
+
+    /* ══ ФОН: частицы ═════════════════════════════════════════════ */
+
+    var bgCanvas = document.getElementById('dg-bg');
+    var bCtx = bgCanvas.getContext('2d');
+    var BW = 0, BH = 0;
+    var particles = [];
+    var PARTICLE_COUNT = 50;
+
+    function resizeBg() {
+        var wrap = document.getElementById('dg-wrap');
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        BW = wrap.offsetWidth;
+        BH = wrap.offsetHeight;
+        bgCanvas.width = BW * dpr;
+        bgCanvas.height = BH * dpr;
+        bCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function initParticles() {
+        var i;
+        particles.length = 0;
+        for (i = 0; i < PARTICLE_COUNT; i++) {
+            particles.push({
+                x: Math.random() * BW,
+                y: Math.random() * BH,
+                r: Math.random() * 2 + 0.8,
+                opacity: Math.random() * 0.6 + 0.2,
+                speedX: (Math.random() - 0.5) * 0.2,
+                speedY: (Math.random() - 0.5) * 0.2,
+                opacitySpeed: (Math.random() - 0.5) * 0.004
+            });
+        }
+    }
+
+    var gradPhase = 0;
+
+    function drawBg() {
+        bCtx.clearRect(0, 0, BW, BH);
+        gradPhase += 0.003;
+
+        var cx1 = BW * 0.5 + Math.sin(gradPhase * 0.7) * BW * 0.12;
+        var cy1 = BH * 0.18 + Math.cos(gradPhase * 0.5) * BH * 0.06;
+        var grd = bCtx.createRadialGradient(cx1, cy1, 0, BW / 2, BH / 2, BH * 0.9);
+        grd.addColorStop(0, 'rgba(40,45,92,0.95)');
+        grd.addColorStop(0.4, 'rgba(21,25,51,0.85)');
+        grd.addColorStop(1, 'rgba(10,12,30,0.9)');
+        bCtx.fillStyle = grd;
+        bCtx.fillRect(0, 0, BW, BH);
+
+        var i, p;
+        for (i = 0; i < particles.length; i++) {
+            p = particles[i];
+            p.x += p.speedX * (1 - warmth * 0.4);
+            p.y += p.speedY * (1 - warmth * 0.4);
+            p.opacity += p.opacitySpeed;
+
+            if (p.opacity < 0.12) p.opacitySpeed = Math.abs(p.opacitySpeed);
+            if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
+            if (p.x < 0) p.x = BW;
+            if (p.x > BW) p.x = 0;
+            if (p.y < 0) p.y = BH;
+            if (p.y > BH) p.y = 0;
+
+            bCtx.beginPath();
+            bCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            bCtx.fillStyle = 'rgba(212,175,55,' + (p.opacity * (0.85 + warmth * 0.15)) + ')';
+            bCtx.fill();
+        }
+    }
+
+    /* ══ ЦИКЛ ═════════════════════════════════════════════════════ */
+
+    var rafId = null;
+
+    function loop() {
+        if (document.hidden) { rafId = null; return; }
+        sAngle += 0.008;
+        if (ringsVisible < ringTarget) {
+            ringsVisible = Math.min(ringTarget, ringsVisible + 0.05);
+        }
+        if (flash > 0) flash = Math.max(0, flash - 0.03);
+        drawSphere();
+        drawBg();
+        rafId = requestAnimationFrame(loop);
+    }
+
+    function stopLoop() {
+        if (rafId !== null) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+    }
+
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) { stopLoop(); return; }
+        if (!reduceMotion && rafId === null) loop();
+    });
+
+    window.addEventListener('resize', function() {
+        resizeBg();
+        initParticles();
+        if (reduceMotion) { drawSphere(); drawBg(); }
+    });
+
+    /* ══ ЭКРАНЫ ═══════════════════════════════════════════════════ */
+
+    var screens = {
+        intro: document.getElementById('screen-intro'),
+        question: document.getElementById('screen-question'),
+        result: document.getElementById('screen-result')
+    };
+
+    function stripClass(el, cls) {
+        el.className = el.className.replace(new RegExp('\\s*\\b' + cls + '\\b', 'g'), '');
+    }
+
+    function addClass(el, cls) {
+        stripClass(el, cls);
+        el.className += ' ' + cls;
+    }
+
+    function switchScreen(fromEl, toEl, prepare, after) {
+        if (reduceMotion) {
+            addClass(fromEl, 'dg-hidden');
+            if (prepare) prepare();
+            stripClass(toEl, 'dg-hidden');
+            resizeBg();
+            drawSphere();
+            drawBg();
+            if (after) after();
+            return;
+        }
+        addClass(fromEl, 'is-leaving');
+        setTimeout(function() {
+            addClass(fromEl, 'dg-hidden');
+            stripClass(fromEl, 'is-leaving');
+            if (prepare) prepare();
+            addClass(toEl, 'is-entering');
+            stripClass(toEl, 'dg-hidden');
+            requestAnimationFrame(function() {
+                requestAnimationFrame(function() {
+                    stripClass(toEl, 'is-entering');
+                    resizeBg();
+                    if (after) after();
+                });
+            });
+        }, 360);
+    }
+
+    /* ══ ВОПРОСЫ ══════════════════════════════════════════════════ */
+
+    var qText = document.getElementById('dg-question-text');
+    var qOptions = document.getElementById('dg-options');
+    var qCounter = document.getElementById('dg-counter');
+    var backBtn = document.getElementById('dg-back');
+
+    function buildQuestion(idx) {
+        var q = QUESTIONS[idx];
+        var i, el;
+        qCounter.textContent = (idx + 1) + ' из ' + QUESTIONS.length;
+        qText.textContent = q.text;
+        while (qOptions.firstChild) qOptions.removeChild(qOptions.firstChild);
+        for (i = 0; i < q.options.length; i++) {
+            el = document.createElement('button');
+            el.setAttribute('type', 'button');
+            el.className = 'dg-option' + (reduceMotion ? '' : ' q-in');
+            el.textContent = q.options[i].label;
+            attachOption(el, idx, i);
+            qOptions.appendChild(el);
+        }
+        if (idx > 0) {
+            stripClass(backBtn, 'dg-invisible');
+        } else {
+            addClass(backBtn, 'dg-invisible');
+        }
+    }
+
+    function focusQuestion() {
+        try {
+            qText.setAttribute('tabindex', '-1');
+            qText.focus();
+        } catch (e) {}
+    }
+
+    function attachOption(el, qIdx, optIdx) {
+        el.addEventListener('click', function() {
+            if (state.locked) return;
+            state.locked = true;
+            pick(el, qIdx, optIdx);
+        });
+    }
+
+    function applyAnswer(opt) {
+        var key;
+        for (key in opt.scores) {
+            if (opt.scores.hasOwnProperty(key)) {
+                state.scores[key] += opt.scores[key];
+            }
+        }
+        if (opt.flag === 'flagship') state.flagshipSignal = true;
+        if (opt.flag === 'checkup') state.checkupWish = true;
+    }
+
+    function recomputeFromHistory() {
+        var i, h;
+        state.scores = { s1: 0, s2: 0, s3: 0, s4: 0 };
+        state.flagshipSignal = false;
+        state.checkupWish = false;
+        for (i = 0; i < state.history.length; i++) {
+            h = state.history[i];
+            applyAnswer(QUESTIONS[h.q].options[h.o]);
+        }
+    }
+
+    function pick(el, qIdx, optIdx) {
+        var kids, i;
+
+        state.history.push({ q: qIdx, o: optIdx });
+        applyAnswer(QUESTIONS[qIdx].options[optIdx]);
+
+        /* SEND-HOOK: здесь встанет отправка diag_answer
+           с номером вопроса и индексом ответа, привязка к sid */
+
+        addClass(el, 'is-chosen');
+        kids = qOptions.children;
+        for (i = 0; i < kids.length; i++) {
+            if (kids[i] !== el) addClass(kids[i], 'is-dimmed');
+        }
+
+        addRing();
+
+        setTimeout(function() {
+            state.step += 1;
+            if (state.step < QUESTIONS.length) {
+                switchScreen(screens.question, screens.question, function() {
+                    buildQuestion(state.step);
+                }, focusQuestion);
+            } else {
+                finish();
+            }
+            state.locked = false;
+        }, reduceMotion ? 120 : 520);
+    }
+
+    function goBack() {
+        if (state.locked || state.history.length === 0) return;
+        state.locked = true;
+        var prev = state.history.pop();
+        recomputeFromHistory();
+        state.step = prev.q;
+        syncRings();
+        switchScreen(screens.question, screens.question, function() {
+            buildQuestion(state.step);
+        }, function() {
+            focusQuestion();
+            state.locked = false;
+        });
+    }
+
+    backBtn.addEventListener('click', goBack);
+
+    /* ══ РЕЗУЛЬТАТ ════════════════════════════════════════════════ */
+
+    var resultBtn = document.getElementById('dg-result-btn');
+    var resultExtra = document.getElementById('dg-result-extra');
+    var currentResultKey = null;
+
+    function bestByScores() {
+        var best = ORDER[0];
+        var i;
+        for (i = 1; i < ORDER.length; i++) {
+            if (state.scores[ORDER[i]] > state.scores[best]) best = ORDER[i];
+        }
+        return best;
+    }
+
+    function resolveResult() {
+        /* Живая встреча это предпочтение формата, она главная
+           карточка, но направление по баллам не пропадает.
+           Флагман это сигнал, он добавляется строкой.
+           Ноль баллов честно ведёт на разговор. */
+        var best = bestByScores();
+        var bestScore = state.scores[best];
+
+        if (state.checkupWish) {
+            return { key: 'checkup', direction: bestScore > 0 ? best : null, zero: false };
+        }
+        if (bestScore === 0) {
+            return { key: 'checkup', direction: null, zero: true };
+        }
+        return { key: best, direction: null, zero: false };
+    }
+
+    function showResult(key, extraText) {
+        var res = RESULTS[key];
+        currentResultKey = key;
+        document.getElementById('dg-result-name').textContent = res.name;
+        document.getElementById('dg-result-desc').textContent = res.desc;
+        resultBtn.textContent = res.btn;
+        if (extraText) {
+            resultExtra.textContent = extraText;
+            stripClass(resultExtra, 'dg-hidden');
+        } else {
+            resultExtra.textContent = '';
+            addClass(resultExtra, 'dg-hidden');
+        }
+        buildOthers(key);
+    }
+
+    function finish() {
+        var r = resolveResult();
+        var extra = null;
+
+        if (r.key === 'checkup' && r.zero) {
+            extra = 'По ответам сложно подобрать практику заочно. Живой разговор подскажет точнее.';
+        } else if (r.key === 'checkup' && r.direction) {
+            extra = 'Судя по ответам, на встрече можно начать с направления «' + RESULTS[r.direction].name + '».';
+        } else if (state.flagshipSignal && r.key !== 'checkup') {
+            extra = 'Судя по опыту, Вам может отозваться и флагманская практика «Память тела».';
+        }
+
+        /* SEND-HOOK: здесь встанет отправка diag_complete
+           с ключом результата и суммой баллов по веткам */
+
+        showResult(r.key, extra);
+
+        if (!reduceMotion) {
+            addClass(sphereEl, 'is-final');
+            setTimeout(function() { stripClass(sphereEl, 'is-final'); }, 900);
+        }
+
+        var card = document.getElementById('dg-result-card');
+        stripClass(card, 'q-in');
+        if (!reduceMotion) addClass(card, 'q-in');
+
+        switchScreen(screens.question, screens.result, null, function() {
+            try {
+                var nameEl = document.getElementById('dg-result-name');
+                nameEl.setAttribute('tabindex', '-1');
+                nameEl.focus();
+            } catch (e) {}
+        });
+    }
+
+    resultBtn.addEventListener('click', function() {
+        if (!currentResultKey) return;
+        window.location.href = RESULTS[currentResultKey].url;
+    });
+
+    function buildOthers(chosenKey) {
+        var list = document.getElementById('dg-others-list');
+        var keys = ['s1', 's2', 's3', 's4', 'flagship', 'checkup'];
+        var i, el, sep, shown = 0;
+        while (list.firstChild) list.removeChild(list.firstChild);
+        for (i = 0; i < keys.length; i++) {
+            if (keys[i] === chosenKey) continue;
+            if (shown > 0) {
+                sep = document.createElement('span');
+                sep.className = 'dg-other-sep';
+                sep.textContent = '·';
+                list.appendChild(sep);
+            }
+            el = document.createElement('button');
+            el.setAttribute('type', 'button');
+            el.className = 'dg-other';
+            el.textContent = RESULTS[keys[i]].name;
+            attachOther(el, keys[i]);
+            list.appendChild(el);
+            shown += 1;
+        }
+    }
+
+    /* Другие пути переключают карточку на месте:
+       для прототипа это удобнее перехода на сайт,
+       можно посмотреть все шесть карточек подряд */
+    function attachOther(el, key) {
+        el.addEventListener('click', function() {
+            showResult(key, null);
+            try {
+                var nameEl = document.getElementById('dg-result-name');
+                nameEl.setAttribute('tabindex', '-1');
+                nameEl.focus();
+            } catch (e) {}
+        });
+    }
+
+    /* ══ СТАРТ И ПЕРЕЗАПУСК ═══════════════════════════════════════ */
+
+    document.getElementById('dg-start').addEventListener('click', function() {
+        /* SEND-HOOK: здесь встанет отправка diag_start */
+        state.step = 0;
+        switchScreen(screens.intro, screens.question, function() {
+            buildQuestion(0);
+        }, focusQuestion);
+    });
+
+    document.getElementById('dg-restart').addEventListener('click', function() {
+        state.step = -1;
+        state.scores = { s1: 0, s2: 0, s3: 0, s4: 0 };
+        state.flagshipSignal = false;
+        state.checkupWish = false;
+        state.history = [];
+        currentResultKey = null;
+        syncRings();
+        ringsVisible = 1;
+        if (reduceMotion) drawSphere();
+        switchScreen(screens.result, screens.intro, null, null);
+    });
+
+    /* ══ ИНИЦИАЛИЗАЦИЯ ════════════════════════════════════════════ */
+
+    resizeBg();
+    initParticles();
+
+    if (!reduceMotion) {
+        loop();
+    } else {
+        drawSphere();
+        drawBg();
+    }
+
+})();
+</script>
+</body>
+</html>
