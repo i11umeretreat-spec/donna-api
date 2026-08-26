@@ -175,6 +175,26 @@
             font-family: 'Outfit', sans-serif;
         }
 
+        /* ─── FLAGSHIP NOTE ───
+           Короткое описание внутри карточки флагмана. Показывается
+           только купившим и только у трека flagship. Текст наш,
+           не Катин: FR-версия ждёт отдельного текста, не перевода. */
+        .flagship-note {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(212,175,55,0.15);
+            text-align: left;
+        }
+
+        .flagship-note-text {
+            font-size: 12px;
+            line-height: 1.7;
+            color: rgba(248,250,252,0.45);
+            margin: 0 0 8px 0;
+        }
+
+        .flagship-note-text:last-child { margin-bottom: 0; }
+
         /* ─── BONUS UNLOCK ─── */
         .bonus-card {
             display: none;
@@ -1343,6 +1363,12 @@
                 'track-16': { title: 'Исцеление внутреннего ребёнка', type: 'Работа с внутренним ребёнком' },
                 'flagship': { title: 'Память тела: код освобождения', type: '8D нейроакустика' },
             },
+            flagshipNote: [
+                'Здесь почти всё звучание собрано с нуля, руками.',
+                'У баса срезан верх: он остаётся внизу и оставляет голосу всю середину. Песочная перкуссия перетекает в дерево одним непрерывным движением, и услышать место перехода нельзя.',
+                'Звук движется вокруг головы, а плотность меняется прямо посреди практики: то почти пусто, то густо, то тишина.',
+                'Около двадцати семи минут.',
+            ],
         },
         fr: {
             subtitle: 'Travail en profondeur avec l\'inconscient',
@@ -1382,6 +1408,9 @@
                 'track-16': { title: 'Guérison de l\'enfant intérieur', type: 'Travail avec l\'enfant intérieur' },
                 'flagship': { title: 'La mémoire du corps : le code de la libération', type: 'Neuroacoustique 8D' },
             },
+            // Французская локаль это отдельный текст, а не перевод русского.
+            // Пока null, блок во французской версии просто не рисуется.
+            flagshipNote: null,
         },
     };
 
@@ -1526,6 +1555,21 @@
                   '</button>'
                 : '';
 
+            // Описание внутри карточки флагмана. Только купившим: в гостевом
+            // состоянии флагмана в списке нет, но проверка allowDownload
+            // страхует от режима Lineup и от будущих изменений выдачи.
+            var flagshipNoteHtml = '';
+            if (track.id === 'flagship' && allowDownload) {
+                var fnote = t('flagshipNote');
+                if (fnote && fnote.length) {
+                    var fnInner = '';
+                    for (var fi = 0; fi < fnote.length; fi++) {
+                        fnInner += '<p class="flagship-note-text">' + escapeHtml(fnote[fi]) + '</p>';
+                    }
+                    flagshipNoteHtml = '<div class="flagship-note">' + fnInner + '</div>';
+                }
+            }
+
             html += '' +
                 '<div class="player-card" data-url="' + safeUrl + '" data-track-id="' + safeId + '">' +
                     '<div class="card-top">' +
@@ -1548,6 +1592,7 @@
                         '</div>' +
                         '<span class="time total-time">' + (safeDuration || '0:00') + '</span>' +
                     '</div>' +
+                    flagshipNoteHtml +
                 '</div>';
         });
 
