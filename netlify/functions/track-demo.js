@@ -12,7 +12,7 @@ const supabase = createClient(
 // В базе два разных действия лежали вперемешку и не различались, из-за чего
 // воронка «просмотр → play» считалась неверно. Старое имя оставлено в списке:
 // оно живёт в demo.html и в записях до 24.08.
-const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play', 'demo_click', 'hero_preview_play'];
+const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play', 'demo_click', 'hero_preview_play', 'podbor_click', 'podbor_start', 'podbor_answer', 'podbor_complete'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
 // Поверхность: сайт на Тильде или демо-плеер на app-поддомене.
@@ -20,7 +20,7 @@ const VALID_SURFACES = ['site', 'player'];
 
 // Метка from из адреса. Белый список, а не произвольная строка: поле
 // приходит из публичного запроса, а в базу пишется сервисным ключом.
-const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal'];
+const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal', 'tg_channel', 'tg_post'];
 
 // Хиро-блок живёт на ekaterina-donnat.com (Тильда), демо-плеер на
 // app.ekaterina-donnat.com — обоим нужен доступ к этой функции.
