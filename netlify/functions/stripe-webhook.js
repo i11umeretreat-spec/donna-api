@@ -82,7 +82,9 @@ const PRODUCT_DEFINITIONS = [
         track_ids:  [],
         journal:    null,
         name:       'Чек-ап сессия',
-        product_type: null,
+        // 25.08: было null, из-за чего покупки чек-апа не попадали
+        // в разбивку дашборда по типам продукта.
+        product_type: 'checkup',
     },
     {
         // Трек комбо утверждён Катей 12.08: track-10, crock.mp3,
@@ -96,7 +98,8 @@ const PRODUCT_DEFINITIONS = [
         track_ids:  ['track-10'],
         journal:    null,
         name:       'Комбо: трек и чек-ап',
-        product_type: null,
+        // 25.08: было null, см. комментарий у чек-апа выше.
+        product_type: 'combo',
     },
 ];
 
