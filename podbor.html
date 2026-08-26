@@ -641,7 +641,8 @@ button {
                 { label: 'Внутри всё сжато, как пружина', scores: { s1: 1 } },
                 { label: 'Голова не выключается, мысли гоняют по кругу', scores: { s3: 1 } },
                 { label: 'Силы есть, но хочется больше: от жизни, от себя', scores: { s4: 1 } },
-                { label: 'Не могу выбрать что-то одно', scores: {} }
+                { label: 'Не могу выбрать что-то одно', scores: {} },
+                { label: 'Сейчас настолько тяжело, что справляться в одиночку не выходит', scores: {}, flag: 'urgent' }
             ]
         },
         {
@@ -657,7 +658,7 @@ button {
             options: [
                 { label: 'Соглашаюсь, а потом жалею', scores: { s2: 1 } },
                 { label: 'Сначала думаю, что скажут другие', scores: { s2: 1 } },
-                { label: 'Умею, но каждый раз это дорого мне стоит', scores: { s2: 1, s3: 1 } },
+                { label: 'Умею, но каждый раз это дорого мне стоит', scores: { s2: 1 } },
                 { label: 'С этим у меня порядок', scores: {} }
             ]
         },
@@ -762,9 +763,11 @@ button {
         scores: { s1: 0, s2: 0, s3: 0, s4: 0 },
         flagshipSignal: false,
         checkupWish: false,
+        urgent: false,
         history: [],
         locked: false
     };
+
 
     var reduceMotion = false;
     try {
@@ -1076,6 +1079,7 @@ button {
         }
         if (opt.flag === 'flagship') state.flagshipSignal = true;
         if (opt.flag === 'checkup') state.checkupWish = true;
+        if (opt.flag === 'urgent') state.urgent = true;
     }
 
     function recomputeFromHistory() {
@@ -1083,6 +1087,7 @@ button {
         state.scores = { s1: 0, s2: 0, s3: 0, s4: 0 };
         state.flagshipSignal = false;
         state.checkupWish = false;
+        state.urgent = false;
         for (i = 0; i < state.history.length; i++) {
             h = state.history[i];
             applyAnswer(QUESTIONS[h.q].options[h.o]);
@@ -1142,6 +1147,15 @@ button {
     var resultExtra = document.getElementById('dg-result-extra');
     var currentResultKey = null;
 
+    /* Счёт сырой, без нормализации по числу вопросов. Нормализацию
+       пробовали и откатили: она отдавала Ступени 2 около двух третей
+       всех исходов, потому что её меряют два вопроса против четырёх
+       у первой и третьей.
+
+       При равенстве баллов побеждает младшая ступень. Это совпадает
+       с логикой самой Кати: «расслабиться, выспаться, выдохнуть,
+       с этого всё начинается». При смешанных сигналах человек идёт
+       в тело, а не в границы. */
     function bestByScores() {
         var best = ORDER[0];
         var i;
@@ -1159,13 +1173,18 @@ button {
         var best = bestByScores();
         var bestScore = state.scores[best];
 
+        /* Острое состояние перекрывает всё, включая выбор
+           «самостоятельно, в своём темпе» в девятом вопросе. */
+        if (state.urgent) {
+            return { key: 'checkup', direction: null, zero: false, urgent: true };
+        }
         if (state.checkupWish) {
-            return { key: 'checkup', direction: bestScore > 0 ? best : null, zero: false };
+            return { key: 'checkup', direction: bestScore > 0 ? best : null, zero: false, urgent: false };
         }
         if (bestScore === 0) {
-            return { key: 'checkup', direction: null, zero: true };
+            return { key: 'checkup', direction: null, zero: true, urgent: false };
         }
-        return { key: best, direction: null, zero: false };
+        return { key: best, direction: null, zero: false, urgent: false };
     }
 
     function showResult(key, extraText) {
@@ -1188,7 +1207,9 @@ button {
         var r = resolveResult();
         var extra = null;
 
-        if (r.key === 'checkup' && r.zero) {
+        if (r.urgent) {
+            extra = 'Сейчас не то время, чтобы разбираться в одиночку. Начните с разговора.';
+        } else if (r.key === 'checkup' && r.zero) {
             extra = 'По ответам сложно подобрать что-то заочно. В разговоре станет понятнее.';
         } else if (r.key === 'checkup' && r.direction) {
             extra = 'Судя по ответам, на встрече можно начать с направления «' + RESULTS[r.direction].name + '».';
