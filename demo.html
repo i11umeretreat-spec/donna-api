@@ -427,6 +427,81 @@
 
     .purchase-note.visible { opacity: 1; }
 
+    /* ─── Мягкое приглашение на подбор ───
+       Появляется на третьей минуте, а не в конце трека: до конца
+       доходят единицы, до третьей минуты 42 процента нажавших play.
+       Ничего не перекрывает и не трогает звук: блок просто
+       проявляется под кнопкой покупки и остаётся. */
+    .podbor-invite {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(212, 175, 55, 0.15);
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  max-height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .podbor-invite.visible {
+      opacity: 1;
+      max-height: 200px;
+    }
+
+    .podbor-invite-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(248, 250, 252, 0.45);
+      margin: 0 0 12px 0;
+    }
+
+    .podbor-invite-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 22px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 999px;
+      background: rgba(212, 175, 55, 0.06);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(248, 250, 252, 0.85);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .podbor-invite-btn:hover {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: rgba(212, 175, 55, 0.55);
+      color: #d4af37;
+    }
+
+    .podbor-invite-btn:focus-visible {
+      outline: 2px solid #d4af37;
+      outline-offset: 3px;
+    }
+
+    /* После окончания трека приглашение становится заметнее:
+       это уже не фон, а следующий шаг. */
+    .podbor-invite.is-primary .podbor-invite-text {
+      color: rgba(248, 250, 252, 0.7);
+    }
+
+    .podbor-invite.is-primary .podbor-invite-btn {
+      border-color: rgba(212, 175, 55, 0.55);
+      background: rgba(212, 175, 55, 0.12);
+      color: #d4af37;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .podbor-invite { transition: none; }
+    }
+
     /* CTA-оверлей после паузы (mood-engine.js setupPauseDetection) — класс
        .visible уже переключался в JS, но стилей для самого блока не было
        вообще, поэтому оверлей никогда не показывался пользователю. */
@@ -578,6 +653,11 @@
           <span id="purchase-label">Ступень 1 · 150€</span>
         </button>
         <div class="purchase-note" id="purchase-note">Полный курс · 4 ступени · прогрессивная глубина</div>
+
+        <div class="podbor-invite" id="podbor-invite">
+          <p class="podbor-invite-text" id="podbor-invite-text">Не уверены, с чего начать? Ответьте на несколько вопросов, и я подскажу.</p>
+          <button type="button" class="podbor-invite-btn" id="podbor-invite-btn">Подобрать практику</button>
+        </div>
       </div>
 
     </div>
@@ -962,6 +1042,7 @@
         if (typeof fbq !== 'undefined') fbq('track', 'Lead', {
           traffic_source: source
         });
+        showPodborInvite();
       }
 
       // Разблокировка кнопки на 90%
@@ -972,7 +1053,44 @@
       document.getElementById('time-total').textContent = formatTime(audio.duration);
     });
 
-    audio.addEventListener('ended', function() { setPlaying(false); unlock(); });
+    audio.addEventListener('ended', function() {
+      setPlaying(false);
+      unlock();
+      /* Событие завершения: до сих пор мы мерили только старт
+         и третью минуту, а сколько человек доходит до конца
+         двадцати одной минуты, не знали вообще. */
+      trackDemo('demo_complete');
+      showPodborInvite();
+      var inv = document.getElementById('podbor-invite');
+      var txt = document.getElementById('podbor-invite-text');
+      if (inv) inv.classList.add('is-primary');
+      if (txt) txt.textContent = 'Практика окончена. Хотите узнать, с чего начать дальше?';
+    });
+
+    /* Приглашение на подбор. Показывается один раз, звук не трогает,
+       ничего не перекрывает: просто проявляется под кнопкой. */
+    function showPodborInvite() {
+      var inv = document.getElementById('podbor-invite');
+      if (!inv || inv.className.indexOf('visible') !== -1) return;
+      inv.classList.add('visible');
+    }
+
+    (function() {
+      var btn = document.getElementById('podbor-invite-btn');
+      if (!btn) return;
+      btn.addEventListener('click', function() {
+        trackDemo('podbor_click');
+        /* sid тащим с собой: подбор на том же поддомене, но сессия
+           должна остаться той же, иначе путь «демо, подбор, покупка»
+           развалится на две. */
+        var url = 'podbor.html?utm_source=' + encodeURIComponent(source)
+                + '&sid=' + encodeURIComponent(sessionId);
+        if (CAMPAIGN_PARAM) {
+          url += '&from=' + encodeURIComponent(CAMPAIGN_PARAM);
+        }
+        window.location.href = url;
+      });
+    })();
 
     function unlock() {
       if (unlocked) return;
