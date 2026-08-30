@@ -137,8 +137,7 @@ exports.handler = async (event) => {
 
         if (error) {
             console.error('podbor-save supabase error:', error.message, error.code);
-            // ВРЕМЕННО: текст ошибки в ответе для диагностики, снять сразу после
-            return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'DB error', detail: error.message, code: error.code, hint: error.hint }) };
+            return { statusCode: 500, headers: CORS_HEADERS, body: '{"error":"DB error"}' };
         }
 
         return { statusCode: 200, headers: CORS_HEADERS, body: '{"ok":true}' };
