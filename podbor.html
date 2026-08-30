@@ -31,7 +31,10 @@
   Дисбаланс источников баллов между ветками тоже её зона:
   у Ступени 3 пять источников, у четвёртой три.
   КНОПКА РЕЗУЛЬТАТА ведёт на главную сайта, якоря уточним.
-  ОТПРАВКА ДАННЫХ ОТКЛЮЧЕНА, места помечены SEND-HOOK.
+  ТРЕКИНГ ПОДКЛЮЧЁН: podbor_start, podbor_answer и podbor_complete
+  идут в demo_events через track-demo.js, содержимое ответов
+  в podbor_sessions через podbor-save.js. sid берётся из адреса,
+  чтобы путь «письмо, сайт, демо, подбор» остался одной сессией.
 
   Правила: ES5, классы вместо инлайн-стилей, регистр Вы,
   токены из design-tokens.md, без длинных тире.
@@ -756,6 +759,105 @@ button {
 
     var ORDER = ['s1', 's2', 's3', 's4'];
 
+    /* ══ ТРЕКИНГ ══════════════════════════════════════════════════
+       События пути идут в demo_events через track-demo.js, чтобы вся
+       лента человека лежала в одном месте. Содержимое ответов идёт
+       в podbor_sessions через podbor-save.js: одна строка на сессию,
+       переписывается на каждом ответе. Так видно, на каком вопросе
+       люди уходят.
+
+       sid берём из адреса: человек приходит сюда из демо-плеера или
+       с сайта, и сессия должна остаться той же, иначе путь
+       «письмо, сайт, демо, подбор» развалится на куски. */
+
+    var TRACK_URL = 'https://app.ekaterina-donnat.com/.netlify/functions/track-demo';
+    var SAVE_URL  = 'https://app.ekaterina-donnat.com/.netlify/functions/podbor-save';
+
+    function getParam(name) {
+        var q = window.location.search;
+        if (!q || q.length < 2) return null;
+        var pairs = q.substring(1).split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var eq = pairs[i].indexOf('=');
+            var key = eq === -1 ? pairs[i] : pairs[i].substring(0, eq);
+            if (decodeURIComponent(key) !== name) continue;
+            return eq === -1 ? '' : decodeURIComponent(pairs[i].substring(eq + 1).replace(/\+/g, ' '));
+        }
+        return null;
+    }
+
+    var SOURCE_MAP = { instagram: 'paid', facebook: 'paid', fb: 'paid', ig: 'paid' };
+    var VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
+
+    var TRACK = (function() {
+        var raw = (getParam('utm_source') || '').toLowerCase();
+        var source = SOURCE_MAP[raw] || (VALID_SOURCES.indexOf(raw) !== -1 ? raw : 'organic');
+        var campaign = getParam('from') || null;
+
+        var sid = getParam('sid');
+        if (!sid) {
+            try {
+                sid = sessionStorage.getItem('donna_session_id');
+                if (!sid) {
+                    sid = (window.crypto && crypto.randomUUID)
+                        ? crypto.randomUUID()
+                        : 'sid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+                    sessionStorage.setItem('donna_session_id', sid);
+                }
+            } catch (e) {
+                sid = 'sid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+            }
+        } else {
+            /* Пришедший из адреса sid кладём в хранилище: если человек
+               обновит страницу без параметров, сессия не разорвётся. */
+            try { sessionStorage.setItem('donna_session_id', sid); } catch (e) {}
+        }
+
+        /* Поверхность: пришёл из плеера или с сайта. Различаем по метке
+           в адресе, чтобы потом понять, какой вход работает лучше. */
+        var surface = getParam('surface') === 'player' ? 'player' : 'site';
+
+        return { source: source, campaign: campaign, sid: sid, surface: surface };
+    })();
+
+    function send(url, payload) {
+        if (!window.fetch) return;
+        try {
+            fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })['catch'](function() {});
+        } catch (e) {}
+    }
+
+    function trackEvent(name) {
+        send(TRACK_URL, {
+            event: name,
+            source: TRACK.source,
+            session_id: TRACK.sid,
+            surface: TRACK.surface,
+            campaign: TRACK.campaign
+        });
+    }
+
+    function saveProgress(resultKey, isComplete) {
+        var pairs = [];
+        for (var i = 0; i < state.history.length; i++) {
+            pairs.push([state.history[i].q, state.history[i].o]);
+        }
+        send(SAVE_URL, {
+            session_id: TRACK.sid,
+            source: TRACK.source,
+            surface: TRACK.surface,
+            campaign: TRACK.campaign,
+            answers: pairs,
+            scores: state.scores,
+            result_key: resultKey || null,
+            completed: isComplete === true
+        });
+    }
+
     /* ══ СОСТОЯНИЕ ════════════════════════════════════════════════ */
 
     var state = {
@@ -1100,8 +1202,8 @@ button {
         state.history.push({ q: qIdx, o: optIdx });
         applyAnswer(QUESTIONS[qIdx].options[optIdx]);
 
-        /* SEND-HOOK: здесь встанет отправка diag_answer
-           с номером вопроса и индексом ответа, привязка к sid */
+        trackEvent('podbor_answer');
+        saveProgress(null, false);
 
         addClass(el, 'is-chosen');
         kids = qOptions.children;
@@ -1217,8 +1319,8 @@ button {
             extra = 'Судя по опыту, Вам может отозваться и флагманская практика «Память тела».';
         }
 
-        /* SEND-HOOK: здесь встанет отправка diag_complete
-           с ключом результата и суммой баллов по веткам */
+        trackEvent('podbor_complete');
+        saveProgress(r.key, true);
 
         showResult(r.key, extra);
 
@@ -1285,7 +1387,7 @@ button {
     /* ══ СТАРТ И ПЕРЕЗАПУСК ═══════════════════════════════════════ */
 
     document.getElementById('dg-start').addEventListener('click', function() {
-        /* SEND-HOOK: здесь встанет отправка diag_start */
+        trackEvent('podbor_start');
         state.step = 0;
         switchScreen(screens.intro, screens.question, function() {
             buildQuestion(0);
