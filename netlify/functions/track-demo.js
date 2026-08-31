@@ -1,6 +1,7 @@
 // netlify/functions/track-demo.js
 const { createClient } = require('@supabase/supabase-js');
 const { checkRateLimit, getClientIp } = require('./_rateLimit');
+const { safeCampaign: sanitizeCampaign } = require('./_attribution');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -18,12 +19,8 @@ const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 // Поверхность: сайт на Тильде или демо-плеер на app-поддомене.
 const VALID_SURFACES = ['site', 'player'];
 
-// Метка from из адреса. Белый список, а не произвольная строка: поле
-// приходит из публичного запроса, а в базу пишется сервисным ключом.
-// ВАЖНО: тот же список живёт в netlify/functions/podbor-save.js.
-// Новая метка добавляется в оба файла, иначе половина событий
-// потока ляжет в базу с campaign = null.
-const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal', 'tg_channel', 'tg_post', 'wa_warm', 'wa_flagman'];
+// Метка from из адреса. Список и проверка в _attribution.js, общие
+// на все функции.
 
 // Хиро-блок живёт на ekaterina-donnat.com (Тильда), демо-плеер на
 // app.ekaterina-donnat.com — обоим нужен доступ к этой функции.
@@ -83,7 +80,7 @@ exports.handler = async (event) => {
     // поле, чем тихо неверная метка, из-за которой снова будем считать
     // воронку на смешанных данных.
     const safeSurface  = VALID_SURFACES.includes(surface) ? surface : null;
-    const safeCampaign = VALID_CAMPAIGNS.includes(campaign) ? campaign : null;
+    const safeCampaign = sanitizeCampaign(campaign);
     const safeSessionId = (typeof session_id === 'string' && session_id.length > 0)
         ? session_id.slice(0, 100)
         : null;

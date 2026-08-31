@@ -9,6 +9,7 @@ const stripe  = require('stripe')(process.env.STRIPE_SECRET_KEY_LIVE);
 const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto  = require('crypto');
+const { parseClientReference } = require('./_attribution');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -245,9 +246,14 @@ exports.handler = async (event) => {
 
     const token      = crypto.randomUUID();
     const amountPaid = session.amount_total ? Math.round(session.amount_total / 100) : null;
-    const utmSource  = session.metadata?.utm_source
-                    || session.client_reference_id?.split('|')[1]
-                    || 'direct';
+    // client_reference_id приходит из ссылки на сайте в виде
+    // «кампания|источник». Раньше отсюда брался только источник, а метка
+    // кампании выбрасывалась, и покупка по короткой ссылке из вотсапа
+    // выглядела в дашборде как organic, неотличимо от человека, который
+    // сам зашёл на сайт. Вопрос «продала ли рассылка» по таблице продаж
+    // было не ответить.
+    const ref        = parseClientReference(session.client_reference_id);
+    const utmSource  = session.metadata?.utm_source || ref.source || 'direct';
 
     // Пишем в purchases для любой завершённой оплаты, включая продукты без
     // треков (чек-ап). Раньше вставка пропускалась при пустом track_ids —
@@ -266,6 +272,7 @@ exports.handler = async (event) => {
             stripe_payment_intent_id:  session.payment_intent || null,
             stripe_customer_id:        session.customer || null,
             utm_source:                utmSource,
+            campaign:                  ref.campaign,
             product_name:              product.name,
             product_type:              product.product_type,
             amount:                    amountPaid,
