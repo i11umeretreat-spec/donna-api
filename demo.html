@@ -1091,9 +1091,12 @@
         trackDemo('podbor_click');
         /* sid тащим с собой: подбор на том же поддомене, но сессия
            должна остаться той же, иначе путь «демо, подбор, покупка»
-           развалится на две. */
+           развалится на две.
+           surface ставим явно: без него подбор по умолчанию пишет site,
+           и все пришедшие из плеера сливаются с пришедшими с сайта. */
         var url = 'podbor.html?utm_source=' + encodeURIComponent(source)
-                + '&sid=' + encodeURIComponent(sessionId);
+                + '&sid=' + encodeURIComponent(sessionId)
+                + '&surface=player';
         if (CAMPAIGN_PARAM) {
           url += '&from=' + encodeURIComponent(CAMPAIGN_PARAM);
         }
