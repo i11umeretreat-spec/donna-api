@@ -21,7 +21,7 @@ const VALID_SURFACES = ['site', 'player'];
 // ВАЖНО: тот же список живёт в netlify/functions/track-demo.js.
 // Новая метка добавляется в оба файла, иначе половина событий
 // потока ляжет в базу с campaign = null.
-const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal', 'tg_channel', 'tg_post', 'wa_warm'];
+const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal', 'tg_channel', 'tg_post', 'wa_warm', 'wa_flagman'];
 
 // Ключи веток результата. Произвольную строку в базу не пускаем:
 // поле приходит из публичного запроса, а пишем сервисным ключом.
