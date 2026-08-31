@@ -820,14 +820,34 @@ button {
         return { source: source, campaign: campaign, sid: sid, surface: surface };
     })();
 
-    function send(url, payload) {
+    /* Край хостинга отдаёт 429, если запросов с одного адреса приходит
+       слишком много подряд. Девять вопросов дают двадцать вызовов, и при
+       быстром прохождении завершающая запись терялась: человек оставался
+       в базе брошенным на середине опроса. Повторяем то, что может пройти
+       позже: 429 и сетевую ошибку. На 400 не повторяем, испорченный запрос
+       лучше не станет. keepalive держит запрос живым, если страницу
+       уже закрывают. */
+
+    function send(url, payload, attempt) {
         if (!window.fetch) return;
+        attempt = attempt || 0;
+
+        function retry() {
+            if (attempt >= 2) return;
+            setTimeout(function() {
+                send(url, payload, attempt + 1);
+            }, 1200 * (attempt + 1) + Math.random() * 400);
+        }
+
         try {
             fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })['catch'](function() {});
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).then(function(r) {
+                if (!r.ok && (r.status === 429 || r.status >= 500)) retry();
+            })['catch'](retry);
         } catch (e) {}
     }
 
@@ -1319,8 +1339,10 @@ button {
             extra = 'Судя по опыту, Вам может отозваться и флагманская практика «Память тела».';
         }
 
-        trackEvent('podbor_complete');
+        /* Запись с результатом уходит первой: если из пары пробьётся
+           только одно, событие восстановится из неё, а не наоборот. */
         saveProgress(r.key, true);
+        trackEvent('podbor_complete');
 
         showResult(r.key, extra);
 
