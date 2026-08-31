@@ -20,7 +20,10 @@ const VALID_SURFACES = ['site', 'player'];
 
 // Метка from из адреса. Белый список, а не произвольная строка: поле
 // приходит из публичного запроса, а в базу пишется сервисным ключом.
-const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal', 'tg_channel', 'tg_post'];
+// ВАЖНО: тот же список живёт в netlify/functions/podbor-save.js.
+// Новая метка добавляется в оба файла, иначе половина событий
+// потока ляжет в базу с campaign = null.
+const VALID_CAMPAIGNS = ['email_demo', 'email_site', 'email_flagship', 'ig_bio', 'qr_journal', 'tg_channel', 'tg_post', 'wa_warm'];
 
 // Хиро-блок живёт на ekaterina-donnat.com (Тильда), демо-плеер на
 // app.ekaterina-donnat.com — обоим нужен доступ к этой функции.
