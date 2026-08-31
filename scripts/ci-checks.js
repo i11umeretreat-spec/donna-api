@@ -3,10 +3,13 @@
 //
 // Гейт перед деплоем. Проверяет:
 //   1. Синтаксис (node --check) каждой Netlify-функции в netlify/functions/
-//   2. Синтаксис инлайновых <script> в index.html / demo.html
-//   3. ES5-чистоту клиентского кода (index.html, demo.html, mood-engine.js) —
+//   2. Синтаксис инлайновых <script> на клиентских страницах
+//   3. ES5-чистоту того же клиентского кода плюс mood-engine.js —
 //      const/let/arrow function/template literals запрещены, т.к. плеер
 //      должен работать в Instagram WebView на старом Android.
+//
+// Список страниц один, в массиве ниже. Второго списка в комментарии нет
+// намеренно: разошлись бы, и файл тихо выпал бы из проверки.
 //
 // netlify.toml дёргает этот скрипт перед npm audit — при ненулевом коде
 // выхода деплой не публикуется. Тот же скрипт гоняет .github/workflows/ci.yml
@@ -90,8 +93,10 @@ if (fs.existsSync(fnDir)) {
     fail('netlify/functions/ не найдена');
 }
 
-// ── 2. Инлайновые <script> в index.html / demo.html — синтаксис + ES5 ───────
-['index.html', 'demo.html', 'vybor.html', 'dashboard.html'].forEach(function (file) {
+// ── 2. Инлайновые <script> клиентских страниц — синтаксис + ES5 ────────────
+// Страница, забытая в этом списке, проходит мимо гейта ES5 целиком:
+// podbor.html так и жил, пока в нём не появилась логика ретраев.
+['index.html', 'demo.html', 'vybor.html', 'dashboard.html', 'podbor.html'].forEach(function (file) {
     const full = path.join(ROOT, file);
     if (!fs.existsSync(full)) return;
     const html = fs.readFileSync(full, 'utf8');
