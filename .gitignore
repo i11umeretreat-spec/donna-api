@@ -1,0 +1,6 @@
+# Зависимости ставятся из package-lock.json, в репозитории им не место.
+node_modules/
+
+# Локальные окружения Netlify CLI и редакторов.
+.netlify/
+.DS_Store

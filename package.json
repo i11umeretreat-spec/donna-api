@@ -2,7 +2,8 @@
   "name": "donna-api",
   "version": "1.0.0",
   "scripts": {
-    "ci-check": "node scripts/ci-checks.js"
+    "ci-check": "node scripts/ci-checks.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@sentry/serverless": "^7.120.4",

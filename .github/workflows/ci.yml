@@ -18,6 +18,19 @@ jobs:
       - name: node scripts/ci-checks.js
         run: node scripts/ci-checks.js
 
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Зависимости нужны не для самих тестов, а чтобы require.resolve нашёл
+      # пакеты, которые стенд подменяет: stripe, supabase, resend.
+      - run: npm ci
+      - run: npm test
+
   smoke-test:
     name: Prod smoke test (post-deploy)
     needs: checks

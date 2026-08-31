@@ -197,6 +197,93 @@ exports.handler = async (event) => {
         return { statusCode: 200, body: JSON.stringify({ received: true, revoked: true }) };
     }
 
+    // Возврат, который Stripe создал, а карточная сеть отбила.
+    //
+    // charge.refunded приходит в момент создания возврата, и на этом
+    // наблюдение кончалось. Если возврат позже проваливался, покупка
+    // оставалась revoked, деньги тихо возвращались на баланс Stripe,
+    // человек оставался без денег и без доступа, и узнать об этом можно
+    // было только открыв конкретный платёж в панели руками.
+    //
+    // Имени у события два: новое refund.updated и устаревшее
+    // charge.refund.updated. Payload одинаковый, поэтому ветка общая:
+    // переименование на стороне Stripe логику не сломает.
+    if (stripeEvent.type === 'refund.updated' || stripeEvent.type === 'charge.refund.updated') {
+        const refundObject = stripeEvent.data.object;
+
+        // succeeded не обрабатываем вовсе: это рядовое присвоение ARN,
+        // реагировать на него нечем.
+        if (refundObject.status !== 'failed' && refundObject.status !== 'canceled') {
+            return { statusCode: 200, body: JSON.stringify({ received: true }) };
+        }
+
+        const refundPaymentIntent = refundObject.payment_intent;
+
+        if (!refundPaymentIntent) {
+            return { statusCode: 200, body: JSON.stringify({ received: true }) };
+        }
+
+        // Строка нужна дважды: из неё берётся почта покупателя для письма,
+        // и по ней видно, не обработано ли это событие раньше.
+        // limit(1), а не maybeSingle(): maybeSingle отдаёт ошибку, если
+        // строк оказалось две, а записать причину важнее, чем упасть.
+        const { data: refundRows, error: refundLookupError } = await supabase
+            .from('purchases')
+            .select('email, amount, revoked_reason')
+            .eq('stripe_payment_intent_id', refundPaymentIntent)
+            .limit(1);
+
+        if (refundLookupError) {
+            console.error('Refund lookup error:', refundLookupError.message);
+            return { statusCode: 500, body: 'Database error' };
+        }
+
+        const refundPurchase = refundRows && refundRows[0];
+
+        // Возврат не по нашей покупке. У Кати в Stripe есть свои продукты
+        // вне этой системы, их вебхук не опознаёт, и это нормально.
+        if (!refundPurchase) {
+            return { statusCode: 200, body: JSON.stringify({ received: true }) };
+        }
+
+        // Повторная доставка того же события: причина уже записана,
+        // второе письмо Кате ничего не добавит.
+        if (refundPurchase.revoked_reason === 'refund_failed') {
+            return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
+        }
+
+        // Пишем только причину. status остаётся revoked намеренно: сбой
+        // доставки денег не отменяет решения их вернуть, а вернуть доступ
+        // автоматически значит отдать продукт тому, кому Катя решила его
+        // не оставлять, и она об этом не узнает. Решает человек, письмо
+        // ниже для этого и нужно.
+        const { error: refundReasonError } = await supabase
+            .from('purchases')
+            .update({ revoked_reason: 'refund_failed' })
+            .eq('stripe_payment_intent_id', refundPaymentIntent);
+
+        if (refundReasonError) {
+            console.error('Refund reason write error:', refundReasonError.message);
+            return { statusCode: 500, body: 'Database error' };
+        }
+
+        logSecurityEvent('refund_failed', ip, {
+            payment_intent: refundPaymentIntent,
+            refund:         refundObject.id,
+            status:         refundObject.status,
+        });
+
+        try {
+            await sendRefundFailedEmail(refundObject, refundPurchase);
+        } catch (err) {
+            // Причина уже записана. Уронить вебхук из-за письма значит
+            // получить от Stripe повтор того, что уже сделано.
+            console.error('Refund alert email error:', err.message);
+        }
+
+        return { statusCode: 200, body: JSON.stringify({ received: true, refund_failed: true }) };
+    }
+
     if (stripeEvent.type !== 'checkout.session.completed') {
         return { statusCode: 200, body: 'Event ignored' };
     }
@@ -316,6 +403,71 @@ async function sendEmail(email, token, product) {
         subject: `Ваша практика готова: ${product.name}`,
         html:    buildEmail(playerUrl, product),
     });
+}
+
+// Письмо Кате о провалившемся возврате. Адрес получателя из окружения:
+// репозиторий публичный, почтам в коде не место, и сменить получателя
+// проще, не трогая функцию.
+async function sendRefundFailedEmail(refundObject, purchase) {
+    const to = process.env.KATYA_ALERT_EMAIL;
+
+    if (!to) {
+        console.error('KATYA_ALERT_EMAIL is not set, refund alert not sent');
+        return;
+    }
+
+    await resend.emails.send({
+        from:    'Ekaterina Donnat <hello@ekaterina-donnat.com>',
+        replyTo: 'swiss.hypnosis@gmail.com',
+        to:      to,
+        subject: `Возврат не прошёл: ${purchase.email}`,
+        html:    buildRefundFailedEmail(refundObject, purchase),
+    });
+}
+
+// Значения приходят из Stripe и из базы, то есть снаружи. В письмо они
+// попадают внутрь разметки, поэтому экранируются.
+function escapeHtml(value) {
+    return String(value === undefined || value === null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+function buildRefundFailedEmail(refundObject, purchase) {
+    const amount = typeof refundObject.amount === 'number'
+        ? `${(refundObject.amount / 100).toFixed(2)} ${String(refundObject.currency || '').toUpperCase()}`
+        : (purchase.amount === null || purchase.amount === undefined ? 'неизвестна' : String(purchase.amount));
+
+    const rows = [
+        ['Покупатель',     purchase.email],
+        ['Сумма',          amount],
+        ['Возврат',        refundObject.id],
+        ['Статус',         refundObject.status],
+        ['Причина отказа', refundObject.failure_reason || 'не указана'],
+        ['Платёж',         refundObject.payment_intent],
+    ];
+
+    const cells = rows.map(function (row) {
+        return `<tr>
+      <td style="padding:6px 16px 6px 0;color:#6b7089;white-space:nowrap;">${escapeHtml(row[0])}</td>
+      <td style="padding:6px 0;color:#151933;word-break:break-all;">${escapeHtml(row[1])}</td>
+    </tr>`;
+    }).join('\n');
+
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="background:#ffffff;font-family:'Outfit',Arial,sans-serif;color:#151933;line-height:1.6;margin:0;padding:32px 20px;">
+  <p style="margin:0 0 16px;">Возврат по этой покупке Stripe создал, но карточная сеть его отбила. Деньги вернулись на баланс Stripe, до человека они не дошли.</p>
+  <table style="border-collapse:collapse;font-size:15px;margin:0 0 20px;">
+${cells}
+  </table>
+  <p style="margin:0 0 12px;">Доступ остался закрытым, сами мы его не возвращали: решение по возврату Ваше, и сбой доставки денег его не отменяет.</p>
+  <p style="margin:0;">Дальше смотреть в панели Stripe по id возврата.</p>
+</body>
+</html>`;
 }
 
 function buildEmail(playerUrl, product) {
