@@ -10,6 +10,9 @@ const { createClient } = require('@supabase/supabase-js');
 const { Resend } = require('resend');
 const crypto  = require('crypto');
 const { parseClientReference } = require('./_attribution');
+const { PRODUCTS } = require('./_products');
+const { sendEmail } = require('./_accessEmail');
+const { generateCode, formatCode } = require('./_gift');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -17,105 +20,6 @@ const supabase = createClient(
 );
 
 const resend  = new Resend(process.env.RESEND_API_KEY_KATYA);
-const R2_BASE = 'https://audio.ekaterina-donnat.com';
-
-// Маппинг Stripe Payment Link ID → треки + журнал + product_type
-//
-// ВАЖНО: собираем из массива и фильтруем неопределённые env-переменные,
-// а не строим объектный литерал напрямую. Раньше несколько ключей
-// одновременно ссылались на process.env.НЕ_СУЩЕСТВУЕТ → все они
-// превращались в один и тот же строковый ключ "undefined" и
-// перезаписывали друг друга (последний в списке побеждал молча).
-// На 31.07 в Netlify живёт только STRIPE_STEP_1_ID из всего списка —
-// остальные ID нужно добавить в env по мере создания ссылок в Stripe.
-// 04.08: у каждой ступени теперь два Payment Link — база и с сопровождением
-// (150/370 у ступеней 1-3, 250/470 у ступени 4). Оба ведут на один и тот же
-// контент, отличается только сопровождающая сессия, поэтому оба ID из пары
-// маппятся на одно и то же определение продукта через ids: [...].
-const PRODUCT_DEFINITIONS = [
-    {
-        ids:        [process.env.STRIPE_STEP_1_BASE_ID, process.env.STRIPE_STEP_1_ESCORT_ID],
-        track_ids:  ['track-02', 'track-09', 'track-10', 'track-12'],
-        journal:    `${R2_BASE}/journals/donna_journal_telo.pdf`,
-        name:       'Возвращение в тело',
-        product_type: 'step_1',
-    },
-    {
-        ids:        [process.env.STRIPE_STEP_2_BASE_ID, process.env.STRIPE_STEP_2_ESCORT_ID],
-        track_ids:  ['track-03', 'track-04', 'track-08', 'track-13'],
-        journal:    `${R2_BASE}/journals/donna_journal_sterzhen.pdf`,
-        name:       'Внутренний стержень',
-        product_type: 'step_2',
-    },
-    {
-        ids:        [process.env.STRIPE_STEP_3_BASE_ID, process.env.STRIPE_STEP_3_ESCORT_ID],
-        track_ids:  ['track-06', 'track-07', 'track-11', 'track-16'],
-        journal:    `${R2_BASE}/journals/donna_journal_impuls.pdf`,
-        name:       'Чистый импульс',
-        product_type: 'step_3',
-    },
-    {
-        ids:        [process.env.STRIPE_STEP_4_BASE_ID, process.env.STRIPE_STEP_4_ESCORT_ID],
-        track_ids:  ['track-01', 'track-05', 'track-14', 'track-15'],
-        journal:    `${R2_BASE}/journals/donna_journal_masshtab.pdf`,
-        name:       'Масштаб и новая реальность',
-        product_type: 'step_4',
-    },
-    {
-        ids:        [process.env.STRIPE_ALBUM_ID],
-        track_ids:  ['track-01','track-02','track-03','track-04','track-05',
-                     'track-06','track-07','track-08','track-09','track-10',
-                     'track-11','track-12','track-13','track-14','track-15','track-16',
-                     'flagship'],
-        journal:    `${R2_BASE}/journals/donna_journal_complete.pdf`,
-        name:       'Полный альбом',
-        product_type: 'full_album',
-    },
-    {
-        ids:        [process.env.STRIPE_FLAGSHIP_ID],
-        track_ids:  ['flagship'],
-        journal:    null,
-        name:       'Память тела: код освобождения',
-        product_type: 'flagship',
-    },
-    {
-        ids:        [process.env.STRIPE_CHECKUP_ID],
-        track_ids:  [],
-        journal:    null,
-        name:       'Чек-ап сессия',
-        // 25.08: было null, из-за чего покупки чек-апа не попадали
-        // в разбивку дашборда по типам продукта.
-        product_type: 'checkup',
-    },
-    {
-        // Трек комбо утверждён Катей 12.08: track-10, crock.mp3,
-        // "Крокодил: обнуление тревоги", 17 минут, Ступень 1.
-        // Выбран как самый короткий в линейке: человек слушает его целиком
-        // до встречи, а не откладывает на "когда будет сорок свободных минут".
-        // Раньше здесь стоял track-09 (Шульц, 40:32), при этом сайт обещал
-        // "трек на выбор", механики выбора не существует.
-        // Метаданные товара в Stripe обновлены синхронно.
-        ids:        [process.env.STRIPE_COMBO_ID],
-        track_ids:  ['track-10'],
-        journal:    null,
-        name:       'Комбо: трек и чек-ап',
-        // 25.08: было null, см. комментарий у чек-апа выше.
-        product_type: 'combo',
-    },
-];
-
-const PRODUCTS = {};
-PRODUCT_DEFINITIONS.forEach(function(def) {
-    def.ids.forEach(function(id) {
-        if (!id) return; // env-переменная ещё не задана — пропускаем, не коллизируем
-        PRODUCTS[id] = {
-            track_ids:    def.track_ids,
-            journal:      def.journal,
-            name:         def.name,
-            product_type: def.product_type,
-        };
-    });
-});
 
 // Fire-and-forget логирование подозрительных событий
 function logSecurityEvent(eventName, ip, details) {
@@ -186,6 +90,22 @@ exports.handler = async (event) => {
 
         if (revokeError) {
             console.error('Purchase revoke error:', revokeError.message);
+            return { statusCode: 500, body: 'Database error' };
+        }
+
+        // Тем же платежом гасим невыданный подарочный сертификат.
+        // Условие status = issued тут не оптимизация: у активированного
+        // сертификата payment_intent записан в строку purchases, и доступ
+        // снимает ревокация выше. Гасить его второй раз нечем и незачем,
+        // а вот затирать след активации нельзя.
+        const { error: certRevokeError } = await supabase
+            .from('donna_gift_certificates')
+            .update({ status: 'revoked' })
+            .eq('stripe_payment_intent_id', paymentIntentId)
+            .eq('status', 'issued');
+
+        if (certRevokeError) {
+            console.error('Gift certificate revoke error:', certRevokeError.message);
             return { statusCode: 500, body: 'Database error' };
         }
 
@@ -308,6 +228,17 @@ exports.handler = async (event) => {
         return { statusCode: 400, body: 'Unknown product' };
     }
 
+    // Подарок это не новый способ оплаты, а обычная покупка, отложенная
+    // во времени: сейчас пишем сертификат, а строка в purchases появится
+    // при активации, ровно такая же и по той же логике. Поэтому вся
+    // выдача доступа ниже остаётся нетронутой.
+    //
+    // Метка kind живёт в metadata подарочной Payment Link и наследуется
+    // сессией. Отсутствие metadata это обычная покупка, а не ошибка.
+    if (session.metadata && session.metadata.kind === 'gift') {
+        return await handleGiftPurchase(session, product, ip);
+    }
+
     // Идемпотентность: Stripe может повторно доставить один и тот же вебхук
     // (таймаут, 5xx, обрыв сети до подтверждения) — а сейчас в Stripe вообще
     // зарегистрировано два webhook endpoint на один и этот же URL, оба
@@ -390,19 +321,115 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify({ received: true }) };
 };
 
-async function sendEmail(email, token, product) {
-    const playerUrl = `https://app.ekaterina-donnat.com?token=${token}`;
 
+// Покупка подарочного сертификата. В purchases не пишем ничего:
+// получатель ещё неизвестен, а строка появится при активации.
+async function handleGiftPurchase(session, product, ip) {
+    const buyerEmail = session.customer_details?.email;
+
+    // Идемпотентность тем же приёмом, что и у обычной покупки: сначала
+    // дешёвая проверка по сессии, а гонку добивает уникальный индекс.
+    const { data: existingCert, error: certLookupError } = await supabase
+        .from('donna_gift_certificates')
+        .select('id, code')
+        .eq('stripe_session_id', session.id)
+        .limit(1);
+
+    if (certLookupError) {
+        console.error('Gift certificate lookup error:', certLookupError.message);
+        return { statusCode: 500, body: 'Database error' };
+    }
+
+    if (existingCert && existingCert[0]) {
+        return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
+    }
+
+    const ref = parseClientReference(session.client_reference_id);
+    const certificate = {
+        code:                     generateCode(),
+        product_type:             product.product_type,
+        product_name:             product.name,
+        amount:                   session.amount_total ? Math.round(session.amount_total / 100) : 0,
+        buyer_email:              buyerEmail,
+        buyer_name:               session.customer_details?.name || null,
+        utm_source:               session.metadata?.utm_source || ref.source || 'direct',
+        campaign:                 ref.campaign,
+        stripe_session_id:        session.id,
+        stripe_payment_intent_id: session.payment_intent || null,
+        status:                   'issued',
+    };
+
+    // Состав ступени в сертификат не кладём намеренно: он резолвится
+    // при активации, и получатель получает актуальный состав, а не тот,
+    // что был на момент дарения.
+    const { error: certError } = await supabase
+        .from('donna_gift_certificates')
+        .insert(certificate);
+
+    if (certError) {
+        if (certError.code === '23505') {
+            return { statusCode: 200, body: JSON.stringify({ received: true, duplicate: true }) };
+        }
+        console.error('Gift certificate insert error:', certError.message);
+        return { statusCode: 500, body: 'Database error' };
+    }
+
+    logSecurityEvent('gift_issued', ip, {
+        stripe_session: session.id,
+        product_type:   certificate.product_type,
+    });
+
+    try {
+        await sendGiftCertificateEmail(certificate);
+    } catch (err) {
+        // Сертификат уже записан. Уронить вебхук из-за письма значит
+        // получить от Stripe повтор того, что уже сделано.
+        console.error('Gift certificate email error:', err.message);
+    }
+
+    return { statusCode: 200, body: JSON.stringify({ received: true, gift: true }) };
+}
+
+// ЧЕРНОВИК, ждёт подписи Кати. Текст ниже держится правил проекта:
+// регистр «Вы», без обещаний результата, без длинных тире.
+async function sendGiftCertificateEmail(certificate) {
     await resend.emails.send({
         from:    'Ekaterina Donnat <hello@ekaterina-donnat.com>',
-        // Домен без MX: ответ на hello@ отскакивает. Ответы уводим
-        // в живой ящик Кати. Ответ клиента — ещё и сильнейший
-        // положительный сигнал для почтовых фильтров.
         replyTo: 'swiss.hypnosis@gmail.com',
-        to:      email,
-        subject: `Ваша практика готова: ${product.name}`,
-        html:    buildEmail(playerUrl, product),
+        to:      certificate.buyer_email,
+        subject: `Ваш подарочный сертификат: ${certificate.product_name}`,
+        html:    buildGiftCertificateEmail(certificate),
     });
+}
+
+function buildGiftCertificateEmail(certificate) {
+    const code = formatCode(certificate.code);
+    const page = 'https://app.ekaterina-donnat.com/gift.html';
+
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="background:#151933;font-family:'Outfit',Arial,sans-serif;color:#f4f1ea;margin:0;padding:40px 20px;">
+  <div style="max-width:520px;margin:0 auto;">
+    <p style="margin:0 0 20px;font-size:16px;">Сертификат готов.</p>
+    <p style="margin:0 0 24px;font-size:16px;line-height:1.6;">
+      ${escapeHtml(certificate.product_name)}
+    </p>
+    <p style="margin:0 0 8px;font-size:13px;opacity:0.7;">Код сертификата</p>
+    <p style="margin:0 0 28px;font-size:26px;letter-spacing:2px;font-family:'Outfit',Arial,sans-serif;">
+      ${escapeHtml(code)}
+    </p>
+    <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">
+      Передайте код тому, кому предназначен подарок, любым удобным способом.
+      Он вводит его на странице <a href="${page}" style="color:#f4f1ea;">${page}</a>,
+      указывает свою почту и получает доступ к практике.
+    </p>
+    <p style="margin:0;font-size:15px;line-height:1.6;">
+      Срока у сертификата нет, воспользоваться им можно когда угодно.
+    </p>
+  </div>
+</body>
+</html>`;
 }
 
 // Письмо Кате о провалившемся возврате. Адрес получателя из окружения:
@@ -468,123 +495,4 @@ ${cells}
   <p style="margin:0;">Дальше смотреть в панели Stripe по id возврата.</p>
 </body>
 </html>`;
-}
-
-function buildEmail(playerUrl, product) {
-    const hasPlayer  = product.track_ids.length > 0;
-    const hasJournal = !!product.journal;
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400&display=swap" rel="stylesheet">
-</head>
-<body style="background:#151933;font-family:'Outfit',sans-serif;margin:0;padding:40px 20px;">
-    <div style="max-width:520px;margin:0 auto;text-align:center;">
-
-        <img src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
-             width="140" style="margin-bottom:32px;opacity:0.9;" alt="Ekaterina Donnat">
-
-        <h1 style="color:#f0eae1;font-weight:200;font-size:26px;margin-bottom:8px;font-family:'Outfit',sans-serif;">
-            ${product.name}
-        </h1>
-        <p style="color:rgba(248,250,252,0.45);font-size:12px;letter-spacing:0.15em;
-                  text-transform:uppercase;margin-bottom:40px;font-family:'Outfit',sans-serif;">
-            готово к работе
-        </p>
-
-        ${hasPlayer ? `
-        <a href="${playerUrl}"
-           style="display:inline-block;background:#d4af37;color:#0f1123;
-                  padding:16px 48px;border-radius:8px;text-decoration:none;
-                  font-size:11px;letter-spacing:0.2em;text-transform:uppercase;
-                  font-weight:500;margin-bottom:32px;font-family:'Outfit',sans-serif;">
-            Открыть мою библиотеку
-        </a>
-        <p style="color:rgba(248,250,252,0.35);font-size:12px;margin-bottom:32px;font-family:'Outfit',sans-serif;">
-            Кнопка скачивания каждого трека внутри плеера
-        </p>
-        ` : `
-        <p style="color:rgba(248,250,252,0.7);font-size:14px;line-height:1.7;margin-bottom:32px;font-family:'Outfit',sans-serif;">
-            Екатерина свяжется с Вами в ближайшее время<br>для записи на сессию.
-        </p>
-        `}
-
-        ${hasJournal ? `
-        <div style="border-top:1px solid rgba(212,175,55,0.15);padding-top:28px;margin-top:8px;">
-            <a href="${product.journal}"
-               style="display:inline-block;border:1px solid rgba(212,175,55,0.35);
-                      color:#d4af37;padding:12px 32px;border-radius:8px;
-                      text-decoration:none;font-size:10px;letter-spacing:0.18em;
-                      text-transform:uppercase;font-family:'Outfit',sans-serif;">
-                Скачать дневник состояний
-            </a>
-            <p style="color:rgba(248,250,252,0.25);font-size:11px;margin-top:12px;font-family:'Outfit',sans-serif;">
-                Личный дневник интеграции для этой ступени
-            </p>
-        </div>
-        ` : ''}
-
-        ${hasPlayer ? buildGuideSection(product.track_ids.length) : ''}
-
-        <p style="color:rgba(248,250,252,0.2);font-size:11px;margin-top:48px;font-family:'Outfit',sans-serif;">
-            ekaterina-donnat.com
-        </p>
-    </div>
-</body>
-</html>`;
-}
-
-// Памятка «Как слушать практики» от Кати, дословно.
-// Ставится в конец письма: сначала кнопка доступа и дневник, потом чтение.
-// Выравнивание по левому краю намеренно: остальное письмо центрировано,
-// но центрированный абзац на несколько строк нечитаем.
-//
-// Регистр. Письмо приведено к «Вы» целиком (CONT-02, решение Дре 18.08):
-// тема «Ваша практика готова», «свяжется с Вами». Расхождения с текстом
-// Кати внутри одного письма больше нет.
-//
-// Три формулировки смягчены по тому же решению (CONT-03, обещание
-// результата и скорости). Вопрос закрыт, исходные формулировки
-// не возвращать.
-//
-// Текст дословно совпадает с i18n.ru.guide в index.html.
-// При правке менять оба места.
-function buildGuideSection(trackCount) {
-    // Разделы про порядок ступеней и «начните с первой ступени» имеют смысл
-    // только там, где практик несколько. Покупателю одного флагмана они
-    // рассказывали бы про структуру, которой у него нет.
-    const isMultiTrack = trackCount > 1;
-
-    const sections = [
-        ['Как часто', 'Идеально заниматься каждый день или через день. Одну практику стоит слушать пять-семь дней подряд: именно повторение закрепляет новое состояние, так устроена наша психика. Потом можно чередовать. Двух практик в день не нужно, лучше одна, но глубокая. Кто-то чувствует отклик уже после первого прослушивания, кому-то нужно больше времени, и это тоже нормально. Ориентируйтесь не на скорость, а на регулярность: за две-три недели практика обычно входит в ритм и становится частью дня.'],
-        ['После практики', 'Дайте себе пять-десять минут покоя: выпейте воды, не берите сразу телефон. За руль и к активным делам возвращайтесь минут через десять-пятнадцать, когда почувствуете полную бодрость. Если слушали глубокую практику вечером, паузу лучше продлить или просто лечь спать, это самый мягкий вариант. Вообще вечер и время перед сном подходят лучше всего, а утренние сеансы хороши для энергии и ясности.'],
-        ['Если тело откликнулось', 'Если после практики тянет в сон, или наоборот появился прилив сил, или подступили слёзы и яркие эмоции, не пугайтесь. Это хороший знак: процесс идёт, подсознание работает.'],
-    ];
-
-    if (isMultiTrack) {
-        sections.push(['Порядок ступеней', 'Ступени выстроены как путь, каждая опирается на предыдущую, поэтому идите по порядку. Внутри ступени четыре практики: первый круг слушайте по очереди, а дальше выбирайте по состоянию, по тому, что откликается именно сегодня.']);
-        sections.push(['С чего начать', 'Если Вы только начинаете, начните с первой ступени. Или выберите практику под свой запрос. Когда есть тревога и ощущение внутреннего бега, Вам подойдёт практика на успокоение и опору. Когда усталость и пустота, начните с наполнения ресурсом. Когда тяжесть и чувство, что всё накопилось, выбирайте практику отпускания. Доверьтесь первому импульсу: Ваше подсознание уже знает, что ему нужно.']);
-    }
-
-    sections.push(['Если мы уже работали вместе', 'Если Вы уже бывали у меня на сеансах, выбирайте свободно: знакомые практики или новые. Ваше подсознание помнит мой голос, и со знакомым звучанием многим проще расслабиться и остаться в практике.']);
-
-    const body = sections.map(([heading, text]) => `
-            <p style="color:#d4af37;font-size:14px;font-weight:400;line-height:1.4;
-                      margin:24px 0 6px;font-family:'Outfit',sans-serif;">
-                ${heading}
-            </p>
-            <p style="color:rgba(248,250,252,0.6);font-size:14px;line-height:1.75;
-                      margin:0;font-family:'Outfit',sans-serif;">
-                ${text}
-            </p>`).join('');
-
-    return `
-        <div style="border-top:1px solid rgba(212,175,55,0.15);margin-top:40px;
-                    padding-top:28px;text-align:left;">
-            <p style="color:#f0eae1;font-size:18px;font-weight:300;margin:0;
-                      font-family:'Outfit',sans-serif;">
-                Как слушать практики
-            </p>${body}
-        </div>`;
 }

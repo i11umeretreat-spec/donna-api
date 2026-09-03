@@ -34,7 +34,13 @@ function makeSupabase(resolver) {
         calls.push(rec);
 
         const builder = {
-            select: function (cols) { rec.op = 'select'; rec.cols = cols; return builder; },
+            // select после update это returning, а не отдельная операция:
+            // операцию не перетираем, иначе условный апдейт запишется
+            // в журнал вызовов как чтение.
+            select: function (cols) {
+                if (rec.op) { rec.returning = true; return builder; }
+                rec.op = 'select'; rec.cols = cols; return builder;
+            },
             update: function (v) { rec.op = 'update'; rec.payload = v; return builder; },
             insert: function (v) { rec.op = 'insert'; rec.payload = v; return builder; },
             upsert: function (v) { rec.op = 'upsert'; rec.payload = v; return builder; },
@@ -52,7 +58,16 @@ function makeSupabase(resolver) {
         return builder;
     }
 
-    return { client: { from: from }, calls: calls };
+    // checkRateLimit ходит не через .from(), а через RPC. Без этого
+    // заглушка бросала бы, лимит уходил в fail-open, и тест «слишком
+    // много попыток» проверял бы не то, что написано в его имени.
+    function rpc(name, args) {
+        const rec = { table: 'rpc:' + name, op: 'rpc', payload: args, filters: [] };
+        calls.push(rec);
+        return Promise.resolve(resolver(rec));
+    }
+
+    return { client: { from: from, rpc: rpc }, calls: calls };
 }
 
 // Загружает обработчик начисто: и его самого, и всё, что он тянет
