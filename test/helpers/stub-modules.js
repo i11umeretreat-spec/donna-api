@@ -13,8 +13,25 @@ const Module = require('module');
 
 const FUNCTIONS_DIR = path.join(__dirname, '..', '..', 'netlify', 'functions');
 
+// Пакеты @aws-sdk/* на диске отсутствуют: их не ставит package.json,
+// в проде они приезжают из окружения Lambda. require.resolve на них
+// бросает, поэтому подменяем на уровне разрешения имени, а не кэша.
+const VIRTUAL = {};
+const realResolve = Module._resolveFilename;
+Module._resolveFilename = function (request) {
+    if (Object.prototype.hasOwnProperty.call(VIRTUAL, request)) return request;
+    return realResolve.apply(this, arguments);
+};
+
 function stub(name, exports) {
-    const resolved = require.resolve(name, { paths: [FUNCTIONS_DIR] });
+    let resolved;
+    try {
+        resolved = require.resolve(name, { paths: [FUNCTIONS_DIR] });
+    } catch (e) {
+        if (e.code !== 'MODULE_NOT_FOUND') throw e;
+        VIRTUAL[name] = true;
+        resolved = name;
+    }
     require.cache[resolved] = new Module(resolved, null);
     require.cache[resolved].filename = resolved;
     require.cache[resolved].loaded = true;
@@ -77,6 +94,7 @@ function makeSupabase(resolver, rpcResolver) {
 // захваченных первым.
 function loadHandler(relPath, opts) {
     opts = opts || {};
+    const opts2 = opts;
 
     Object.keys(opts.env || {}).forEach(function (k) {
         if (opts.env[k] === undefined) delete process.env[k];
@@ -98,6 +116,27 @@ function loadHandler(relPath, opts) {
     });
 
     stub('@supabase/supabase-js', { createClient: function () { return supabase.client; } });
+
+    // Подпись R2. Отдаём предсказуемый адрес того же вида, что и настоящий:
+    // тесты смотрят на параметры подписи, а не на криптографию.
+    const signed = [];
+    stub('@aws-sdk/client-s3', {
+        S3Client: function (cfg) { this.cfg = cfg; },
+        GetObjectCommand: function (input) { this.input = input; },
+    });
+    stub('@aws-sdk/s3-request-presigner', {
+        getSignedUrl: function (client, command, opts) {
+            if (opts2 && opts2.signFails) {
+                return Promise.reject(new Error('secret bucket detail'));
+            }
+            const key = command && command.input ? command.input.Key : 'unknown';
+            const url = 'https://stub-account.r2.cloudflarestorage.com/donnameditations/' + key +
+                '?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Expires=' + (opts && opts.expiresIn) +
+                '&X-Amz-Signature=deadbeef';
+            signed.push({ key: key, expiresIn: opts && opts.expiresIn });
+            return Promise.resolve(url);
+        },
+    });
 
     stub('resend', {
         Resend: function () {
@@ -121,7 +160,8 @@ function loadHandler(relPath, opts) {
         if (k.indexOf(FUNCTIONS_DIR) === 0) delete require.cache[k];
     });
 
-    return { handler: require(target).handler, db: supabase, sent: sent };
+    const mod = require(target);
+    return { handler: mod.handler, mod: mod, db: supabase, sent: sent, signed: signed };
 }
 
 function webhookEvent(type, object, livemode) {

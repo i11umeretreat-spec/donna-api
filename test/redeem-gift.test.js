@@ -44,8 +44,6 @@ function request(body, ip) {
 function db(opts) {
     opts = opts || {};
     return function (rec) {
-        // Лимит: RPC отдаёт true, пока попытки в пределах окна.
-        if (rec.op === 'rpc') return { data: opts.rateLimited ? false : true, error: null };
         if (rec.table === 'donna_gift_certificates' && rec.op === 'update') {
             // Апдейт со статусом в фильтре это активация, без него откат.
             const conditional = rec.filters.some(function (f) { return f[0] === 'status'; });
@@ -177,7 +175,11 @@ test('сбой записи покупки: сертификат возвращ�
 });
 
 test('превышение лимита попыток: 429, до сертификата не идём', async () => {
-    const app = loadHandler('redeem-gift.js', { env: ENV, db: db({ rateLimited: true }) });
+    // Лимит живёт на отдельной поверхности клиента: не from(), а rpc().
+    const app = loadHandler('redeem-gift.js', {
+        env: ENV, db: db({}),
+        rpc: function () { return { data: false, error: null }; },
+    });
     const res = await app.handler(request({ code: 'ABCD2345EFGH', email: 'x@example.com' }));
 
     assert.strictEqual(res.statusCode, 429);

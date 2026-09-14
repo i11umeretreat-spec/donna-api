@@ -1,0 +1,162 @@
+// test/pamyat-access.test.js
+//
+// Окно «Память тела», 48 часов. Набор из раздела «Тесты» спеки
+// от 14.09. Главный здесь пятый: он защищает от раздачи продукта
+// после закрытия окна, остальные держат границы и форму ответа.
+//
+// Запуск: node --test
+
+const test = require('node:test');
+const assert = require('node:assert');
+const { loadHandler } = require('./helpers/stub-modules');
+
+const ENV = {
+    SUPABASE_URL:         'https://stub.supabase.co',
+    SUPABASE_SERVICE_KEY: 'service_stub',
+    R2_ENDPOINT:          'https://stub-account.r2.cloudflarestorage.com',
+    R2_ACCESS_KEY_ID:     'stub_key',
+    R2_SECRET_ACCESS_KEY: 'stub_secret',
+    R2_BUCKET_NAME:       'donnameditations',
+};
+
+// Границы окна: 15.09 18:00 и 17.09 18:00 по Женеве, оба конца 16:00 UTC.
+const START = Date.UTC(2026, 8, 15, 16, 0, 0);
+const END   = Date.UTC(2026, 8, 17, 16, 0, 0);
+const MIN   = 60 * 1000;
+
+function request(origin) {
+    return {
+        httpMethod: 'GET',
+        headers: { origin: origin || 'https://app.ekaterina-donnat.com' },
+        body: null,
+    };
+}
+
+// Время подменяем на уровне Date.now: функция обязана читать часы
+// оттуда, иначе её невозможно проверить, не дожидаясь пятнадцатого.
+function at(ms, fn) {
+    const real = Date.now;
+    Date.now = function () { return ms; };
+    try { return fn(); } finally { Date.now = real; }
+}
+
+function load() {
+    return loadHandler('pamyat-access.js', { env: ENV });
+}
+
+// Через стенд, а не напрямую: модуль тянет подпись R2, а пакетов
+// @aws-sdk на диске нет, они приезжают из окружения Lambda.
+function windowState(ms) {
+    return load().mod.getWindowState(new Date(ms));
+}
+
+// ── Границы окна ───────────────────────────────────────────────────
+
+test('за минуту до старта окно закрыто', () => {
+    const st = windowState(START - MIN);
+    assert.strictEqual(st.open, false);
+    assert.ok(st.startsAt, 'дата открытия названа');
+    assert.ok(st.endsAt, 'дата закрытия названа');
+});
+
+test('через минуту после старта окно открыто', () => {
+    assert.strictEqual(windowState(START + MIN).open, true);
+});
+
+test('за минуту до конца окно ещё открыто', () => {
+    assert.strictEqual(windowState(END - MIN).open, true);
+});
+
+test('через минуту после конца окно закрыто', () => {
+    assert.strictEqual(windowState(END + MIN).open, false);
+});
+
+// ── Форма ответа ───────────────────────────────────────────────────
+
+test('закрытое окно: ни одной ссылки в теле ответа', async () => {
+    const app = load();
+    const res = await at(START - MIN, function () { return app.handler(request()); });
+
+    assert.strictEqual(res.statusCode, 200, 'отвечаем 200, а не ошибкой');
+
+    const body = JSON.parse(res.body);
+    assert.strictEqual(body.open, false);
+    assert.ok(!('trackUrl' in body), 'ключа trackUrl нет');
+    assert.ok(!('warmupUrl' in body), 'ключа warmupUrl нет');
+    assert.ok(body.startsAt && body.endsAt, 'даты окна отданы');
+
+    // Главная проверка спеки: никакого адреса в теле, ни в каком виде.
+    assert.ok(res.body.indexOf('http') === -1, 'в теле нет подстроки http: ' + res.body);
+    assert.strictEqual(app.signed.length, 0, 'подпись даже не запрашивалась');
+});
+
+test('закрытое окно после конца: тоже ни одной ссылки', async () => {
+    const app = load();
+    const res = await at(END + MIN, function () { return app.handler(request()); });
+    const body = JSON.parse(res.body);
+
+    assert.strictEqual(body.open, false);
+    assert.ok(res.body.indexOf('http') === -1);
+    assert.strictEqual(app.signed.length, 0);
+});
+
+test('открытое окно: оба адреса подписаны на шесть часов', async () => {
+    const app = load();
+    const res = await at(START + MIN, function () { return app.handler(request()); });
+
+    assert.strictEqual(res.statusCode, 200);
+    const body = JSON.parse(res.body);
+
+    assert.strictEqual(body.open, true);
+    assert.ok(body.endsAt, 'конец окна отдан, странице нужно показать срок');
+
+    [body.warmupUrl, body.trackUrl].forEach(function (url, i) {
+        const which = i === 0 ? 'warmupUrl' : 'trackUrl';
+        assert.ok(url, which + ' отдан');
+        assert.ok(url.indexOf('X-Amz-Signature') > -1, which + ' подписан');
+        assert.ok(url.indexOf('X-Amz-Expires=21600') > -1, which + ' живёт шесть часов');
+        assert.ok(url.indexOf('r2.cloudflarestorage.com') > -1, which + ' ведёт в бакет');
+    });
+
+    // TTL не режется концом окна: начавший за десять минут до закрытия
+    // должен дослушать двадцать семь минут, а не упереться в 403.
+    app.signed.forEach(function (s) { assert.strictEqual(s.expiresIn, 21600); });
+    assert.deepStrictEqual(app.signed.map(function (s) { return s.key; }),
+        ['flagship/body_memory_progrev.mp3', 'flagship/body_memory.mp3']);
+});
+
+test('ни один ответ не ведёт на публичный домен аудио', async () => {
+    for (const ms of [START - MIN, START + MIN, END - MIN, END + MIN]) {
+        const app = load();
+        const res = await at(ms, function () { return app.handler(request()); });
+        assert.ok(res.body.indexOf('audio.ekaterina-donnat.com') === -1,
+            'публичный домен в ответе при ' + new Date(ms).toISOString());
+    }
+});
+
+// ── Доступ и ошибки ────────────────────────────────────────────────
+
+test('CORS только на страницу окна', async () => {
+    const app = load();
+    const res = await at(START + MIN, function () { return app.handler(request('https://example.com')); });
+    assert.strictEqual(res.headers['Access-Control-Allow-Origin'], 'https://app.ekaterina-donnat.com');
+});
+
+test('OPTIONS отвечает 200, посторонний метод 405', async () => {
+    const app = load();
+    const pre = await app.handler({ httpMethod: 'OPTIONS', headers: {}, body: null });
+    assert.strictEqual(pre.statusCode, 200);
+
+    const post = await app.handler({ httpMethod: 'POST', headers: {}, body: '{}' });
+    assert.strictEqual(post.statusCode, 405);
+});
+
+test('сбой подписи не выносит наружу текст ошибки', async () => {
+    // Грабли 30.08, коммит 4b2683c: наружу ушли детали ошибки базы.
+    const app = loadHandler('pamyat-access.js', { env: ENV, signFails: true });
+
+    const res = await at(START + MIN, function () { return app.handler(request()); });
+    assert.strictEqual(res.statusCode, 500);
+    assert.ok(res.body.indexOf('secret bucket detail') === -1, 'текст ошибки не наружу');
+    assert.ok(res.body.indexOf('http') === -1, 'и ссылок тоже нет');
+});

@@ -17,7 +17,12 @@ const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_pre
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
 // Поверхность: сайт на Тильде или демо-плеер на app-поддомене.
-const VALID_SURFACES = ['site', 'player'];
+// Поверхность: сайт на Тильде, демо-плеер на app-поддомене
+// или страница окна «Память тела».
+// ВАЖНО: тот же список живёт во втором файле из пары
+// track-demo.js и podbor-save.js. Новая поверхность добавляется
+// в оба, иначе половина событий потока ляжет с surface = null.
+const VALID_SURFACES = ['site', 'player', 'pamyat'];
 
 // Метка from из адреса. Список и проверка в _attribution.js, общие
 // на все функции.

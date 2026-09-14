@@ -18,7 +18,10 @@ const supabase = createClient(
 );
 
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
-const VALID_SURFACES = ['site', 'player'];
+// ВАЖНО: тот же список живёт во втором файле из пары
+// track-demo.js и podbor-save.js. Новая поверхность добавляется
+// в оба, иначе половина событий потока ляжет с surface = null.
+const VALID_SURFACES = ['site', 'player', 'pamyat'];
 // Метка кампании: список и проверка в _attribution.js.
 
 // Ключи веток результата. Произвольную строку в базу не пускаем:
