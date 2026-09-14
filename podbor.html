@@ -912,9 +912,19 @@ button {
             try { sessionStorage.setItem('donna_session_id', sid); } catch (e) {}
         }
 
-        /* Поверхность: пришёл из плеера или с сайта. Различаем по метке
-           в адресе, чтобы потом понять, какой вход работает лучше. */
-        var surface = getParam('surface') === 'player' ? 'player' : 'site';
+        /* Поверхность: пришёл из плеера, со страницы окна или с сайта.
+           Различаем по метке в адресе, чтобы потом понять, какой вход
+           работает лучше.
+
+           Список закрытый и совпадает с VALID_SURFACES в podbor-save.js
+           и track-demo.js. Незнакомое значение сводим к site, а не пишем
+           как есть: в базе лучше грубее, чем мусорнее. Страница окна
+           «Память тела» шлёт pamyat, и без неё в этом списке весь трафик
+           операции писался бы как трафик с сайта. 31.08 ровно так
+           потерялся surface в ссылке из плеера. */
+        var KNOWN_SURFACES = ['player', 'pamyat'];
+        var askedSurface = getParam('surface');
+        var surface = KNOWN_SURFACES.indexOf(askedSurface) !== -1 ? askedSurface : 'site';
 
         return { source: source, campaign: campaign, sid: sid, surface: surface };
     })();

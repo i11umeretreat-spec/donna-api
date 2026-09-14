@@ -96,7 +96,7 @@ if (fs.existsSync(fnDir)) {
 // ── 2. Инлайновые <script> клиентских страниц — синтаксис + ES5 ────────────
 // Страница, забытая в этом списке, проходит мимо гейта ES5 целиком:
 // podbor.html так и жил, пока в нём не появилась логика ретраев.
-['index.html', 'demo.html', 'vybor.html', 'dashboard.html', 'podbor.html'].forEach(function (file) {
+['index.html', 'demo.html', 'vybor.html', 'dashboard.html', 'podbor.html', 'pamyat.html'].forEach(function (file) {
     const full = path.join(ROOT, file);
     if (!fs.existsSync(full)) return;
     const html = fs.readFileSync(full, 'utf8');
