@@ -26,8 +26,19 @@ function stub(name, exports) {
 // который тест задал через resolver. Thenable, а не Promise, потому что
 // ответ должен зависеть от полностью собранной цепочки: await случается
 // уже после .eq() и .limit().
-function makeSupabase(resolver) {
+// rpcResolver отдельный от resolver: from() и rpc() — две независимые
+// поверхности клиента, и почти всякому тесту нужен только from(). По умолчанию
+// rpc отвечает «разрешено», потому что единственный её вызов в проекте —
+// check_rate_limit из _rateLimit.js. Тест, которому нужен отказ лимита,
+// передаёт свой rpcResolver.
+function makeSupabase(resolver, rpcResolver) {
     const calls = [];
+
+    function rpc(name, args) {
+        const rec = { rpc: name, args: args };
+        calls.push(rec);
+        return Promise.resolve(rpcResolver ? rpcResolver(rec) : { data: true, error: null });
+    }
 
     function from(table) {
         const rec = { table: table, op: null, payload: null, filters: [], cols: null };
@@ -58,15 +69,6 @@ function makeSupabase(resolver) {
         return builder;
     }
 
-    // checkRateLimit ходит не через .from(), а через RPC. Без этого
-    // заглушка бросала бы, лимит уходил в fail-open, и тест «слишком
-    // много попыток» проверял бы не то, что написано в его имени.
-    function rpc(name, args) {
-        const rec = { table: 'rpc:' + name, op: 'rpc', payload: args, filters: [] };
-        calls.push(rec);
-        return Promise.resolve(resolver(rec));
-    }
-
     return { client: { from: from, rpc: rpc }, calls: calls };
 }
 
@@ -82,7 +84,7 @@ function loadHandler(relPath, opts) {
     });
 
     const sent = [];
-    const supabase = makeSupabase(opts.db || function () { return { data: null, error: null }; });
+    const supabase = makeSupabase(opts.db || function () { return { data: null, error: null }; }, opts.rpc);
 
     stub('stripe', function () {
         return {

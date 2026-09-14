@@ -39,11 +39,17 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
-  const { token, seconds } = body;
+  const { token } = body;
 
-  if (!token || typeof seconds !== 'number') {
+  if (!token || !Number.isFinite(body.seconds)) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'token and seconds required' }) };
   }
+
+  // Клиент копит секунды из audio.currentTime, значение дробное.
+  // Колонка listening_progress.seconds — integer, дробь роняет upsert
+  // на 22P02. Приводим к целому здесь, на границе, чтобы дальше по функции
+  // число было целым по построению и второй путь записи это не обошёл.
+  const seconds = Math.floor(body.seconds);
 
   if (seconds < 0 || seconds > MAX_SECONDS) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid seconds value' }) };

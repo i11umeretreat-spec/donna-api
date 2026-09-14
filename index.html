@@ -909,7 +909,11 @@
         return fetch('/.netlify/functions/save-progress', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: currentToken, seconds: totalSeconds }),
+            body: JSON.stringify({ token: currentToken, seconds: Math.round(totalSeconds) }),
+        }).then(function(res) {
+            // fetch не реджектится на 4xx/5xx. Без этой проверки отказ записи
+            // не виден нигде: три месяца прогресс не сохранялся молча.
+            if (!res.ok) console.error('save-progress failed:', res.status);
         }).catch(function(e) {});
     }
 

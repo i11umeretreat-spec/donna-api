@@ -483,6 +483,42 @@ button {
     outline-offset: 4px;
 }
 
+/* Вторая кнопка на карточке: маршрут в плеер. Контурная, чтобы не спорить
+   с основной за внимание, но той же высоты и той же типографики.
+   По умолчанию скрыта и включается модификатором is-on: аудио предлагается
+   не на каждом исходе, у чек-апа в тексте прямо сказано начать с разговора. */
+.dg-result-btn-2 {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    min-height: 55px;
+    padding: 0 36px;
+    margin-top: 12px;
+    color: #d4af37;
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 12px;
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.dg-result-btn-2.is-on { display: inline-flex; }
+
+.dg-result-btn-2:hover {
+    border-color: rgba(212, 175, 55, 0.9);
+    color: #f0eae1;
+    transform: translateY(-1px);
+}
+
+.dg-result-btn-2:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 4px;
+}
+
 .dg-result-note {
     font-size: 14px;
     line-height: 1.6;
@@ -614,6 +650,7 @@ button {
                 <p class="dg-result-desc" id="dg-result-desc"></p>
                 <p class="dg-result-extra dg-hidden" id="dg-result-extra"></p>
                 <button type="button" class="dg-result-btn" id="dg-result-btn"></button>
+                <button type="button" class="dg-result-btn-2" id="dg-result-btn-2"></button>
             </div>
             <p class="dg-result-note">Это подсказка, а не вердикт. Выбрать можно любой путь.</p>
             <div class="dg-others">
@@ -717,33 +754,43 @@ button {
     ];
 
     var SITE = 'https://ekaterina-donnat.com/';
+    var DEMO = '/demo';
+
+    /* Подпись второй кнопки одна на все исходы: маршрут у неё один,
+       и шесть копий строки разошлись бы при первой же правке текста. */
+    var LISTEN_BTN = 'Послушать практику';
 
     var RESULTS = {
         s1: {
             name: 'Возвращение в тело',
             desc: 'Вам сейчас нужнее всего вернуться в тело. Расслабиться, выспаться, выдохнуть, с этого всё начинается.',
-            btn: 'Подробнее о программе'
+            btn: 'Подробнее о программе',
+            listen: true
         },
         s2: {
             name: 'Внутренний стержень',
             desc: 'Ваша точка это внутренний стержень. Про то, как перестать себя ругать и начать быть на своей стороне.',
-            btn: 'Подробнее о программе'
+            btn: 'Подробнее о программе',
+            listen: true
         },
         s3: {
             name: 'Чистый импульс',
             desc: 'Про то, как выйти из борьбы и перестать жить через усилие.',
-            btn: 'Подробнее о программе'
+            btn: 'Подробнее о программе',
+            listen: true
         },
         s4: {
             name: 'Масштаб и новая реальность',
             desc: 'Вы готовы к масштабу. Про то, как хотеть большего и не бояться этого.',
-            btn: 'Подробнее о программе'
+            btn: 'Подробнее о программе',
+            listen: true
         },
         flagship: {
             name: 'Память тела: код освобождения',
             desc: 'Глубокая практика в объёмном звучании. Для тех, кто уже прошёл серьёзную работу с собой.',
             btn: 'Подробнее о практике',
-            hash: '#pamyat-tela'
+            hash: '#pamyat-tela',
+            listen: true
         },
         checkup: {
             name: 'Чек-ап с Екатериной',
@@ -766,29 +813,41 @@ button {
         return key.charAt(0) === 's' ? '#acc-header-' + key.slice(1) : '';
     }
 
-    /* Адрес перехода на главную: сначала параметры, потом хеш. Хеш
-       последним обязательно, иначе он уедет в значение параметра
-       и метка потеряется вместе с ним.
-       Пустую метку не ставим вовсе: from= прочитается на той стороне
-       как метка нулевой длины и ляжет в базу неизвестным значением.
+    /* Параметры атрибуции, общие для обоих переходов с карточки результата.
+       Знание «что несём дальше» лежит здесь одно: 02.09 выяснилось, что
+       забытый utm_source разводит подбор и главную по разным источникам
+       в одной сессии, и второй копии этой строки быть не должно.
+       Пустую метку не ставим вовсе: from= прочитается на той стороне как
+       метка нулевой длины и ляжет в базу неизвестным значением.
        Метку и sid несём в адресе, а не в хранилище: sessionStorage
        у поддомена и у корневого домена разный, и это ровно тот разрыв,
        ради которого sid и завели. */
-    function siteUrl(key) {
-        var url = SITE;
+    function trackParams() {
         var params = [];
-
         if (TRACK.campaign) params.push('from=' + encodeURIComponent(TRACK.campaign));
         if (TRACK.sid) params.push('sid=' + encodeURIComponent(TRACK.sid));
-        /* Источник тоже несём, иначе главная считает заход органическим:
-           02.09 подбор записался с source paid, а pageview на главной
-           с source organic, в одной и той же сессии. Значение здесь уже
-           разложено по нашему списку, и повторная раскладка на той
-           стороне ничего не меняет: paid остаётся paid. */
         if (TRACK.source) params.push('utm_source=' + encodeURIComponent(TRACK.source));
+        return params;
+    }
 
+    /* Адрес перехода на главную: сначала параметры, потом хеш. Хеш
+       последним обязательно, иначе он уедет в значение параметра
+       и метка потеряется вместе с ним. */
+    function siteUrl(key) {
+        var params = trackParams();
+        var url = SITE;
         if (params.length) url += '?' + params.join('&');
         return url + resultHash(key);
+    }
+
+    /* Маршрут в плеер. Демо на том же поддомене, поэтому адрес
+       относительный. Набор параметров тот же, что у перехода на главную:
+       demo.html читает from и utm_source, а sid ему не нужен, он подхватит
+       свой из общего sessionStorage. Лишний параметр дешевле второго
+       набора, который разойдётся с первым при следующей правке. */
+    function demoUrl() {
+        var params = trackParams();
+        return params.length ? DEMO + '?' + params.join('&') : DEMO;
     }
 
     /* Порядок здесь решает ничью: сравнение в bestByScores строгое,
@@ -1331,6 +1390,7 @@ button {
     /* ══ РЕЗУЛЬТАТ ════════════════════════════════════════════════ */
 
     var resultBtn = document.getElementById('dg-result-btn');
+    var listenBtn = document.getElementById('dg-result-btn-2');
     var resultExtra = document.getElementById('dg-result-extra');
     var currentResultKey = null;
 
@@ -1380,6 +1440,12 @@ button {
         document.getElementById('dg-result-name').textContent = res.name;
         document.getElementById('dg-result-desc').textContent = res.desc;
         resultBtn.textContent = res.btn;
+        if (res.listen) {
+            listenBtn.textContent = LISTEN_BTN;
+            addClass(listenBtn, 'is-on');
+        } else {
+            stripClass(listenBtn, 'is-on');
+        }
         if (extraText) {
             resultExtra.textContent = extraText;
             stripClass(resultExtra, 'dg-hidden');
@@ -1432,6 +1498,21 @@ button {
     resultBtn.addEventListener('click', function() {
         if (!currentResultKey) return;
         window.location.href = siteUrl(currentResultKey);
+    });
+
+    /* Событие уходит до перехода: send() ставит keepalive, запрос
+       переживает выгрузку страницы.
+
+       Имя своё, а не общий demo_click. Подбор шлёт surface site, ровно
+       как блок на главной, у которого своя кнопка на демо, и она уже
+       стреляла: 28.08 в базе лежит demo_click с поверхностью site.
+       На общем имени два разных перехода слиплись бы в одну цифру,
+       и разделить их можно было бы только по наличию podbor_complete
+       в той же сессии, то есть знанием в голове аналитика вместо
+       знания в данных. */
+    listenBtn.addEventListener('click', function() {
+        trackEvent('podbor_demo_click');
+        window.location.href = demoUrl();
     });
 
     function buildOthers(chosenKey) {

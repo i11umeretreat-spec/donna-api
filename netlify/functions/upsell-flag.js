@@ -47,19 +47,30 @@ exports.handler = async (event) => {
   const key = `${token}:step${step}`;
 
   if (event.httpMethod === 'GET') {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('upsell_shown')
       .select('shown_at')
       .eq('key', key)
       .maybeSingle();
 
+    // Отказ чтения трактуем как «ещё не показывали»: лишний показ апсела
+    // дешевле пустого экрана. Но молча это проходить не должно.
+    if (error) console.error('upsell-flag read error:', error.message, error.code);
+
     return { statusCode: 200, headers, body: JSON.stringify({ shown: !!data }) };
   }
 
   if (event.httpMethod === 'POST') {
-    await supabase
+    const { error } = await supabase
       .from('upsell_shown')
       .upsert({ key, shown_at: new Date().toISOString() }, { onConflict: 'key' });
+
+    // Раньше результат upsert не читался вообще и ответ всегда был ok.
+    // Ровно так три месяца прятался отказ записи в listening_progress.
+    if (error) {
+      console.error('upsell-flag write error:', error.message, error.code);
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'DB error' }) };
+    }
 
     return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) };
   }
