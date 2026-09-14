@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="/mood-engine.js"></script>
+  <title>Память тела: код освобождения · Екатерина Донна</title>
+
+  <!-- Facebook Pixel -->
+  <script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '570014464378584');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=570014464378584&ev=PageView&noscript=1"/></noscript>
+  <!-- End Facebook Pixel -->
+
+  <!-- UTM + Instagram WebView -->
+  <script>
+  (function() {
+    /* Разбор адреса руками, а не через URLSearchParams: основной трафик
+       этой операции придёт из ленты Инстаграма, а в его вебвью на старом
+       Android URLSearchParams нет. В demo.html здесь стоит URLSearchParams,
+       и это известный долг, переносить его сюда нельзя. */
+    function readQueryParam(name) {
+      var q = window.location.search;
+      if (!q || q.length < 2) return null;
+      var pairs = q.substring(1).split('&');
+      for (var i = 0; i < pairs.length; i++) {
+        var eq = pairs[i].indexOf('=');
+        if (eq === -1) continue;
+        if (decodeURIComponent(pairs[i].substring(0, eq)) !== name) continue;
+        return decodeURIComponent(pairs[i].substring(eq + 1).replace(/\+/g, ' ')) || null;
+      }
+      return null;
+    }
+    window.readQueryParam = readQueryParam;
+
+    var source = readQueryParam('utm_source') || 'direct';
+    window.TRAFFIC_SOURCE = source;
+
+    // PageView с источником
+    if (typeof fbq !== 'undefined') fbq('track', 'PageView', { traffic_source: source });
+
+    // Instagram WebView баннер
+    var ua = navigator.userAgent || '';
+    if (ua.indexOf('Instagram') > -1 || ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1) {
+      document.addEventListener('DOMContentLoaded', function() {
+        var banner = document.createElement('div');
+        banner.style.cssText = [
+          'position:fixed','top:0','left:0','right:0','z-index:99999',
+          'background:rgba(13,15,38,0.97)','backdrop-filter:blur(12px)',
+          'border-bottom:1px solid rgba(212,175,55,0.25)',
+          'padding:12px 20px','display:flex','align-items:center',
+          'justify-content:space-between','gap:12px'
+        ].join(';');
+        banner.innerHTML = [
+          '<p style="margin:0;font-family:Outfit,sans-serif;font-size:12px;',
+          'font-weight:300;color:rgba(248,250,252,0.8);line-height:1.4;">',
+          'Для комфортного прослушивания<br>откройте в браузере</p>',
+          '<a href="' + window.location.href + '" target="_blank" rel="noopener"',
+          ' style="flex-shrink:0;background:#d4af37;color:#0f1123;padding:8px 16px;',
+          'border-radius:8px;text-decoration:none;font-family:Outfit,sans-serif;',
+          'font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.15em;',
+          'white-space:nowrap;">Открыть</a>'
+        ].join('');
+        document.body.insertBefore(banner, document.body.firstChild);
+      });
+    }
+  })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@200;300&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* min-height, а не height: страница длиннее экрана, в отличие
+       от demo.html, где плеер помещается в один экран целиком.
+       overflow-x здесь не ставится намеренно: он делает body
+       собственным контейнером прокрутки, и страница начинает
+       скроллиться внутри себя. Горизонтального выезда нет и так,
+       он проверен на 375px. */
+    html, body {
+      min-height: 100%;
+      background: #151933;
+      color: rgba(248,250,252,0.95);
+      font-family: 'Outfit', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .screen {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 28px 40px;
+    }
+
+    .header {
+      padding: 40px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-img {
+      height: 44px;
+      object-fit: contain;
+      filter: brightness(1.15) drop-shadow(0 0 12px rgba(212,175,55,0.55));
+    }
+
+    .site-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(248,250,252,0.4);
+      text-decoration: none;
+      padding: 7px 14px;
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 40px;
+      font-family: 'Outfit', sans-serif;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .site-link:hover { color: rgba(248,250,252,0.8); border-color: rgba(212,175,55,0.4); }
+
+    @media (hover: none) {
+      .site-link:hover { color: rgba(248,250,252,0.4); border-color: rgba(212,175,55,0.2); }
+    }
+
+    .center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 32px 0;
+    }
+
+    /* Четыре состояния страницы: ожидание, окно открыто, окно закрыто
+       и отказ. Видимым остаётся ровно одно, остальные
+       лежат со своим классом. Разметка по умолчанию показывает ожидание:
+       если скрипт упадёт, человек увидит строку, а не пустой экран. */
+    .state { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .state.visible { display: flex; }
+
+    .sphere-wrap {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,0.3);
+      overflow: hidden;
+      margin-bottom: 28px;
+      animation: sphereBreathe 4s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes sphereBreathe {
+      0%   { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
+      50%  { box-shadow: 0 0 50px rgba(212,175,55,0.35), 0 0 90px rgba(212,175,55,0.15); }
+      100% { box-shadow: 0 0 20px rgba(212,175,55,0.1), 0 0 40px rgba(212,175,55,0.05); }
+    }
+
+    #sphere-canvas { width: 96px; height: 96px; border-radius: 50%; display: block; }
+
+    .track-eyebrow {
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #d4af37;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+
+    .track-title {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-size: clamp(26px, 6.4vw, 38px);
+      letter-spacing: 0.01em;
+      line-height: 1.15;
+      margin-bottom: 6px;
+      color: rgba(248,250,252,0.82);
+      text-shadow:
+        0 0 1px rgba(212,175,55,0.45),
+        0 0 8px rgba(212,175,55,0.12);
+    }
+
+    .track-author {
+      font-size: 12px;
+      color: rgba(248,250,252,0.4);
+      letter-spacing: 0.12em;
+      margin-bottom: 20px;
+    }
+
+    /* Срок окна. Человеку надо знать, сколько у него времени,
+       и это единственное место, где срок виден на странице. */
+    .window-note {
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      color: rgba(248,250,252,0.45);
+      margin-bottom: 28px;
+    }
+
+    /* Какая дорожка звучит сейчас: прогрев или сама практика.
+       Переход между ними без паузы, поэтому подпись это
+       единственный признак, что началось главное. */
+    .stage-note {
+      font-family: 'Fraunces', serif;
+      font-weight: 200;
+      font-style: italic;
+      font-size: 13px;
+      color: rgba(248,250,252,0.5);
+      margin-bottom: 14px;
+      min-height: 18px;
+    }
+
+    .waveform {
+      width: 100%;
+      max-width: 100%;
+      /* Страховка на поворот экрана: полоски считаются по ширине один
+         раз, и после поворота в портрет их могло бы оказаться больше,
+         чем помещается. Горизонтального скролла на странице нет. */
+      overflow: hidden;
+      height: 44px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .wave-bar {
+      width: 3px;
+      border-radius: 2px;
+      background: rgba(212,175,55,0.12);
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+
+    .wave-bar.played { background: rgba(212,175,55,0.5); }
+    .wave-bar.active { background: #d4af37; }
+
+    .progress-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .time {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      color: rgba(248,250,252,0.35);
+      flex-shrink: 0;
+      width: 36px;
+    }
+
+    .time-end { text-align: right; }
+
+    /* Дорожка прогресса без курсора и без обработчика: перемотки здесь
+       нет. Практика собрана как одно движение, и прыжок по ней ломает
+       не только смысл, но и счёт дослушиваний. */
+    .progress-track {
+      flex: 1;
+      height: 2px;
+      background: rgba(212,175,55,0.12);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #d4af37;
+      border-radius: 2px;
+      width: 0%;
+      transition: width 0.5s linear;
+      pointer-events: none;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .btn-play {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,0.4);
+      background: rgba(212,175,55,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #d4af37;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn-play:hover { background: rgba(212,175,55,0.16); }
+    .btn-play:active { transform: scale(0.96); }
+
+    @media (hover: none) {
+      .btn-play:hover { background: rgba(212,175,55,0.08); }
+    }
+
+    /* Условия прослушивания. Набрано наравне с основным текстом,
+       а не мельче: предупреждение о безопасности не уменьшаем. */
+    .listen-note {
+      max-width: 300px;
+      margin: 0 auto;
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(248,250,252,0.55);
+    }
+
+    /* ─── Приглашение на подбор ───
+       Один блок, две ступени яркости, второго окна нет. Механика взята
+       из demo.html: на двадцатой минуте блок тихо проявляется под
+       плеером, в конце трека становится заметнее и меняет текст. */
+    .podbor-invite {
+      width: 100%;
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(212, 175, 55, 0.15);
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+                  max-height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .podbor-invite.visible {
+      opacity: 1;
+      max-height: 320px;
+    }
+
+    .podbor-invite-text {
+      font-size: 13px;
+      line-height: 1.7;
+      color: rgba(248, 250, 252, 0.45);
+      margin: 0 0 14px 0;
+    }
+
+    .podbor-invite-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 22px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 999px;
+      background: rgba(212, 175, 55, 0.06);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(248, 250, 252, 0.85);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .podbor-invite-btn:hover {
+      background: rgba(212, 175, 55, 0.12);
+      border-color: rgba(212, 175, 55, 0.55);
+      color: #d4af37;
+    }
+
+    .podbor-invite-btn:focus-visible {
+      outline: 2px solid #d4af37;
+      outline-offset: 3px;
+    }
+
+    @media (hover: none) {
+      .podbor-invite-btn:hover {
+        background: rgba(212, 175, 55, 0.06);
+        border-color: rgba(212, 175, 55, 0.3);
+        color: rgba(248, 250, 252, 0.85);
+      }
+    }
+
+    .podbor-invite.is-primary .podbor-invite-text {
+      color: rgba(248, 250, 252, 0.7);
+    }
+
+    .podbor-invite.is-primary .podbor-invite-btn {
+      border-color: rgba(212, 175, 55, 0.55);
+      background: rgba(212, 175, 55, 0.12);
+      color: #d4af37;
+    }
+
+    /* Второй план: оставить практику себе. Тихая строка под кнопкой,
+       а не вторая кнопка. */
+    .keep-line {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.6;
+      letter-spacing: 0.04em;
+      color: rgba(248, 250, 252, 0.35);
+      /* Подчёркивание по самому тексту, а не рамкой по низу блока:
+         область нажатия здесь сорок четыре пикселя высотой, и рамка
+         висела бы отдельной чертой в стороне от строки. */
+      text-decoration: underline;
+      text-decoration-color: rgba(212, 175, 55, 0.3);
+      text-underline-offset: 4px;
+      -webkit-tap-highlight-color: transparent;
+      transition: color 0.3s ease, text-decoration-color 0.3s ease;
+    }
+
+    .keep-line:hover {
+      color: rgba(248, 250, 252, 0.7);
+      text-decoration-color: rgba(212, 175, 55, 0.6);
+    }
+
+    @media (hover: none) {
+      .keep-line:hover {
+        color: rgba(248, 250, 252, 0.35);
+        text-decoration-color: rgba(212, 175, 55, 0.3);
+      }
+    }
+
+    /* Закрытое окно и ожидание ответа функции */
+    .plain-text {
+      max-width: 320px;
+      font-size: 15px;
+      line-height: 1.8;
+      color: rgba(248,250,252,0.6);
+      margin: 0 auto 8px;
+    }
+
+    .plain-text strong {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      color: rgba(248,250,252,0.9);
+    }
+
+    .closed-actions { margin-top: 26px; display: flex; flex-direction: column; align-items: center; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .podbor-invite { transition: none; }
+      .sphere-wrap { animation: none; }
+      .progress-fill { transition: none; }
+    }
+
+    audio { display: none; }
+  </style>
+</head>
+<body>
+
+  <canvas id="bg-canvas"></canvas>
+
+  <div class="screen">
+
+    <header class="header">
+      <img class="logo-img"
+        src="https://optim.tildacdn.com/tild3163-3633-4963-a231-363031656432/-/resize/453x/-/format/webp/logo_gold_final2.png.webp"
+        alt="Ekaterina Donnat" />
+      <a href="https://ekaterina-donnat.com/" class="site-link" id="site-link">
+        На сайт
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+          <path d="M2 8L8 2M8 2H4M8 2v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </header>
+
+    <div class="center">
+
+      <div class="sphere-wrap">
+        <canvas id="sphere-canvas" width="192" height="192"></canvas>
+      </div>
+
+      <!-- Ожидание ответа функции. Видимо по умолчанию: класс, скрывающий
+           этот блок, ставится скриптом последним. -->
+      <div class="state visible" id="state-loading">
+        <p class="plain-text">Минуту, открываю практику.</p>
+      </div>
+
+      <!-- Окно открыто -->
+      <div class="state" id="state-open">
+        <div class="track-eyebrow">Авторская нейроакустика</div>
+        <h1 class="track-title">Память тела: код освобождения</h1>
+        <div class="track-author">Екатерина Донна</div>
+        <div class="window-note" id="window-note"></div>
+
+        <div class="stage-note" id="stage-note">Прогрев, несколько минут</div>
+
+        <div class="waveform" id="waveform"></div>
+
+        <div class="progress-row">
+          <span class="time" id="time-cur">0:00</span>
+          <div class="progress-track" id="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+          <span class="time time-end" id="time-total">0:00</span>
+        </div>
+
+        <div class="controls">
+          <button class="btn-play" id="btn-play" type="button" aria-label="Слушать">
+            <svg id="icon-play" width="22" height="22" viewBox="0 0 22 22" fill="currentColor">
+              <path d="M5 3.5l14 7.5-14 7.5V3.5z"/>
+            </svg>
+            <svg id="icon-pause" width="22" height="22" viewBox="0 0 22 22" fill="currentColor" style="display:none">
+              <rect x="5" y="3" width="4" height="16" rx="1"/>
+              <rect x="13" y="3" width="4" height="16" rx="1"/>
+            </svg>
+          </button>
+        </div>
+
+        <p class="listen-note">
+          Лучше в наушниках и там, где Вас не потревожат. За руль и к активным делам возвращайтесь минут через десять-пятнадцать, когда почувствуете полную бодрость.
+        </p>
+
+        <div class="podbor-invite" id="podbor-invite">
+          <p class="podbor-invite-text" id="podbor-invite-text">Если отозвалось, следующий вопрос: с чего начать.</p>
+          <button type="button" class="podbor-invite-btn" id="podbor-invite-btn">Подобрать практику</button>
+          <div>
+            <a class="keep-line" id="keep-line" href="https://ekaterina-donnat.com/">Оставить эту практику себе, 90 €</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Окно закрыто: до старта или после конца -->
+      <div class="state" id="state-closed">
+        <div class="track-eyebrow">Авторская нейроакустика</div>
+        <h1 class="track-title">Память тела: код освобождения</h1>
+        <div class="track-author">Екатерина Донна</div>
+
+        <p class="plain-text" id="closed-text"></p>
+
+        <div class="closed-actions">
+          <button type="button" class="podbor-invite-btn" id="closed-podbor-btn">Подобрать практику</button>
+          <div>
+            <a class="keep-line" id="closed-keep-line" href="https://ekaterina-donnat.com/">Оставить эту практику себе, 90 €</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Функция не ответила -->
+      <div class="state" id="state-error">
+        <p class="plain-text">Не получилось открыть практику. Обновите страницу, пожалуйста.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Дорожка одна на прогрев и на практику: адрес подставляется скриптом
+       из ответа pamyat-access. Атрибута src в разметке нет намеренно, при
+       закрытом окне на странице не должно быть ни одной ссылки на mp3. -->
+  <audio id="audio-pamyat" preload="none"></audio>
+
+  <script>
+  (function() {
+
+    // ── АТРИБУЦИЯ ────────────────────────────────────────────────────────
+    // Разбор адреса тот же, что в шапке: руками, без URLSearchParams.
+    var readParam = window.readQueryParam || function() { return null; };
+
+    var source = window.TRAFFIC_SOURCE || 'direct';
+    var CAMPAIGN_PARAM = readParam('from');
+
+    /* Идентификатор сессии. Принимаем sid из адреса, как в demo.html:
+       письмо и лента ведут на один поддомен, но путь «страница, подбор»
+       должен остаться одной сессией. */
+    function getSidFromUrl() {
+      var v = readParam('sid');
+      return (v && v.length <= 100 && /^[A-Za-z0-9._-]+$/.test(v)) ? v : null;
+    }
+
+    function getSessionId() {
+      var fromUrl = getSidFromUrl();
+      if (fromUrl) {
+        try { sessionStorage.setItem('donna_session_id', fromUrl); } catch (e) {}
+        return fromUrl;
+      }
+      var sid = null;
+      try { sid = sessionStorage.getItem('donna_session_id'); } catch (e) {}
+      if (!sid) {
+        sid = (window.crypto && crypto.randomUUID)
+          ? crypto.randomUUID()
+          : 'sid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+        try { sessionStorage.setItem('donna_session_id', sid); } catch (e) {}
+      }
+      return sid;
+    }
+    var sessionId = getSessionId();
+
+    // track-demo.js понимает только paid/referral/pinterest/organic,
+    // сырой utm_source бакетируем перед отправкой.
+    var SOURCE_BUCKET_MAP = { instagram: 'paid', facebook: 'paid', fb: 'paid', ig: 'paid' };
+
+    /* surface здесь всегда pamyat: это отдельная поверхность, и главный
+       вопрос операции, кто приводит людей, письмо или лента, читается
+       парой surface плюс campaign. */
+    function trackDemo(eventName) {
+      var bucketedSource = SOURCE_BUCKET_MAP[source.toLowerCase()] || source;
+      try {
+        fetch('/.netlify/functions/track-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          keepalive: true,
+          body: JSON.stringify({
+            event: eventName,
+            source: bucketedSource,
+            session_id: sessionId,
+            surface: 'pamyat',
+            campaign: CAMPAIGN_PARAM
+          })
+        }).catch(function() {});
+      } catch (e) {}
+    }
+
+    try { trackDemo('pageview'); } catch (e) {}
+
+    /* Переход на подбор тащит все четыре параметра. Забытый параметр
+       не ломает страницу, он тихо портит статистику: 31.08 ровно так
+       потерялся surface, и месяц трафика писался бы не тем. */
+    function podborUrl() {
+      var url = 'podbor.html?utm_source=' + encodeURIComponent(source)
+              + '&sid=' + encodeURIComponent(sessionId)
+              + '&surface=pamyat';
+      if (CAMPAIGN_PARAM) url += '&from=' + encodeURIComponent(CAMPAIGN_PARAM);
+      return url;
+    }
+
+    /* Флагман живёт в Тильде, своей страницы под него у нас нет.
+       Параметры стоят до решётки: после неё они попали бы во фрагмент,
+       а скрипт блока читает window.location.search. Тем же from живёт
+       client_reference_id у кнопки оплаты, так что метка доезжает
+       до самой покупки в Stripe. */
+    function flagshipUrl() {
+      var url = 'https://ekaterina-donnat.com/?utm_source=' + encodeURIComponent(source)
+              + '&sid=' + encodeURIComponent(sessionId);
+      if (CAMPAIGN_PARAM) url += '&from=' + encodeURIComponent(CAMPAIGN_PARAM);
+      return url + '#pamyat-tela';
+    }
+
+    // Ссылки собираются скриптом, чтобы не потерять метки. Если скрипт
+    // не доживёт до этого места, в разметке остаётся адрес без них.
+    try {
+      var keep = document.getElementById('keep-line');
+      var keepClosed = document.getElementById('closed-keep-line');
+      var site = document.getElementById('site-link');
+      if (keep) keep.href = flagshipUrl();
+      if (keepClosed) keepClosed.href = flagshipUrl();
+      if (site) site.href = flagshipUrl().replace('#pamyat-tela', '');
+    } catch (e) {}
+
+    // ── ДАТЫ ОКНА ────────────────────────────────────────────────────────
+    /* Женева в сентябре живёт по CEST, это плюс два часа к UTC. Та же
+       константа зашита в pamyat-access.js, где границы окна заданы
+       в UTC. Считаем руками, а не через Intl: в старом вебвью часовых
+       поясов в Intl может не быть вовсе, и дата вышла бы неверной
+       молча. */
+    var GENEVA_OFFSET_MIN = 120;
+    var MONTHS = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                  'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+    function genevaLabel(iso) {
+      var d = new Date(iso);
+      if (!iso || isNaN(d.getTime())) return '';
+      var t = new Date(d.getTime() + GENEVA_OFFSET_MIN * 60000);
+      var m = t.getUTCMinutes();
+      return t.getUTCDate() + ' ' + MONTHS[t.getUTCMonth()] + ', в '
+           + t.getUTCHours() + ':' + (m < 10 ? '0' : '') + m
+           + ' по женевскому времени';
+    }
+
+    // ── ЭКРАНЫ ───────────────────────────────────────────────────────────
+    var STATES = ['state-loading', 'state-open', 'state-closed', 'state-error'];
+
+    function showState(id) {
+      var target = document.getElementById(id);
+      if (target) target.className = 'state visible';
+      // Скрываем остальные последним шагом: если бы порядок был обратным
+      // и что-то упало посередине, человек остался бы перед пустым экраном.
+      for (var i = 0; i < STATES.length; i++) {
+        if (STATES[i] === id) continue;
+        var el = document.getElementById(STATES[i]);
+        if (el) el.className = 'state';
+      }
+    }
+
+    // ── ПЛЕЕР ────────────────────────────────────────────────────────────
+    var audio = document.getElementById('audio-pamyat');
+    var isPlaying = false;
+    var stage = 0;               // 0 прогрев, 1 практика
+    var trackUrl = null;
+    var inviteShown = false;
+    var wf = document.getElementById('waveform');
+
+    /* Число полосок считаем от ширины экрана, а не берём фиксированным.
+       Каждая занимает три пикселя плюс три на промежуток, и на 320px
+       фиксированные пятьдесят шесть выезжали за край страницы.
+       Ширину берём у окна, а не у самого блока: он в этот момент ещё
+       скрыт и меряется нулём. */
+    var BARS = 56;
+    try {
+      var availWidth = Math.min(480, window.innerWidth || 375) - 56;
+      BARS = Math.max(24, Math.min(56, Math.floor((availWidth + 3) / 6)));
+    } catch (e) {}
+
+    // Двадцатая минута практики: здесь блок подбора тихо проявляется.
+    var INVITE_AT = 1200;
+
+    try {
+      for (var b = 0; b < BARS; b++) {
+        var bar = document.createElement('div');
+        bar.className = 'wave-bar';
+        bar.style.height = (8 + Math.random() * 28) + 'px';
+        wf.appendChild(bar);
+      }
+    } catch (e) {}
+
+    /* Каждая привязка в своём try: независимые части скрипта не должны
+       уносить друг друга. Падение одного обработчика оставляет плеер
+       на месте. */
+    function on(target, ev, fn) {
+      try {
+        var el = (typeof target === 'string') ? document.getElementById(target) : target;
+        if (!el) return;
+        el.addEventListener(ev, function (e) {
+          try { fn(e); } catch (err) {}
+        });
+      } catch (e) {}
+    }
+
+    function setPlaying(v) {
+      isPlaying = v;
+      document.getElementById('icon-play').style.display = v ? 'none' : 'block';
+      document.getElementById('icon-pause').style.display = v ? 'block' : 'none';
+    }
+
+    function formatTime(s) {
+      if (isNaN(s)) return '0:00';
+      var m = Math.floor(s / 60), sec = Math.floor(s % 60);
+      return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function resetWave() {
+      var bars = wf.querySelectorAll('.wave-bar');
+      for (var i = 0; i < bars.length; i++) {
+        bars[i].className = 'wave-bar';
+      }
+      document.getElementById('progress-fill').style.width = '0%';
+      document.getElementById('time-cur').textContent = '0:00';
+    }
+
+    on('btn-play', 'click', function() {
+      if (isPlaying) {
+        audio.pause();
+        setPlaying(false);
+        return;
+      }
+      /* Если браузер откажет в воспроизведении, иконка не должна
+         остаться в положении «играет»: человек увидел бы паузу
+         вместо кнопки и решил, что плеер сломан. */
+      audio.play().catch(function() { setPlaying(false); });
+      setPlaying(true);
+      if (!window._pamyatPlayFired) {
+        window._pamyatPlayFired = true;
+        trackDemo('play');
+        if (typeof fbq !== 'undefined') fbq('track', 'ViewContent', {
+          content_name: 'pamyat_full',
+          traffic_source: source
+        });
+      }
+    });
+
+    on(audio, 'loadedmetadata', function() {
+      document.getElementById('time-total').textContent = formatTime(audio.duration);
+    });
+
+    on(audio, 'timeupdate', function() {
+      var pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('time-cur').textContent = formatTime(audio.currentTime);
+
+      // NodeList.forEach в старом вебвью нет, поэтому обычный цикл.
+      var bars = wf.querySelectorAll('.wave-bar');
+      var idx = Math.floor((audio.currentTime / (audio.duration || 1)) * BARS);
+      for (var i = 0; i < bars.length; i++) {
+        bars[i].className = 'wave-bar'
+          + (i < idx ? ' played' : '')
+          + (i === idx ? ' active' : '');
+      }
+
+      /* Двадцатая минута считается по самой практике, а не от нажатия
+         play: прогрев идёт перед ней отдельной дорожкой. Событие lead
+         уже есть в белом списке track-demo.js, заводить новое ради
+         той же по смыслу глубины не стали. */
+      if (stage === 1 && !inviteShown && audio.currentTime >= INVITE_AT) {
+        showPodborInvite();
+        trackDemo('lead');
+      }
+    });
+
+    /* Переход прогрева в практику без паузы: адрес меняется на том же
+       элементе, поэтому разрешение, полученное по нажатию человека,
+       сохраняется и звук не обрывается. */
+    function startTrack() {
+      stage = 1;
+      document.getElementById('stage-note').textContent = 'Память тела, двадцать семь минут';
+      resetWave();
+      audio.src = trackUrl;
+      audio.load();
+      audio.play().catch(function() { setPlaying(false); });
+    }
+
+    on(audio, 'ended', function() {
+      if (stage === 0) { startTrack(); return; }
+
+      setPlaying(false);
+      trackDemo('demo_complete');
+      showPodborInvite();
+
+      var inv = document.getElementById('podbor-invite');
+      var txt = document.getElementById('podbor-invite-text');
+      if (inv && inv.className.indexOf('is-primary') === -1) {
+        inv.className = inv.className + ' is-primary';
+      }
+      if (txt) {
+        txt.textContent = 'Если отозвалось, следующий вопрос: с чего начать. '
+                        + 'Девять вопросов, минуты три, одна рекомендация.';
+      }
+    });
+
+    /* Прогрев не обязателен. Если его файла в бакете не окажется,
+       ведём сразу к практике, а не оставляем человека перед молчащей
+       кнопкой. Ошибка на самой практике это уже отказ страницы. */
+    on(audio, 'error', function() {
+      if (stage === 0 && trackUrl) { startTrack(); return; }
+      setPlaying(false);
+      showState('state-error');
+    });
+
+    function showPodborInvite() {
+      if (inviteShown) return;
+      inviteShown = true;
+      var inv = document.getElementById('podbor-invite');
+      if (inv) inv.className = inv.className + ' visible';
+    }
+
+    on('podbor-invite-btn', 'click', function() {
+      trackDemo('podbor_click');
+      window.location.href = podborUrl();
+    });
+
+    on('closed-podbor-btn', 'click', function() {
+      trackDemo('podbor_click');
+      window.location.href = podborUrl();
+    });
+
+    // ── ДОСТУП ───────────────────────────────────────────────────────────
+    /* XMLHttpRequest, а не fetch: это единственный запрос, без которого
+       страницы нет, а fetch в старом вебвью может отсутствовать.
+       Край хостинга при частых запросах отдаёт 429, поэтому один
+       повтор с паузой, иначе человек увидит ошибку на ровном месте. */
+    function askAccess(attempt) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', '/.netlify/functions/pamyat-access', true);
+
+      xhr.onload = function() {
+        if (xhr.status === 429 && attempt < 2) {
+          setTimeout(function() { askAccess(attempt + 1); }, 2000 * attempt);
+          return;
+        }
+        if (xhr.status !== 200) { showState('state-error'); return; }
+
+        var data = null;
+        try { data = JSON.parse(xhr.responseText); } catch (e) {}
+        if (!data) { showState('state-error'); return; }
+
+        if (!data.open) {
+          applyClosed(data);
+          return;
+        }
+        applyOpen(data);
+      };
+
+      xhr.onerror = function() {
+        if (attempt < 2) {
+          setTimeout(function() { askAccess(attempt + 1); }, 2000 * attempt);
+          return;
+        }
+        showState('state-error');
+      };
+
+      xhr.send();
+    }
+
+    function applyClosed(data) {
+      var now = new Date().getTime();
+      var startsAt = data.startsAt ? new Date(data.startsAt).getTime() : 0;
+      var el = document.getElementById('closed-text');
+
+      if (el) {
+        el.innerHTML = (now < startsAt)
+          ? 'Практика откроется <strong>' + genevaLabel(data.startsAt) + '</strong>. Двое суток, целиком и бесплатно.'
+          : 'Окно закрылось <strong>' + genevaLabel(data.endsAt) + '</strong>. Практику можно оставить себе.';
+      }
+      showState('state-closed');
+    }
+
+    function applyOpen(data) {
+      if (!data.warmupUrl || !data.trackUrl) { showState('state-error'); return; }
+
+      trackUrl = data.trackUrl;
+      audio.src = data.warmupUrl;
+
+      var note = document.getElementById('window-note');
+      if (note && data.endsAt) {
+        note.textContent = 'Открыто до ' + genevaLabel(data.endsAt);
+      }
+      showState('state-open');
+    }
+
+    try { askAccess(1); } catch (e) { showState('state-error'); }
+
+    // ── СФЕРА ────────────────────────────────────────────────────────────
+    var sc = document.getElementById('sphere-canvas');
+    var sCtx = sc.getContext('2d');
+    var SW = 192, SH = 192;
+    var sAngle = 0;
+
+    var rings = [
+      { color: 'rgba(212,175,55,0.7)', width: 1.5 },
+      { color: 'rgba(212,175,55,0.35)', width: 1 },
+      { color: 'rgba(180,160,220,0.5)', width: 1.2 },
+      { color: 'rgba(212,175,55,0.2)', width: 0.8 }
+    ];
+
+    function drawSphere() {
+      sCtx.clearRect(0, 0, SW, SH);
+      sCtx.save();
+      sCtx.beginPath();
+      sCtx.arc(SW/2, SH/2, SW/2-1, 0, Math.PI*2);
+      sCtx.clip();
+      sCtx.fillStyle = '#0d1030';
+      sCtx.fillRect(0, 0, SW, SH);
+
+      var grd = sCtx.createRadialGradient(SW*0.35, SH*0.3, 0, SW/2, SH/2, SW/2);
+      grd.addColorStop(0, 'rgba(212,175,55,0.18)');
+      grd.addColorStop(0.5, 'transparent');
+      grd.addColorStop(1, 'rgba(75,0,130,0.25)');
+      sCtx.fillStyle = grd;
+      sCtx.fillRect(0, 0, SW, SH);
+
+      var cx = SW/2, cy = SH/2, r = SW/2-2;
+      for (var i = 0; i < 7; i++) {
+        var latAngle = -Math.PI/2 + Math.PI*(i/7);
+        var ringR = Math.cos(latAngle)*r;
+        var ringY = cy + Math.sin(latAngle)*r;
+        var rotOffset = sAngle*(i%2===0?1:-0.7)+i*0.4;
+        var ri = rings[i % rings.length];
+        sCtx.save();
+        sCtx.translate(cx, ringY);
+        sCtx.scale(1, 0.22);
+        sCtx.beginPath();
+        sCtx.arc(0, 0, Math.abs(ringR), 0, Math.PI*2);
+        sCtx.strokeStyle = ri.color;
+        sCtx.lineWidth = ri.width*(1+0.3*Math.cos(latAngle));
+        sCtx.stroke();
+        var dotCount = Math.floor(Math.abs(ringR)/12);
+        for (var d = 0; d < dotCount; d++) {
+          var dAngle = (d/dotCount)*Math.PI*2+rotOffset;
+          sCtx.beginPath();
+          sCtx.arc(Math.cos(dAngle)*Math.abs(ringR), Math.sin(dAngle)*Math.abs(ringR), 1.2, 0, Math.PI*2);
+          sCtx.fillStyle = 'rgba(248,245,235,0.85)';
+          sCtx.fill();
+        }
+        sCtx.restore();
+      }
+
+      var shine = sCtx.createRadialGradient(cx-r*0.3, cy-r*0.3, 0, cx, cy, r);
+      shine.addColorStop(0, 'rgba(255,255,255,0.07)');
+      shine.addColorStop(0.4, 'transparent');
+      sCtx.fillStyle = shine;
+      sCtx.fillRect(0, 0, SW, SH);
+      sCtx.restore();
+    }
+
+    // ── ФОНОВЫЙ CANVAS ───────────────────────────────────────────────────
+    var bgCanvas = document.getElementById('bg-canvas');
+    var bCtx = bgCanvas.getContext('2d');
+    var BW, BH, gradPhase = 0;
+    var mouseX = -1000, mouseY = -1000;
+
+    function resizeBg() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      BW = window.innerWidth;
+      BH = window.innerHeight;
+      bgCanvas.width = BW * dpr;
+      bgCanvas.height = BH * dpr;
+      bgCanvas.style.width = BW + 'px';
+      bgCanvas.style.height = BH + 'px';
+      bCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
+    document.addEventListener('mouseleave', function() { mouseX = -1000; mouseY = -1000; });
+
+    var mood = window.moodConfig || {};
+    var PARTICLE_COUNT = Math.round(60 * (mood.particleDensity || 1.0));
+    var particles = [];
+
+    function initParticles() {
+      particles = [];
+      for (var i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+          x: Math.random()*BW, y: Math.random()*BH,
+          r: Math.random()*2+0.6,
+          opacity: Math.random()*0.6+0.2,
+          speedX: (Math.random()-0.5)*0.2,
+          speedY: (Math.random()-0.5)*0.2,
+          opacitySpeed: (Math.random()-0.5)*0.004
+        });
+      }
+    }
+
+    function drawBg() {
+      bCtx.clearRect(0, 0, BW, BH);
+      gradPhase += 0.003;
+      var cx1 = BW*0.5 + Math.sin(gradPhase*0.7)*BW*0.15;
+      var cy1 = BH*0.15 + Math.cos(gradPhase*0.5)*BH*0.08;
+      var grd = bCtx.createRadialGradient(cx1, cy1, 0, BW/2, BH/2, BH*0.9);
+      grd.addColorStop(0, 'rgba(40,45,92,0.95)');
+      grd.addColorStop(0.4, 'rgba(21,25,51,0.85)');
+      grd.addColorStop(1, 'rgba(10,12,30,0.9)');
+      bCtx.fillStyle = grd;
+      bCtx.fillRect(0, 0, BW, BH);
+
+      if (mouseX > 0) {
+        var mgrd = bCtx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 160);
+        mgrd.addColorStop(0, 'rgba(212,175,55,0.08)');
+        mgrd.addColorStop(1, 'transparent');
+        bCtx.fillStyle = mgrd;
+        bCtx.fillRect(0, 0, BW, BH);
+      }
+
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.speedX; p.y += p.speedY; p.opacity += p.opacitySpeed;
+        if (mouseX > 0) {
+          var dx = mouseX-p.x, dy = mouseY-p.y;
+          var dist = Math.sqrt(dx*dx+dy*dy);
+          if (dist > 0 && dist < 180) { p.x += dx/dist*0.15; p.y += dy/dist*0.15; }
+        }
+        if (p.opacity < 0.15) p.opacitySpeed = Math.abs(p.opacitySpeed);
+        if (p.opacity > 0.85) p.opacitySpeed = -Math.abs(p.opacitySpeed);
+        if (p.x < 0) p.x = BW; if (p.x > BW) p.x = 0;
+        if (p.y < 0) p.y = BH; if (p.y > BH) p.y = 0;
+        bCtx.beginPath();
+        bCtx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        bCtx.fillStyle = 'rgba(212,175,55,'+p.opacity+')';
+        bCtx.fill();
+      }
+    }
+
+    // ── LOOP ─────────────────────────────────────────────────────────────
+    var animationRunning = false;
+    var animationFrameId = null;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function loop() {
+      if (!animationRunning) { animationFrameId = null; return; }
+      var m = window.moodConfig || {};
+      sAngle += (m.pulseSpeed || 0.004);
+      drawSphere();
+      drawBg();
+      animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function startAnimation() {
+      if (animationRunning) return;
+      drawSphere();
+      drawBg();
+      if (reduceMotion) return;
+      animationRunning = true;
+      animationFrameId = requestAnimationFrame(loop);
+    }
+
+    function stopAnimation() {
+      animationRunning = false;
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+      }
+    }
+
+    /* Заблокированный экран останавливает рисование, но не звук:
+       практика продолжается, кадры не тратят батарею. */
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) { stopAnimation(); } else { startAnimation(); }
+    });
+
+    try {
+      resizeBg();
+      initParticles();
+      window.addEventListener('resize', function() { resizeBg(); initParticles(); });
+      startAnimation();
+    } catch (e) {}
+
+  })();
+  </script>
+
+</body>
+</html>
