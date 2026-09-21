@@ -120,7 +120,7 @@ test('закрытое окно после конца: тоже ни одной 
     assert.strictEqual(app.signed.length, 0);
 });
 
-test('открытое окно: оба адреса подписаны на шесть часов', async () => {
+test('открытое окно: ровно один адрес, подписанный на шесть часов', async () => {
     const app = load();
     const res = await at(START + MIN, function () { return app.handler(request()); });
 
@@ -130,19 +130,21 @@ test('открытое окно: оба адреса подписаны на ш�
     assert.strictEqual(body.open, true);
     assert.ok(body.endsAt, 'конец окна отдан, странице нужно показать срок');
 
-    [body.warmupUrl, body.trackUrl].forEach(function (url, i) {
-        const which = i === 0 ? 'warmupUrl' : 'trackUrl';
-        assert.ok(url, which + ' отдан');
-        assert.ok(url.indexOf('X-Amz-Signature') > -1, which + ' подписан');
-        assert.ok(url.indexOf('X-Amz-Expires=21600') > -1, which + ' живёт шесть часов');
-        assert.ok(url.indexOf('r2.cloudflarestorage.com') > -1, which + ' ведёт в бакет');
-    });
+    assert.ok(body.trackUrl, 'trackUrl отдан');
+    assert.ok(body.trackUrl.indexOf('X-Amz-Signature') > -1, 'адрес подписан');
+    assert.ok(body.trackUrl.indexOf('X-Amz-Expires=21600') > -1, 'живёт шесть часов');
+    assert.ok(body.trackUrl.indexOf('r2.cloudflarestorage.com') > -1, 'ведёт в бакет');
+
+    // Файл склеен, второго адреса больше нет. Ключ warmupUrl не просто
+    // пустой, его нет: страница не должна выбирать между двумя файлами.
+    assert.ok(!('warmupUrl' in body), 'ключа warmupUrl в ответе нет: ' + res.body);
+
+    assert.deepStrictEqual(app.signed.map(function (s) { return s.key; }),
+        ['flagship/body_memory_full.mp3'], 'подписан ровно один ключ, склеенный файл');
 
     // TTL не режется концом окна: начавший за десять минут до закрытия
-    // должен дослушать двадцать семь минут, а не упереться в 403.
+    // должен дослушать практику, а не упереться в 403 на середине.
     app.signed.forEach(function (s) { assert.strictEqual(s.expiresIn, 21600); });
-    assert.deepStrictEqual(app.signed.map(function (s) { return s.key; }),
-        ['flagship/body_memory_progrev.mp3', 'flagship/body_memory.mp3']);
 });
 
 test('ни один ответ не ведёт на публичный домен аудио', async () => {

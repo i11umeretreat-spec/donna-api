@@ -35,16 +35,22 @@ function safeCampaign(value) {
     return VALID_CAMPAIGNS.indexOf(value) !== -1 ? value : null;
 }
 
-// client_reference_id собирается на сайте как «кампания|источник»:
-// var ref = (from || 'site') + '|' + (utm || 'direct');
-// Оба места сборки — кнопка флагмана и кнопки в аккордеоне — пишут
-// один формат.
+// client_reference_id собирается как «кампания, разделитель, источник».
+//
+// Разделителей два, и это не небрежность. На сайте Тильды стоит
+// вертикальная черта: var ref = (from || 'site') + '|' + (utm || 'direct').
+// Stripe же принимает в client_reference_id только [A-Za-z0-9_-], и
+// на прямых платёжных ссылках черта ломала покупку, было в августе.
+// Поэтому страница окна «Память тела» склеивает то же самое дефисом.
+//
+// Дефис безопасен как разделитель: ни одна метка из VALID_CAMPAIGNS
+// и ни один источник его не содержат, они пишутся через подчёркивание.
 //
 // Заглушка 'site' в списке кампаний не значится и обнуляется сама,
 // отдельной проверки под неё не нужно.
 function parseClientReference(ref) {
     if (typeof ref !== 'string') return { campaign: null, source: null };
-    const parts = ref.split('|');
+    const parts = ref.indexOf('|') !== -1 ? ref.split('|') : ref.split('-');
     return {
         campaign: safeCampaign(parts[0]),
         source: parts[1] || null

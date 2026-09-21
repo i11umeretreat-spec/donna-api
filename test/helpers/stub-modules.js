@@ -154,6 +154,35 @@ function loadHandler(relPath, opts) {
         },
     });
 
+    // Сеть. Функции проекта ходят наружу только в Resend и только через
+    // глобальный fetch, поэтому подменяем его целиком. По умолчанию он
+    // бросает: тест, который случайно полез в настоящий интернет, должен
+    // падать, а не висеть.
+    const fetched = [];
+    const realFetch = global.fetch;
+    global.fetch = function (url, opts) {
+        opts = opts || {};
+        let body = null;
+        try { body = opts.body ? JSON.parse(opts.body) : null; } catch (e) { body = opts.body; }
+        const call = { url: String(url), method: opts.method || 'GET', body: body, headers: opts.headers || {} };
+        fetched.push(call);
+
+        if (!opts2.fetch) {
+            return Promise.reject(new Error('тест не подменил fetch, а функция пошла в сеть: ' + call.method + ' ' + call.url));
+        }
+
+        const res = opts2.fetch(call);
+        // Ответ описывается тестом как { status, body }, а функция видит
+        // то же, что даёт настоящий fetch.
+        return Promise.resolve({
+            ok: res.status >= 200 && res.status < 300,
+            status: res.status,
+            json: function () { return Promise.resolve(res.body === undefined ? {} : res.body); },
+            text: function () { return Promise.resolve(JSON.stringify(res.body === undefined ? {} : res.body)); },
+        });
+    };
+    global.fetch.restore = function () { global.fetch = realFetch; };
+
     const target = path.join(FUNCTIONS_DIR, relPath);
 
     Object.keys(require.cache).forEach(function (k) {
@@ -161,7 +190,7 @@ function loadHandler(relPath, opts) {
     });
 
     const mod = require(target);
-    return { handler: mod.handler, mod: mod, db: supabase, sent: sent, signed: signed };
+    return { handler: mod.handler, mod: mod, db: supabase, sent: sent, signed: signed, fetched: fetched };
 }
 
 function webhookEvent(type, object, livemode) {

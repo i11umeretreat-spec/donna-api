@@ -23,10 +23,13 @@ const WINDOW_END   = Date.UTC(2026, 8, 20, 15, 0, 0);
 // минут, а не упереться в 403 на середине практики.
 const SIGN_TTL = 21600;
 
-const KEYS = {
-    warmup: 'flagship/body_memory_progrev.mp3',
-    track:  'flagship/body_memory.mp3',
-};
+// Один файл на всё: вступление и практика склеены, 28:54. Так у окна
+// нет шва посередине и нет случая «файла прогрева нет», который
+// страница раньше обрабатывала отдельной веткой.
+//
+// body_memory.mp3 намеренно остаётся нетронутым: он играет у купивших,
+// без вступления. Вступление слышат один раз, на странице знакомства.
+const TRACK_KEY = 'flagship/body_memory_full.mp3';
 
 const CORS = {
     'Access-Control-Allow-Origin': 'https://app.ekaterina-donnat.com',
@@ -77,8 +80,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const warmupUrl = await signKey(KEYS.warmup, SIGN_TTL);
-        const trackUrl  = await signKey(KEYS.track, SIGN_TTL);
+        const trackUrl = await signKey(TRACK_KEY, SIGN_TTL);
 
         return {
             statusCode: 200,
@@ -86,7 +88,6 @@ exports.handler = async (event) => {
             body: JSON.stringify({
                 open: true,
                 endsAt: state.endsAt,
-                warmupUrl: warmupUrl,
                 trackUrl: trackUrl,
             }),
         };
