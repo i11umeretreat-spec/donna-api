@@ -8,12 +8,18 @@ const supabase = createClient(
     process.env.SUPABASE_SERVICE_KEY
 );
 
+// buy_click и email_submit добавлены 21.09, вместе с новым экраном
+// «Памяти тела»: первый шлёт страница при клике по оплате, второй
+// пишет pamyat-subscribe.js после успешной подписки. Второй в этом
+// списке не проверяется ничем, он тут как опись: имена событий
+// проекта читают отсюда.
+//
 // hero_preview_play добавлен 24.08: хиро-блок на сайте слал 'play', то есть
 // то же имя, что демо-плеер при запуске полной практики на 21 минуту.
 // В базе два разных действия лежали вперемешку и не различались, из-за чего
 // воронка «просмотр → play» считалась неверно. Старое имя оставлено в списке:
 // оно живёт в demo.html и в записях до 24.08.
-const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play', 'demo_click', 'hero_preview_play', 'podbor_click', 'podbor_demo_click', 'podbor_start', 'podbor_answer', 'podbor_complete', 'demo_complete'];
+const VALID_EVENTS  = ['pageview', 'play', 'lead', 'welcome_play', 'flagship_preview_1_play', 'flagship_preview_2_play', 'demo_click', 'hero_preview_play', 'podbor_click', 'podbor_demo_click', 'podbor_start', 'podbor_answer', 'podbor_complete', 'demo_complete', 'buy_click', 'email_submit'];
 const VALID_SOURCES = ['paid', 'referral', 'pinterest', 'organic'];
 
 // Поверхность: сайт на Тильде или демо-плеер на app-поддомене.

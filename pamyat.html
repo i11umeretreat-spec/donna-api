@@ -225,19 +225,6 @@
       margin-bottom: 28px;
     }
 
-    /* Какая дорожка звучит сейчас: прогрев или сама практика.
-       Переход между ними без паузы, поэтому подпись это
-       единственный признак, что началось главное. */
-    .stage-note {
-      font-family: 'Fraunces', serif;
-      font-weight: 200;
-      font-style: italic;
-      font-size: 13px;
-      color: rgba(248,250,252,0.5);
-      margin-bottom: 14px;
-      min-height: 18px;
-    }
-
     .waveform {
       width: 100%;
       max-width: 100%;
@@ -341,14 +328,21 @@
       color: rgba(248,250,252,0.55);
     }
 
-    /* ─── Приглашение на подбор ───
-       Один блок, две ступени яркости, второго окна нет. Механика взята
-       из demo.html: на двадцатой минуте блок тихо проявляется под
-       плеером, в конце трека становится заметнее и меняет текст. */
-    .podbor-invite {
+    /* ─── Экран после практики ───
+       Один блок на два состояния, после практики и при закрытом окне.
+       Порядок в нём и есть содержание правки: сначала покупка, потом
+       почта, подбор тихой строкой и только на закрытом экране.
+
+       Окно 17-20.09: семнадцать человек дослушали двадцать девять
+       минут, подбор из девяти вопросов после этого нажал один. Человек
+       после получаса практики не хочет теста, он хочет одного простого
+       действия. На закрытом экране подбор, наоборот, работает: трое
+       нажали, один прошёл до конца. Поэтому он остался там, где
+       доказал, что нужен. */
+    .offer {
       width: 100%;
       margin-top: 28px;
-      padding-top: 18px;
+      padding-top: 22px;
       border-top: 1px solid rgba(212, 175, 55, 0.15);
       opacity: 0;
       max-height: 0;
@@ -357,99 +351,169 @@
                   max-height 0.8s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
-    .podbor-invite.visible {
-      opacity: 1;
-      max-height: 320px;
+    .offer.visible { opacity: 1; max-height: 700px; }
+
+    /* Подбор показывается только на закрытом экране, форма исчезает
+       после отправки. И то и другое переключается классом на самом
+       блоке: скрипт в этом файле не пишет ни цветов, ни отступов. */
+    .offer .podbor-wrap { display: none; }
+    .offer.with-podbor .podbor-wrap { display: block; }
+    .offer.mail-sent .mail-form,
+    .offer.mail-sent .mail-note { display: none; }
+
+    .offer-lead {
+      font-size: 15px;
+      line-height: 1.75;
+      color: rgba(248, 250, 252, 0.7);
+      margin-bottom: 18px;
     }
 
-    .podbor-invite-text {
-      font-size: 13px;
-      line-height: 1.7;
-      color: rgba(248, 250, 252, 0.45);
-      margin: 0 0 14px 0;
-    }
-
-    .podbor-invite-btn {
-      display: inline-flex;
+    .buy-btn {
+      display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 44px;
-      padding: 0 22px;
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      border-radius: 999px;
-      background: rgba(212, 175, 55, 0.06);
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 400;
-      letter-spacing: 0.16em;
+      width: 100%;
+      min-height: 52px;
+      padding: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #d4af37;
+      color: #0f1123;
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(248, 250, 252, 0.85);
+      text-decoration: none;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+      transition: opacity 0.3s, transform 0.1s;
     }
 
-    .podbor-invite-btn:hover {
-      background: rgba(212, 175, 55, 0.12);
-      border-color: rgba(212, 175, 55, 0.55);
-      color: #d4af37;
-    }
-
-    .podbor-invite-btn:focus-visible {
-      outline: 2px solid #d4af37;
-      outline-offset: 3px;
-    }
+    .buy-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .buy-btn:active { transform: translateY(0); }
 
     @media (hover: none) {
-      .podbor-invite-btn:hover {
-        background: rgba(212, 175, 55, 0.06);
-        border-color: rgba(212, 175, 55, 0.3);
-        color: rgba(248, 250, 252, 0.85);
-      }
+      .buy-btn:hover { opacity: 1; transform: none; }
     }
 
-    .podbor-invite.is-primary .podbor-invite-text {
-      color: rgba(248, 250, 252, 0.7);
+    .buy-note {
+      margin-top: 10px;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      color: rgba(248, 250, 252, 0.4);
     }
 
-    .podbor-invite.is-primary .podbor-invite-btn {
-      border-color: rgba(212, 175, 55, 0.55);
-      background: rgba(212, 175, 55, 0.12);
+    .mail-block {
+      margin-top: 26px;
+      padding-top: 22px;
+      border-top: 1px solid rgba(212, 175, 55, 0.12);
+    }
+
+    .mail-lead {
+      font-size: 14px;
+      line-height: 1.7;
+      color: rgba(248, 250, 252, 0.6);
+      margin-bottom: 14px;
+    }
+
+    .mail-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .mail-input {
+      flex: 1 1 150px;
+      min-width: 0;
+      min-height: 46px;
+      padding: 12px 14px;
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(248, 250, 252, 0.9);
+      font-family: 'Outfit', sans-serif;
+      /* Шестнадцать пикселей здесь не про красоту: на меньшем размере
+         Сафари на айфоне зумит всю страницу при фокусе в поле. */
+      font-size: 16px;
+      font-weight: 300;
+    }
+
+    .mail-input::placeholder { color: rgba(248, 250, 252, 0.3); }
+    .mail-input:focus { outline: none; border-color: rgba(212, 175, 55, 0.6); }
+
+    .mail-btn {
+      flex: 0 0 auto;
+      min-height: 46px;
+      padding: 0 20px;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 8px;
+      background: rgba(212, 175, 55, 0.08);
+      color: rgba(248, 250, 252, 0.85);
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .mail-btn:hover { background: rgba(212, 175, 55, 0.16); color: #d4af37; }
+    .mail-btn[disabled] { opacity: 0.5; cursor: default; }
+
+    @media (hover: none) {
+      .mail-btn:hover { background: rgba(212, 175, 55, 0.08); color: rgba(248, 250, 252, 0.85); }
+    }
+
+    .mail-note {
+      margin-top: 10px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(248, 250, 252, 0.35);
+    }
+
+    /* Одна строка на два случая: сюда попадает и отказ, и благодарность
+       после удачной отправки. Двух мест для одной мысли не заводим. */
+    .mail-say {
+      margin-top: 12px;
+      font-size: 13px;
+      line-height: 1.6;
       color: #d4af37;
     }
 
-    /* Второй план: оставить практику себе. Тихая строка под кнопкой,
-       а не вторая кнопка. */
-    .keep-line {
+    /* Ловушка для ботов. Не display:none: часть простых роботов такие
+       поля пропускает, а увезти за край экрана надёжнее. Человек его
+       не видит и не может в него попасть табом. */
+    .hp-field {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+
+    .podbor-line {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       min-height: 44px;
-      margin-top: 6px;
-      font-size: 12px;
+      margin-top: 22px;
+      padding: 0;
+      font-family: inherit;
+      font-size: 13px;
       line-height: 1.6;
-      letter-spacing: 0.04em;
-      color: rgba(248, 250, 252, 0.35);
-      /* Подчёркивание по самому тексту, а не рамкой по низу блока:
-         область нажатия здесь сорок четыре пикселя высотой, и рамка
-         висела бы отдельной чертой в стороне от строки. */
+      color: rgba(248, 250, 252, 0.4);
+      background: none;
+      border: none;
       text-decoration: underline;
-      text-decoration-color: rgba(212, 175, 55, 0.3);
+      text-decoration-color: rgba(212, 175, 55, 0.25);
       text-underline-offset: 4px;
+      cursor: pointer;
       -webkit-tap-highlight-color: transparent;
-      transition: color 0.3s ease, text-decoration-color 0.3s ease;
+      transition: color 0.3s;
     }
 
-    .keep-line:hover {
-      color: rgba(248, 250, 252, 0.7);
-      text-decoration-color: rgba(212, 175, 55, 0.6);
-    }
+    .podbor-line:hover { color: rgba(248, 250, 252, 0.75); }
 
     @media (hover: none) {
-      .keep-line:hover {
-        color: rgba(248, 250, 252, 0.35);
-        text-decoration-color: rgba(212, 175, 55, 0.3);
-      }
+      .podbor-line:hover { color: rgba(248, 250, 252, 0.4); }
     }
 
     /* Закрытое окно и ожидание ответа функции */
@@ -467,10 +531,8 @@
       color: rgba(248,250,252,0.9);
     }
 
-    .closed-actions { margin-top: 26px; display: flex; flex-direction: column; align-items: center; }
-
     @media (prefers-reduced-motion: reduce) {
-      .podbor-invite { transition: none; }
+      .offer { transition: none; }
       .sphere-wrap { animation: none; }
       .progress-fill { transition: none; }
     }
@@ -515,8 +577,6 @@
         <div class="track-author">Екатерина Донна</div>
         <div class="window-note" id="window-note"></div>
 
-        <div class="stage-note" id="stage-note">Прогрев, несколько минут</div>
-
         <div class="waveform" id="waveform"></div>
 
         <div class="progress-row">
@@ -542,14 +602,6 @@
         <p class="listen-note">
           Лучше в наушниках и там, где Вас не потревожат. За руль и к активным делам возвращайтесь минут через десять-пятнадцать, когда почувствуете полную бодрость.
         </p>
-
-        <div class="podbor-invite" id="podbor-invite">
-          <p class="podbor-invite-text" id="podbor-invite-text">Если отозвалось, следующий вопрос: с чего начать.</p>
-          <button type="button" class="podbor-invite-btn" id="podbor-invite-btn">Подобрать практику</button>
-          <div>
-            <a class="keep-line" id="keep-line" href="https://ekaterina-donnat.com/">Оставить эту практику себе, 90 €</a>
-          </div>
-        </div>
       </div>
 
       <!-- Окно закрыто: до старта или после конца -->
@@ -559,18 +611,46 @@
         <div class="track-author">Екатерина Донна</div>
 
         <p class="plain-text" id="closed-text"></p>
-
-        <div class="closed-actions">
-          <button type="button" class="podbor-invite-btn" id="closed-podbor-btn">Подобрать практику</button>
-          <div>
-            <a class="keep-line" id="closed-keep-line" href="https://ekaterina-donnat.com/">Оставить эту практику себе, 90 €</a>
-          </div>
-        </div>
       </div>
 
       <!-- Функция не ответила -->
       <div class="state" id="state-error">
         <p class="plain-text">Не получилось открыть практику. Обновите страницу, пожалуйста.</p>
+      </div>
+
+      <!-- Экран после практики и закрытого окна. В разметке он один:
+           видимое состояние всегда одно, и блок появляется под ним.
+           Тексты ждут подписи Кати. -->
+      <div class="offer" id="offer">
+        <p class="offer-lead" id="offer-lead"></p>
+
+        <a class="buy-btn" id="buy-btn" href="https://buy.stripe.com/eVq8wOfVlbCs11t26Easg0d">Оставить практику себе</a>
+        <p class="buy-note">Постоянный доступ и файл, 90 €</p>
+
+        <div class="mail-block">
+          <p class="mail-lead">Я сейчас записываю практику для сна. Оставьте почту, и я пришлю её, когда она будет готова.</p>
+
+          <form class="mail-form" id="mail-form" novalidate>
+            <div class="mail-row">
+              <input class="mail-input" id="mail-input" type="email" name="email"
+                autocomplete="email" inputmode="email" placeholder="Ваша почта" />
+              <button class="mail-btn" id="mail-btn" type="submit">Прислать мне</button>
+            </div>
+
+            <div class="hp-field" aria-hidden="true">
+              <label>Это поле заполнять не нужно
+                <input id="mail-hp" type="text" name="company" tabindex="-1" autocomplete="off" />
+              </label>
+            </div>
+          </form>
+
+          <p class="mail-note" id="mail-note">Только письма от меня. Отписаться можно в любом из них.</p>
+          <p class="mail-say" id="mail-say"></p>
+        </div>
+
+        <div class="podbor-wrap">
+          <button type="button" class="podbor-line" id="podbor-line">Не знаете, с чего начать? Подбор из девяти вопросов →</button>
+        </div>
       </div>
 
     </div>
@@ -624,8 +704,11 @@
     /* surface здесь всегда pamyat: это отдельная поверхность, и главный
        вопрос операции, кто приводит людей, письмо или лента, читается
        парой surface плюс campaign. */
+    function bucketedSource() {
+      return SOURCE_BUCKET_MAP[source.toLowerCase()] || source;
+    }
+
     function trackDemo(eventName) {
-      var bucketedSource = SOURCE_BUCKET_MAP[source.toLowerCase()] || source;
       try {
         fetch('/.netlify/functions/track-demo', {
           method: 'POST',
@@ -633,7 +716,7 @@
           keepalive: true,
           body: JSON.stringify({
             event: eventName,
-            source: bucketedSource,
+            source: bucketedSource(),
             session_id: sessionId,
             surface: 'pamyat',
             campaign: CAMPAIGN_PARAM
@@ -655,27 +738,45 @@
       return url;
     }
 
-    /* Флагман живёт в Тильде, своей страницы под него у нас нет.
-       Параметры стоят до решётки: после неё они попали бы во фрагмент,
-       а скрипт блока читает window.location.search. Тем же from живёт
-       client_reference_id у кнопки оплаты, так что метка доезжает
-       до самой покупки в Stripe. */
-    function flagshipUrl() {
+    /* Сайт Кати. Параметры стоят до решётки: после неё они попали бы
+       во фрагмент, а скрипты блоков читают window.location.search. */
+    function siteUrl() {
       var url = 'https://ekaterina-donnat.com/?utm_source=' + encodeURIComponent(source)
               + '&sid=' + encodeURIComponent(sessionId);
       if (CAMPAIGN_PARAM) url += '&from=' + encodeURIComponent(CAMPAIGN_PARAM);
-      return url + '#pamyat-tela';
+      return url;
+    }
+
+    /* Оплата флагмана прямой ссылкой, без захода на витрину: человек
+       уже слушал практику целиком, показывать ему её описание незачем.
+
+       Метка едет в client_reference_id и склеена дефисом, а не
+       вертикальной чертой, как на Тильде: Stripe принимает здесь
+       только [A-Za-z0-9_-], и в августе черта ломала покупку.
+       Разбирает это _attribution.js, он понимает оба разделителя.
+
+       Оба значения приходят из адресной строки, поэтому чистим их до
+       того же набора символов. Иначе чужой параметр в ссылке ломал бы
+       оплату снова, теперь уже нашими руками. */
+    var BUY_LINK = 'https://buy.stripe.com/eVq8wOfVlbCs11t26Easg0d';
+
+    function refSafe(value, fallback) {
+      var clean = String(value || '').replace(/[^A-Za-z0-9_-]/g, '');
+      return clean ? clean.slice(0, 60) : fallback;
+    }
+
+    function buyUrl() {
+      return BUY_LINK + '?client_reference_id='
+           + refSafe(CAMPAIGN_PARAM, 'site') + '-' + refSafe(bucketedSource(), 'direct');
     }
 
     // Ссылки собираются скриптом, чтобы не потерять метки. Если скрипт
     // не доживёт до этого места, в разметке остаётся адрес без них.
     try {
-      var keep = document.getElementById('keep-line');
-      var keepClosed = document.getElementById('closed-keep-line');
       var site = document.getElementById('site-link');
-      if (keep) keep.href = flagshipUrl();
-      if (keepClosed) keepClosed.href = flagshipUrl();
-      if (site) site.href = flagshipUrl().replace('#pamyat-tela', '');
+      var buy = document.getElementById('buy-btn');
+      if (site) site.href = siteUrl();
+      if (buy) buy.href = buyUrl();
     } catch (e) {}
 
     // ── ДАТЫ ОКНА ────────────────────────────────────────────────────────
@@ -716,10 +817,21 @@
     // ── ПЛЕЕР ────────────────────────────────────────────────────────────
     var audio = document.getElementById('audio-pamyat');
     var isPlaying = false;
-    var stage = 0;               // 0 прогрев, 1 практика
-    var trackUrl = null;
-    var inviteShown = false;
     var wf = document.getElementById('waveform');
+
+    /* Двадцатая минута практики. Это измерение, а не интерфейс: блок
+       на экране появляется только в конце, а событие отсюда отвечает
+       на вопрос, сколько человек дошло до середины. Без него «послушал
+       пять минут» и «почти дослушал» в базе выглядят одинаково.
+
+       Имя переиспользовано из белого списка. В demo.html тем же именем
+       помечена третья минута, смысл там другой, и различать их надо
+       по surface: здесь всегда pamyat.
+
+       Замок держит обещание «один раз за сессию»: timeupdate приходит
+       несколько раз в секунду, а после паузы приходит снова. */
+    var LEAD_AT = 1200;
+    var leadFired = false;
 
     /* Число полосок считаем от ширины экрана, а не берём фиксированным.
        Каждая занимает три пикселя плюс три на промежуток, и на 320px
@@ -731,9 +843,6 @@
       var availWidth = Math.min(480, window.innerWidth || 375) - 56;
       BARS = Math.max(24, Math.min(56, Math.floor((availWidth + 3) / 6)));
     } catch (e) {}
-
-    // Двадцатая минута практики: здесь блок подбора тихо проявляется.
-    var INVITE_AT = 1200;
 
     try {
       for (var b = 0; b < BARS; b++) {
@@ -767,15 +876,6 @@
       if (isNaN(s)) return '0:00';
       var m = Math.floor(s / 60), sec = Math.floor(s % 60);
       return m + ':' + (sec < 10 ? '0' : '') + sec;
-    }
-
-    function resetWave() {
-      var bars = wf.querySelectorAll('.wave-bar');
-      for (var i = 0; i < bars.length; i++) {
-        bars[i].className = 'wave-bar';
-      }
-      document.getElementById('progress-fill').style.width = '0%';
-      document.getElementById('time-cur').textContent = '0:00';
     }
 
     on('btn-play', 'click', function() {
@@ -817,70 +917,133 @@
           + (i === idx ? ' active' : '');
       }
 
-      /* Двадцатая минута считается по самой практике, а не от нажатия
-         play: прогрев идёт перед ней отдельной дорожкой. Событие lead
-         уже есть в белом списке track-demo.js, заводить новое ради
-         той же по смыслу глубины не стали. */
-      if (stage === 1 && !inviteShown && audio.currentTime >= INVITE_AT) {
-        showPodborInvite();
+      if (!leadFired && audio.currentTime >= LEAD_AT) {
+        leadFired = true;
         trackDemo('lead');
       }
     });
 
-    /* Переход прогрева в практику без паузы: адрес меняется на том же
-       элементе, поэтому разрешение, полученное по нажатию человека,
-       сохраняется и звук не обрывается. */
-    function startTrack() {
-      stage = 1;
-      document.getElementById('stage-note').textContent = 'Память тела, двадцать семь минут';
-      resetWave();
-      audio.src = trackUrl;
-      audio.load();
-      audio.play().catch(function() { setPlaying(false); });
-    }
-
     on(audio, 'ended', function() {
-      if (stage === 0) { startTrack(); return; }
-
       setPlaying(false);
       trackDemo('demo_complete');
-      showPodborInvite();
-
-      var inv = document.getElementById('podbor-invite');
-      var txt = document.getElementById('podbor-invite-text');
-      if (inv && inv.className.indexOf('is-primary') === -1) {
-        inv.className = inv.className + ' is-primary';
-      }
-      if (txt) {
-        txt.textContent = 'Если отозвалось, следующий вопрос: с чего начать. '
-                        + 'Девять вопросов, минуты три, одна рекомендация.';
-      }
+      showOffer('ended');
     });
 
-    /* Прогрев не обязателен. Если его файла в бакете не окажется,
-       ведём сразу к практике, а не оставляем человека перед молчащей
-       кнопкой. Ошибка на самой практике это уже отказ страницы. */
     on(audio, 'error', function() {
-      if (stage === 0 && trackUrl) { startTrack(); return; }
       setPlaying(false);
       showState('state-error');
     });
 
-    function showPodborInvite() {
-      if (inviteShown) return;
-      inviteShown = true;
-      var inv = document.getElementById('podbor-invite');
-      if (inv) inv.className = inv.className + ' visible';
+    // ── ЭКРАН ПОСЛЕ ПРАКТИКИ ─────────────────────────────────────────────
+    /* Два состояния, один блок. Разница только в первой строке и в том,
+       показывать ли подбор: после практики он мешает, на закрытом экране
+       работает. */
+    var LEAD = {
+      ended:  'Спасибо, что были со мной эти полчаса.',
+      closed: 'Практику можно оставить себе.'
+    };
+
+    var offerShown = false;
+
+    function showOffer(mode) {
+      if (offerShown) return;
+      offerShown = true;
+
+      var offer = document.getElementById('offer');
+      var lead = document.getElementById('offer-lead');
+      if (!offer) return;
+
+      if (lead) lead.textContent = LEAD[mode] || LEAD.closed;
+
+      var cls = 'offer visible';
+      if (mode === 'closed') cls += ' with-podbor';
+      offer.className = cls;
     }
 
-    on('podbor-invite-btn', 'click', function() {
+    on('buy-btn', 'click', function() {
+      // Событие уходит с keepalive, поэтому переход на оплату его
+      // не обрывает. Ссылку не перехватываем: браузер уйдёт сам.
+      trackDemo('buy_click');
+    });
+
+    on('podbor-line', 'click', function() {
       trackDemo('podbor_click');
       window.location.href = podborUrl();
     });
 
-    on('closed-podbor-btn', 'click', function() {
-      trackDemo('podbor_click');
-      window.location.href = podborUrl();
+    // ── ПОЧТА ────────────────────────────────────────────────────────────
+    /* Отправка без перезагрузки. Введённый адрес при отказе остаётся
+       в поле: заставлять человека набирать его заново из-за сети,
+       которая моргнула, нельзя.
+
+       Второй щелчок по кнопке во время отправки не создаёт второго
+       запроса: замок снимается только ответом. */
+    var mailSending = false;
+
+    function mailSay(text) {
+      var el = document.getElementById('mail-say');
+      if (el) el.textContent = text;
+    }
+
+    function mailDone() {
+      var offer = document.getElementById('offer');
+      if (offer && offer.className.indexOf('mail-sent') === -1) {
+        offer.className = offer.className + ' mail-sent';
+      }
+      mailSay('Спасибо. Напишу, как только практика будет готова.');
+    }
+
+    function mailSend(email, hp) {
+      var btn = document.getElementById('mail-btn');
+
+      mailSending = true;
+      if (btn) btn.setAttribute('disabled', 'disabled');
+      mailSay('');
+
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', '/.netlify/functions/pamyat-subscribe', true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+
+      function release() {
+        mailSending = false;
+        if (btn) btn.removeAttribute('disabled');
+      }
+
+      xhr.onload = function() {
+        release();
+        if (xhr.status === 200) { mailDone(); return; }
+        if (xhr.status === 400) { mailSay('Кажется, в адресе опечатка. Проверьте, пожалуйста.'); return; }
+        mailSay('Не получилось отправить. Попробуйте ещё раз.');
+      };
+
+      xhr.onerror = function() {
+        release();
+        mailSay('Не получилось отправить. Попробуйте ещё раз.');
+      };
+
+      xhr.send(JSON.stringify({
+        email: email,
+        sid: sessionId,
+        source: bucketedSource(),
+        campaign: CAMPAIGN_PARAM,
+        hp: hp
+      }));
+    }
+
+    on('mail-form', 'submit', function(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      if (mailSending) return;
+
+      var input = document.getElementById('mail-input');
+      var hp = document.getElementById('mail-hp');
+      var email = input ? input.value : '';
+
+      if (!email || email.indexOf('@') === -1) {
+        mailSay('Кажется, в адресе опечатка. Проверьте, пожалуйста.');
+        return;
+      }
+
+      mailSend(email, hp ? hp.value : '');
     });
 
     // ── ДОСТУП ───────────────────────────────────────────────────────────
@@ -929,16 +1092,16 @@
       if (el) {
         el.innerHTML = (now < startsAt)
           ? 'Практика откроется <strong>' + genevaLabel(data.startsAt) + '</strong>. Трое суток, целиком и бесплатно.'
-          : 'Окно закрылось <strong>' + genevaLabel(data.endsAt) + '</strong>. Практику можно оставить себе.';
+          : 'Открытое прослушивание закончилось <strong>' + genevaLabel(data.endsAt) + '</strong>.';
       }
       showState('state-closed');
+      showOffer('closed');
     }
 
     function applyOpen(data) {
-      if (!data.warmupUrl || !data.trackUrl) { showState('state-error'); return; }
+      if (!data.trackUrl) { showState('state-error'); return; }
 
-      trackUrl = data.trackUrl;
-      audio.src = data.warmupUrl;
+      audio.src = data.trackUrl;
 
       var note = document.getElementById('window-note');
       if (note && data.endsAt) {
