@@ -124,6 +124,16 @@ exports.handler = async (event) => {
 
     const campaign = safeCampaign(payload.campaign);
 
+    // Без сегмента писать некуда: Resend отбил бы создание контакта
+    // с пустым списком, а в журнале осталась бы его ошибка вместо
+    // нашей причины. Проверяем до сети, чтобы причина читалась
+    // с первой строки.
+    const segmentId = process.env.RESEND_SEGMENT_PAMYAT;
+    if (!segmentId) {
+        console.error('pamyat-subscribe: RESEND_SEGMENT_PAMYAT не задан, подписка невозможна');
+        return respond(500, { error: 'subscribe_failed' });
+    }
+
     const existing = await findContact(email);
 
     // Не смогли спросить: молчим и ничего не трогаем.
@@ -139,13 +149,13 @@ exports.handler = async (event) => {
 
     let result;
     if (existing.found) {
-        result = await addToSegment(email, process.env.RESEND_SEGMENT_PAMYAT);
+        result = await addToSegment(email, segmentId);
     } else {
         const properties = { signup_at: new Date().toISOString() };
         if (VALID_SOURCES.includes(payload.source)) properties.source = payload.source;
         if (campaign) properties.campaign = campaign;
 
-        result = await createContact(email, process.env.RESEND_SEGMENT_PAMYAT, properties);
+        result = await createContact(email, segmentId, properties);
     }
 
     if (result.failed) {

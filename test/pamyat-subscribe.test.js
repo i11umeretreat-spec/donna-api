@@ -252,6 +252,17 @@ test('сбой Resend не выносит наружу текст ошибки',
     assert.ok(res.body.indexOf('unhappy') === -1, 'текст ошибки не наружу: ' + res.body);
 });
 
+test('без сегмента в окружении не ходим в сеть вовсе', async () => {
+    const app = loadHandler('pamyat-subscribe.js', {
+        env: Object.assign({}, ENV, { RESEND_SEGMENT_PAMYAT: undefined }),
+        fetch: resendStub(),
+    });
+
+    const res = await app.handler(request(GOOD));
+    assert.strictEqual(res.statusCode, 500);
+    assert.strictEqual(app.fetched.length, 0, 'причина видна до первого запроса');
+});
+
 test('кривое тело запроса это 400, а не падение', async () => {
     const app = load();
     const res = await app.handler({ httpMethod: 'POST', headers: {}, body: '{не json' });
