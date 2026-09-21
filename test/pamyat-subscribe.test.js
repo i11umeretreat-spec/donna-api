@@ -40,6 +40,9 @@ function resendStub(state) {
         if (call.method === 'POST' && state.failWrites) {
             return { status: 500, body: { message: 'resend is unhappy about segment seg_pamyat_stub' } };
         }
+        if (call.method === 'POST' && state.failSegment && call.url.indexOf('/segments/') > -1) {
+            return { status: 422, body: { message: 'no such segment seg_pamyat_stub' } };
+        }
         if (call.method === 'GET' && state.failLookup) {
             return { status: 500, body: { message: 'resend is down' } };
         }
@@ -109,26 +112,51 @@ test('заполненная ловушка: вежливый успех и ни
 
 // ── 3. Новый адрес ─────────────────────────────────────────────────
 
-test('новый адрес: контакт создан в сегменте подписки', async () => {
+test('новый адрес: контакт заведён и положен в сегмент', async () => {
     const app = load();
     const res = await app.handler(request(GOOD));
 
     assert.strictEqual(res.statusCode, 200);
 
-    const created = writes(app);
-    assert.strictEqual(created.length, 1, 'ровно один изменяющий вызов');
-    assert.strictEqual(created[0].method, 'POST');
-    assert.ok(created[0].url.indexOf('/contacts') > -1, 'создаём контакт: ' + created[0].url);
-    assert.ok(JSON.stringify(created[0].body).indexOf('seg_pamyat_stub') > -1,
-        'сегмент подписки назван: ' + JSON.stringify(created[0].body));
-    assert.strictEqual(created[0].body.unsubscribed, false);
+    const w = writes(app);
+    assert.strictEqual(w.length, 2, 'создание и добавление, без лишнего: ' + JSON.stringify(w.map(function (c) { return c.url; })));
 
-    const props = created[0].body.properties || {};
+    assert.ok(w[0].url.indexOf('/contacts') > -1 && w[0].url.indexOf('/segments/') === -1,
+        'сначала заводим контакт: ' + w[0].url);
+    assert.strictEqual(w[0].body.unsubscribed, false);
+
+    const props = w[0].body.properties || {};
     assert.strictEqual(props.source, 'organic');
     assert.strictEqual(props.campaign, 'post_pamyat');
     assert.ok(props.signup_at, 'дата подписки записана');
 
-    assert.ok((created[0].headers.Authorization || '').indexOf('re_stub_key') > -1, 'ключ уходит заголовком');
+    assert.ok((w[0].headers.Authorization || '').indexOf('re_stub_key') > -1, 'ключ уходит заголовком');
+});
+
+test('после создания контакта добавление в сегмент идёт ровно один раз', async () => {
+    // 21.09 живьём: создание принимает поле с сегментом и молча его
+    // не применяет. Контакт был, свойства были, списков ноль. Кладёт
+    // только отдельный вызов, и он должен случиться один раз.
+    const app = load();
+    await app.handler(request(GOOD));
+
+    const toSegment = writes(app).filter(function (c) { return c.url.indexOf('/segments/') > -1; });
+    assert.strictEqual(toSegment.length, 1, 'вызов добавления один: ' + JSON.stringify(toSegment));
+    assert.ok(toSegment[0].url.indexOf('seg_pamyat_stub') > -1, 'адресован нужному сегменту: ' + toSegment[0].url);
+    assert.strictEqual(toSegment[0].body.email, 'olga@example.com');
+});
+
+test('отказ добавления в сегмент это не ok', async () => {
+    // Контакт заведён, но в списке его нет. Отвечать успехом тут
+    // нельзя: человек будет думать, что подписан, а письма не придут.
+    const app = load({ state: { failSegment: true } });
+    const res = await app.handler(request(GOOD));
+
+    assert.strictEqual(res.statusCode, 500);
+    assert.ok(res.body.indexOf('seg_pamyat_stub') === -1, 'идентификатор сегмента не наружу: ' + res.body);
+
+    const inserts = app.db.calls.filter(function (c) { return c.op === 'insert'; });
+    assert.strictEqual(inserts.length, 0, 'несостоявшуюся подписку в статистику не пишем');
 });
 
 test('существующий подписанный контакт добавляется в сегмент', async () => {
@@ -137,7 +165,7 @@ test('существующий подписанный контакт добав�
 
     assert.strictEqual(res.statusCode, 200);
     const w = writes(app);
-    assert.strictEqual(w.length, 1);
+    assert.strictEqual(w.length, 1, 'существующий контакт заново не создаётся');
     assert.ok(w[0].url.indexOf('seg_pamyat_stub') > -1, 'вызов адресован сегменту: ' + w[0].url);
 });
 
