@@ -147,19 +147,25 @@ exports.handler = async (event) => {
         return ok();
     }
 
-    let result;
-    if (existing.found) {
-        result = await addToSegment(email, segmentId);
-    } else {
+    // Нет контакта, заводим. Дальше путь общий: разницы между «завели
+    // только что» и «был раньше» с этого места нет.
+    if (!existing.found) {
         const properties = { signup_at: new Date().toISOString() };
         if (VALID_SOURCES.includes(payload.source)) properties.source = payload.source;
         if (campaign) properties.campaign = campaign;
 
-        result = await createContact(email, segmentId, properties);
+        const created = await createContact(email, properties);
+        if (created.failed) {
+            // Наружу только код. Ни адреса сегмента, ни текста ошибки.
+            return respond(500, { error: 'subscribe_failed' });
+        }
     }
 
-    if (result.failed) {
-        // Наружу только код. Ни адреса сегмента, ни текста ошибки.
+    // В сегмент кладёт только этот вызов. Создание контакта поле
+    // с сегментом принимает и молча не применяет, проверено живьём
+    // 21.09: контакт есть, свойства есть, списков ноль.
+    const added = await addToSegment(email, segmentId);
+    if (added.failed) {
         return respond(500, { error: 'subscribe_failed' });
     }
 
