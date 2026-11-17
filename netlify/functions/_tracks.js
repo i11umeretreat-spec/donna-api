@@ -21,6 +21,10 @@ const TRACKS = {
     'track-15': { file: 'release/unlock_emotions.mp3',     title: 'Разблокировка целей и эмоций',         type: 'Эмоциональная разблокировка' },
     'track-16': { file: 'release/inner_child.mp3',         title: 'Исцеление внутреннего ребёнка',        type: 'Работа с внутренним ребёнком' },
     'flagship': { file: 'flagship/body_memory.mp3',         title: 'Память тела: код освобождения',        type: '8D нейроакустика',              duration: '26:36' },
+    // «Фонарщик», 17.11: полная практика и пробная версия на три ночи.
+    // Пробную отдаёт только гостевая ветка verify-token и только до expires_at.
+    'son':       { file: 'son/fonarshchik.mp3',             title: 'Фонарщик',                             type: 'Сессия самогипноза на ночь',    duration: '40:58' },
+    'son_trial': { file: 'son/pervoe_pogruzhenie.mp3',      title: 'Фонарщик. Первое погружение',          type: 'Три пробные ночи',              duration: '19:58' },
 };
 
 module.exports = { TRACKS };

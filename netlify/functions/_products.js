@@ -72,6 +72,15 @@ const PRODUCT_DEFINITIONS = [
         product_type: 'flagship',
     },
     {
+        // «Фонарщик», 17.11. Отдельный продукт, в полный альбом не входит:
+        // альбом это шестнадцать треков ступеней и флагман, сон продаётся сам.
+        ids:        [process.env.STRIPE_SON_ID],
+        track_ids:  ['son'],
+        journal:    null,
+        name:       'Фонарщик',
+        product_type: 'son',
+    },
+    {
         ids:        [process.env.STRIPE_CHECKUP_ID],
         track_ids:  [],
         journal:    null,

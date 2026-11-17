@@ -117,6 +117,15 @@ function loadHandler(relPath, opts) {
 
     stub('@supabase/supabase-js', { createClient: function () { return supabase.client; } });
 
+    // Sentry оборачивает обработчик verify-token. В тестах обёртка
+    // прозрачная: init ничего не делает, wrapHandler отдаёт функцию как есть.
+    stub('@sentry/serverless', {
+        AWSLambda: {
+            init: function () {},
+            wrapHandler: function (fn) { return fn; },
+        },
+    });
+
     // Подпись R2. Отдаём предсказуемый адрес того же вида, что и настоящий:
     // тесты смотрят на параметры подписи, а не на криптографию.
     const signed = [];

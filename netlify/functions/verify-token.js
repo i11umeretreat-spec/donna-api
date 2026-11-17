@@ -10,6 +10,7 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { TRACKS } = require('./_tracks');
 const { checkRateLimit } = require('./_rateLimit');
+const { guestAccess } = require('./_trial');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
@@ -58,7 +59,10 @@ async function generateSignedUrl(trackId, type, expiry) {
     return getSignedUrl(r2, command, { expiresIn: expiry });
 }
 
-async function buildTrackList(trackIds) {
+// withDownload: false для гостей пробных ночей. Им отдаётся только поток:
+// ссылка на скачивание жила бы сутки и пережила бы сам пробный срок.
+async function buildTrackList(trackIds, withDownload) {
+    var download = withDownload !== false;
     return Promise.all(
         trackIds
             .filter(function(id) { return TRACKS[id]; })
@@ -66,16 +70,17 @@ async function buildTrackList(trackIds) {
                 var track = TRACKS[id];
                 var results = await Promise.all([
                     generateSignedUrl(id, 'stream', STREAM_EXPIRY),
-                    generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY),
+                    download ? generateSignedUrl(id, 'download', DOWNLOAD_EXPIRY) : Promise.resolve(null),
                 ]);
-                return {
+                var item = {
                     id: id,
                     title: track.title,
                     type: track.type,
                     duration: track.duration || null,
                     streamUrl: results[0],
-                    downloadUrl: results[1],
                 };
+                if (download) item.downloadUrl = results[1];
+                return item;
             })
     );
 }
@@ -151,11 +156,25 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
 
     var guestResult = await supabase
         .from('donna_guests')
-        .select('email, promo_track, created_at')
+        .select('email, promo_track, created_at, expires_at')
         .eq('token', token)
         .maybeSingle();
 
     if (guestResult.data) {
+        // Пробные ночи «Фонарщика» (17.11): срок проверяет сервер, а не плеер.
+        // После срока ни одной подписи, только причина, чтобы плеер показал
+        // экран окончания, а не «ключ неверен».
+        var access = guestAccess(guestResult.data, Date.now());
+        if (!access.ok) {
+            return { statusCode: 403, headers: headers, body: JSON.stringify({ error: 'trial_ended' }) };
+        }
+
+        // Трек из каталога получает подписанную ссылку. Старый лид-магнит
+        // (water_energy) в каталоге не значится и живёт как раньше: пустой
+        // список, плеер играет публичное промо.
+        var promo = guestResult.data.promo_track;
+        var guestTracks = TRACKS[promo] ? await buildTrackList([promo], false) : [];
+
         return {
             statusCode: 200,
             headers: headers,
@@ -163,8 +182,9 @@ exports.handler = Sentry.AWSLambda.wrapHandler(async function(event) {
                 valid: true,
                 type: 'guest',
                 email: guestResult.data.email,
-                tracks: [],
-                promoTrack: guestResult.data.promo_track,
+                tracks: guestTracks,
+                promoTrack: promo,
+                expiresAt: guestResult.data.expires_at || null,
             }),
         };
     }

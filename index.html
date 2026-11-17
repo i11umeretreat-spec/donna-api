@@ -1303,6 +1303,13 @@
             upsellText: 'Открой для себя полную коллекцию нейропрактик или запишись на личный чек-ап к Екатерине для точечной работы с подсознанием.',
             upsellBtn1: 'Полная коллекция',
             upsellBtn2: 'Записаться на чек-ап',
+            sonUpsellLabel: 'Полная практика',
+            sonUpsellTitle: 'Фонарщик',
+            sonUpsellText: 'Сорок минут вместо двадцати, история фонарщика и короткий ритуал на каждую ночь. Доступ навсегда.',
+            sonUpsellBtn: 'Подробнее · 90 €',
+            trialEndedTitle: 'Три ночи закончились',
+            trialEndedText: 'Надеюсь, они были тихими. Полная практика «Фонарщик» открывается навсегда: сорок минут, история фонарщика и ритуал на каждую ночь.',
+            trialEndedBtn: 'Полная практика · 90 €',
             // Памятка от Кати. Изменено: сквозная нумерация (в присланном
             // тексте пропущен пункт 3, сохранена только последовательность)
             // и «вы» приведено к «Вы» по CONT-02.
@@ -1366,6 +1373,8 @@
                 'track-15': { title: 'Разблокировка целей и эмоций', type: 'Эмоциональная разблокировка' },
                 'track-16': { title: 'Исцеление внутреннего ребёнка', type: 'Работа с внутренним ребёнком' },
                 'flagship': { title: 'Память тела: код освобождения', type: '8D нейроакустика' },
+                'son': { title: 'Фонарщик', type: 'Сессия самогипноза на ночь' },
+                'son_trial': { title: 'Фонарщик. Первое погружение', type: 'Три пробные ночи' },
             },
             flagshipNote: [
                 'Здесь почти всё звучание собрано с нуля, руками.',
@@ -1386,6 +1395,13 @@
             upsellText: 'Explorez la collection complète de neuro-pratiques ou réservez un bilan privé avec Ekaterina pour un travail ciblé avec votre inconscient.',
             upsellBtn1: 'Collection complète',
             upsellBtn2: 'Réserver un bilan',
+            sonUpsellLabel: 'Pratique complète',
+            sonUpsellTitle: 'L\'allumeur de réverbères',
+            sonUpsellText: 'Quarante minutes au lieu de vingt, l\'histoire de l\'allumeur et un court rituel pour chaque nuit. Accès illimité.',
+            sonUpsellBtn: 'En savoir plus · 90 €',
+            trialEndedTitle: 'Les trois nuits sont terminées',
+            trialEndedText: 'J\'espère qu\'elles ont été paisibles. La pratique complète reste accessible pour toujours.',
+            trialEndedBtn: 'Pratique complète · 90 €',
             // Перевода памятки нет: это авторский текст Кати, машинный
             // перевод под её подписью недопустим (CONT-01). Пока null,
             // блок во французской версии просто не рисуется. Когда будет
@@ -1411,6 +1427,8 @@
                 'track-15': { title: 'Déblocage des objectifs et des émotions', type: 'Libération émotionnelle' },
                 'track-16': { title: 'Guérison de l\'enfant intérieur', type: 'Travail avec l\'enfant intérieur' },
                 'flagship': { title: 'La mémoire du corps : le code de la libération', type: 'Neuroacoustique 8D' },
+                'son': { title: 'L\'allumeur de réverbères', type: 'Séance d\'auto-hypnose pour la nuit' },
+                'son_trial': { title: 'L\'allumeur de réverbères : première immersion', type: 'Trois nuits d\'essai' },
             },
             // Французская локаль это отдельный текст, а не перевод русского.
             // Пока null, блок во французской версии просто не рисуется.
@@ -1450,6 +1468,20 @@
         document.getElementById('header-subtitle').textContent = t('subtitle');
         document.documentElement.lang = lang;
         if (lastRenderArgs) renderTracks.apply(null, lastRenderArgs);
+    }
+
+    // Страница «Фонарщика» в Тильде. Тот же адрес в netlify/functions/_trialEmails.js.
+    var SON_PAGE_URL = 'https://ekaterina-donnat.com/fonarshchik';
+
+    // Три пробные ночи закончились: сервер ответил trial_ended. Это не
+    // «ключ неверен», человек ничего не перепутал, поэтому свой экран.
+    function renderTrialEnded() {
+        var container = document.getElementById('app-content');
+        container.innerHTML = '<div class="access-gate">' +
+            '<div class="access-gate-title">' + t('trialEndedTitle') + '</div>' +
+            '<div class="access-gate-text">' + t('trialEndedText') + '</div>' +
+            '<a href="' + SON_PAGE_URL + '?utm_source=referral&amp;from=son_player" class="access-gate-btn">' + t('trialEndedBtn') + '</a>' +
+        '</div>';
     }
 
     var DEMO_TRACK = {
@@ -1509,6 +1541,10 @@
             })
             .then(function(result) {
                 if (!result.ok || !result.data.valid) {
+                    if (result.data && result.data.error === 'trial_ended') {
+                        renderTrialEnded();
+                        return;
+                    }
                     container.innerHTML = '<div class="system-message">' + t('errorToken') + '</div>';
                     return;
                 }
@@ -1524,6 +1560,13 @@
 
                     if (!result.data.tracks || result.data.tracks.length === 0) {
                         renderTracks([DEMO_TRACK], false, true);
+                        return;
+                    }
+
+                    // Гость пробных ночей: только поток, без скачивания, и вместо
+                    // общего предложения ведём на полную практику.
+                    if (result.data.type === 'guest') {
+                        renderTracks(result.data.tracks, false, 'son');
                         return;
                     }
 
@@ -1622,7 +1665,15 @@
                 '</div>';
         }
 
-        if (showUpsell) {
+        if (showUpsell === 'son') {
+            html += '' +
+                '<div class="upsell-card">' +
+                    '<div class="upsell-label">' + t('sonUpsellLabel') + '</div>' +
+                    '<div class="upsell-title">' + t('sonUpsellTitle') + '</div>' +
+                    '<div class="upsell-text">' + t('sonUpsellText') + '</div>' +
+                    '<a href="' + SON_PAGE_URL + '?utm_source=referral&amp;from=son_player" class="btn-primary" target="_blank">' + t('sonUpsellBtn') + '</a>' +
+                '</div>';
+        } else if (showUpsell) {
             html += '' +
                 '<div class="upsell-card">' +
                     '<div class="upsell-label">' + t('upsellLabel') + '</div>' +

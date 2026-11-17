@@ -27,7 +27,15 @@ const VALID_CAMPAIGNS = [
     'email_pamyat',
     'post_pamyat',
     // Пост про ступени.
-    'post_stupeni'
+    'post_stupeni',
+    // «Фонарщик», 17.11: шапка и сторис, реклама, письма пробных ночей, плеер.
+    'ig_story',
+    'ig_ad_son',
+    'son_mail_welcome',
+    'son_mail_morning',
+    'son_mail_last',
+    'son_mail_used',
+    'son_player'
 ];
 
 // Неизвестное значение обнуляем, а не подменяем дефолтом: лучше пустое
