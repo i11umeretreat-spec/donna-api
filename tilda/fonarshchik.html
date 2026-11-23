@@ -1,0 +1,779 @@
+<!--
+  ФОНАРЩИК · ekaterina-donnat.com/fonarshchik · Тильда, pageid 409389009, блок T123
+  Исходник: donna-api/tilda/fonarshchik.html. Правится только там, в Тильде
+  лежит копия: вставить целиком в T123 и опубликовать страницу.
+  Шрифты: @import первой строкой в style, Fraunces 200, 300, 300 italic; Outfit 300, 400.
+  Обложка с app.ekaterina-donnat.com/assets (immutable на год: замена только
+  новым именем), демо с audio.ekaterina-donnat.com/promo.
+  События в наш дашборд: son_pageview, son_preview_play, son_cta_click.
+  Пиксель Meta подключает Тильда из настроек сайта; кнопка оплаты шлёт
+  в него InitiateCheckout.
+  Регистр: «ты», как в самой записи. Все цитаты сверены с расшифровкой, слова Кати не тронуты.
+-->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,200;0,300;1,300&family=Outfit:wght@300;400&display=swap');
+.donna-son { background: #151933; }
+.donna-son-hero {
+  background: radial-gradient(ellipse at 50% 0%, rgba(212, 175, 55, 0.10), transparent 60%), #151933;
+  padding: 56px 20px 64px;
+}
+.donna-son-sec {
+  background: #151933;
+  border-top: 1px solid rgba(212, 175, 55, 0.08);
+  padding: 56px 20px;
+}
+.donna-son-sec-deep { background: #0f1123; }
+.donna-son-inner { max-width: 720px; margin: 0 auto; box-sizing: border-box; }
+
+.donna-son-eyebrow {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #d4af37;
+  margin: 0 0 16px;
+}
+.donna-son-h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 200;
+  font-size: clamp(32px, 9vw, 48px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: rgba(248, 250, 252, 0.95);
+  margin: 0 0 10px;
+}
+.donna-son-meta {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: rgba(248, 250, 252, 0.6);
+  margin: 0 0 28px;
+}
+.donna-son-cover {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: #0f1123;
+  margin: 0 0 32px;
+}
+.donna-son-cover-img { display: block; width: 100%; height: auto; }
+
+.donna-son-hook { margin: 0 0 22px; padding: 0; border: 0; }
+.donna-son-hook-text {
+  display: block;
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-style: italic;
+  font-size: 22px;
+  line-height: 1.4;
+  color: rgba(248, 250, 252, 0.95);
+}
+.donna-son-time-label {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(248, 250, 252, 0.4);
+  margin-top: 8px;
+}
+.donna-son-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.75;
+  color: rgba(248, 250, 252, 0.85);
+  margin: 0 0 18px;
+}
+.donna-son-text-muted { color: rgba(248, 250, 252, 0.6); font-size: 14px; line-height: 1.6; }
+
+/* Демо */
+.donna-son-demo {
+  display: flex;
+  align-items: center;
+  margin: 28px 0 32px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(13, 15, 35, 0.8);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  box-sizing: border-box;
+}
+.donna-son-demo-btn {
+  position: relative;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: rgba(212, 175, 55, 0.08);
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.donna-son-demo-btn:hover { background: rgba(212, 175, 55, 0.16); border-color: #d4af37; }
+.donna-son-demo-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: 3px; }
+.donna-son-play {
+  position: absolute;
+  left: 21px;
+  top: 18px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 13px solid #d4af37;
+}
+.donna-son-pause { position: absolute; left: 19px; top: 18px; width: 14px; height: 16px; display: none; }
+.donna-son-pause span { position: absolute; top: 0; width: 4px; height: 16px; background: #d4af37; }
+.donna-son-pause span:first-child { left: 0; }
+.donna-son-pause span:last-child { left: 10px; }
+.donna-son-demo.is-playing .donna-son-play { display: none; }
+.donna-son-demo.is-playing .donna-son-pause { display: block; }
+.donna-son-demo-body { flex: 1; min-width: 0; margin-left: 16px; }
+.donna-son-demo-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: rgba(248, 250, 252, 0.85);
+}
+.donna-son-demo-sub {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(248, 250, 252, 0.4);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.donna-son-demo-bar {
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(248, 250, 252, 0.1);
+  margin-top: 12px;
+  overflow: hidden;
+}
+.donna-son-demo-fill {
+  height: 2px;
+  background: #d4af37;
+  -webkit-transform-origin: left center;
+  transform-origin: left center;
+  -webkit-transform: scaleX(0);
+  transform: scaleX(0);
+}
+.donna-son-demo.is-started .donna-son-demo-fill {
+  -webkit-animation: donna-son-fill 57s linear forwards;
+  animation: donna-son-fill 57s linear forwards;
+  -webkit-animation-play-state: paused;
+  animation-play-state: paused;
+}
+.donna-son-demo.is-started.is-playing .donna-son-demo-fill {
+  -webkit-animation-play-state: running;
+  animation-play-state: running;
+}
+@-webkit-keyframes donna-son-fill { from { -webkit-transform: scaleX(0); } to { -webkit-transform: scaleX(1); } }
+@keyframes donna-son-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Покупка. Тильда красит все <a> через #allrecords a: закрыты все состояния */
+.donna-son-purchase { display: flex; align-items: center; justify-content: space-between; }
+.donna-son-price {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 28px;
+  color: #d4af37;
+  font-variant-numeric: tabular-nums;
+}
+.donna-son-cta, .donna-son-cta:link, .donna-son-cta:visited, .donna-son-cta:hover, .donna-son-cta:active,
+.donna-son-next, .donna-son-next:link, .donna-son-next:visited, .donna-son-next:hover, .donna-son-next:active {
+  text-decoration: none !important;
+}
+.donna-son-cta, .donna-son-cta:link, .donna-son-cta:visited {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  max-width: 280px;
+  min-height: 52px;
+  margin-left: 20px;
+  padding: 0 24px;
+  border-radius: 12px;
+  background: #d4af37;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: opacity 0.3s ease, transform 0.1s ease;
+}
+.donna-son-cta:hover { opacity: 0.9; }
+.donna-son-cta:active { transform: scale(0.98); }
+.donna-son-cta:focus-visible { outline: 2px solid #d4af37; outline-offset: 3px; }
+.donna-son-cta-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #0f1123;
+}
+.donna-son-note {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.4);
+  margin: 14px 0 0;
+  text-align: center;
+}
+.donna-son-nolink {
+  display: none;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #d4af37;
+  margin: 10px 0 0;
+  text-align: center;
+}
+.donna-son-buy.is-nolink .donna-son-nolink { display: block; }
+
+/* Заголовки секций */
+.donna-son-h2 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: rgba(248, 250, 252, 0.95);
+  margin: 0 0 24px;
+  text-wrap: balance;
+}
+.donna-son-quote { margin: 0 0 26px; padding: 0 0 0 16px; border: 0; border-left: 1px solid rgba(212, 175, 55, 0.4); }
+.donna-son-quote-text {
+  display: block;
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-style: italic;
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.95);
+}
+
+/* Ход практики по таймкодам */
+.donna-son-steps { margin: 8px 0 0; }
+.donna-son-step { display: flex; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.donna-son-step:first-child { border-top: 0; padding-top: 0; }
+.donna-son-step-time {
+  flex: none;
+  width: 64px;
+  padding-top: 3px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: #d4af37;
+  font-variant-numeric: tabular-nums;
+}
+.donna-son-step-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.85);
+}
+
+/* Автор */
+.donna-son-author { display: flex; align-items: center; margin: 0 0 24px; }
+.donna-son-portrait {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.5);
+  background: radial-gradient(circle at 50% 35%, rgba(212, 175, 55, 0.18), rgba(13, 15, 35, 0.9) 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.donna-son-portrait-mono {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 22px;
+  color: #d4af37;
+}
+.donna-son-author-body { margin-left: 18px; }
+.donna-son-author-name {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 18px;
+  color: rgba(248, 250, 252, 0.95);
+}
+.donna-son-author-role {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  color: rgba(248, 250, 252, 0.6);
+  margin-top: 4px;
+}
+
+/* Вопросы */
+.donna-son-faq { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+.donna-son-faq-item { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+.donna-son-faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 52px;
+  padding: 16px 4px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.donna-son-faq-q:focus-visible { outline: 2px solid #d4af37; outline-offset: -2px; }
+.donna-son-faq-q-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  color: rgba(248, 250, 252, 0.85);
+  padding-right: 16px;
+}
+.donna-son-faq-icon {
+  flex: none;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 20px;
+  color: #d4af37;
+  transition: transform 0.3s ease;
+}
+.donna-son-faq-item.open .donna-son-faq-icon { -webkit-transform: rotate(45deg); transform: rotate(45deg); }
+.donna-son-faq-a { padding: 0 4px 18px; }
+
+/* Финал и следующая практика */
+.donna-son-final { text-align: center; }
+.donna-son-final .donna-son-purchase { justify-content: center; }
+.donna-son-next, .donna-son-next:link, .donna-son-next:visited {
+  display: block;
+  margin-top: 40px;
+  padding: 28px 24px;
+  border-radius: 20px;
+  background: rgba(23, 27, 54, 0.55);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  text-align: left;
+  box-sizing: border-box;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.donna-son-next:hover {
+  -webkit-transform: translateY(-6px);
+  transform: translateY(-6px);
+  border-color: rgba(212, 175, 55, 0.35);
+  background: rgba(27, 31, 62, 0.85);
+  box-shadow: 0 20px 40px -22px rgba(212, 175, 55, 0.35);
+}
+.donna-son-next:focus-visible { outline: 2px solid #d4af37; outline-offset: 3px; }
+@media (hover: none) {
+  .donna-son-next:hover { -webkit-transform: none; transform: none; box-shadow: none; }
+}
+.donna-son-next-title {
+  display: block;
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 22px;
+  color: rgba(248, 250, 252, 0.95);
+  margin: 0 0 8px;
+}
+.donna-son-next-text {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.6);
+}
+.donna-son-next-more {
+  display: block;
+  margin-top: 14px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+
+@media (min-width: 720px) {
+  .donna-son-hero { padding: 80px 24px 88px; }
+  .donna-son-sec { padding: 72px 24px; }
+  .donna-son-h2 { font-size: 34px; }
+}
+@media (max-width: 560px) {
+  .donna-son-purchase { flex-direction: column; align-items: stretch; }
+  .donna-son-price { text-align: center; }
+  .donna-son-cta, .donna-son-cta:link, .donna-son-cta:visited { max-width: none; margin-left: 0; margin-top: 14px; }
+  .donna-son-hook-text { font-size: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .donna-son-cta, .donna-son-next, .donna-son-faq-icon, .donna-son-demo-btn { transition: none; }
+  .donna-son-demo.is-started .donna-son-demo-fill { -webkit-animation: none; animation: none; -webkit-transform: none; transform: none; }
+}
+</style>
+
+<div class="donna-son" id="fonarshchik">
+
+  <section class="donna-son-hero">
+    <div class="donna-son-inner">
+      <div class="donna-son-eyebrow">Практика на ночь</div>
+      <h1 class="donna-son-h1">Фонарщик</h1>
+      <p class="donna-son-meta">Сессия самогипноза · 40 минут · объёмный звук</p>
+
+      <div class="donna-son-cover">
+        <img class="donna-son-cover-img" src="https://app.ekaterina-donnat.com/assets/son_cover.jpg" width="941" height="575"
+             alt="Женщина спит в мягком тёплом свете, над ней светится звуковая волна">
+      </div>
+
+      <blockquote class="donna-son-hook">
+        <span class="donna-son-hook-text">«Твоё тело уже легло, а день ещё нет.»</span>
+        <span class="donna-son-time-label">Из записи, 0:17</span>
+      </blockquote>
+      <p class="donna-son-text">Это сорок минут моего голоса и тёплого звука для вечера, когда свет уже выключен, а мысли всё ещё работают. Ничего не нужно делать правильно: уснуть на десятой минуте или дослушать до конца одинаково хорошо.</p>
+
+      <div class="donna-son-demo" id="donna-son-demo">
+        <button type="button" class="donna-son-demo-btn" id="donna-son-demo-btn" aria-label="Послушать начало практики">
+          <span class="donna-son-play" aria-hidden="true"></span>
+          <span class="donna-son-pause" aria-hidden="true"><span></span><span></span></span>
+        </button>
+        <div class="donna-son-demo-body">
+          <div class="donna-son-demo-title">Послушать начало</div>
+          <div class="donna-son-demo-sub" id="donna-son-demo-time">0:57 · лучше в наушниках</div>
+          <div class="donna-son-demo-bar"><div class="donna-son-demo-fill"></div></div>
+        </div>
+        <audio id="donna-son-demo-audio" preload="none" src="https://audio.ekaterina-donnat.com/promo/son_demo.mp3"></audio>
+      </div>
+
+      <div class="donna-son-buy">
+        <div class="donna-son-purchase">
+          <div class="donna-son-price">90 €</div>
+          <a class="donna-son-cta" href="#oplata" data-buy>
+            <span class="donna-son-cta-text">Получить практику</span>
+          </a>
+        </div>
+        <p class="donna-son-note">Бессрочный доступ. Ссылка на практику придёт на почту сразу после оплаты.</p>
+        <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="donna-son-sec">
+    <div class="donna-son-inner">
+      <div class="donna-son-eyebrow">Когда голова не выключается</div>
+      <h2 class="donna-son-h2">Свет выключен, а рабочий день всё идёт</h2>
+      <blockquote class="donna-son-quote">
+        <span class="donna-son-quote-text">«И тут в голове включается кто-то бодрый и деловой, и начинает перебирать.»</span>
+        <span class="donna-son-time-label">0:30</span>
+      </blockquote>
+      <p class="donna-son-text">Вчерашний разговор, письмо без ответа, список на завтра. Чем старательнее пытаешься уснуть, тем дальше сон, и это не твоя ошибка.</p>
+      <blockquote class="donna-son-quote">
+        <span class="donna-son-quote-text">«Потому что засыпание - это единственное дело на свете, которое невозможно сделать усилием. Его можно только разрешить.»</span>
+        <span class="donna-son-time-label">1:00</span>
+      </blockquote>
+      <p class="donna-son-text">Вокруг этой мысли и собрана практика. Сорок минут тебе не нужно стараться и проверять, получается ли. Голос и звук берут это на себя.</p>
+    </div>
+  </section>
+
+  <section class="donna-son-sec donna-son-sec-deep">
+    <div class="donna-son-inner">
+      <div class="donna-son-eyebrow">Как проходит практика</div>
+      <h2 class="donna-son-h2">Сорок минут, и дальше тишина</h2>
+      <div class="donna-son-steps">
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">0:00</div>
+          <div class="donna-son-step-text">Я рассказываю, что будет происходить, и снимаю с тебя задачу. Здесь можно ничего не делать.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">4:13</div>
+          <div class="donna-son-step-text">Внимание опускается в ощущения: матрас, вес одеяла, вдох прохладнее, выдох теплее.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">6:48</div>
+          <div class="donna-son-step-text">Мысли становятся машинами на дальнем шоссе. Любой ночной звук за окном теперь только уводит глубже.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">10:28</div>
+          <div class="donna-son-step-text">Внимание проходит по телу, от пальцев до век.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">16:31</div>
+          <div class="donna-son-step-text">Появляется тёплая дорога под уклон.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">21:11</div>
+          <div class="donna-son-step-text">Маленькая площадь и человек, который гасит фонари. Кто он, узнаешь сама, если не уснёшь раньше.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">34:54</div>
+          <div class="donna-son-step-text">Короткий ритуал на каждую ночь. Его можно повторять и без записи.</div>
+        </div>
+        <div class="donna-son-step">
+          <div class="donna-son-step-time">36:30</div>
+          <div class="donna-son-step-text">Финал без пробуждения. Голос становится тише и уходит, музыка затихает сама.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="donna-son-sec">
+    <div class="donna-son-inner">
+      <div class="donna-son-eyebrow">Как это звучит</div>
+      <h2 class="donna-son-h2">Звук, который ходит медленно</h2>
+      <p class="donna-son-text">Голос и музыка плавно обходят голову, примерно один круг за двадцать секунд. Медленно специально, чтобы не укачивало.</p>
+      <p class="donna-son-text">Внизу лежит бинауральный слой: в каждое ухо приходит свой низкий тон, и они почти совпадают, разница меньше одного колебания в секунду.</p>
+      <p class="donna-son-text">Объём и бинаурал слышны только в наушниках. Через динамик телефона останутся голос и музыка, практику можно слушать и так.</p>
+      <p class="donna-son-text donna-son-text-muted">Записано и сведено в студии AudioLaguna.</p>
+    </div>
+  </section>
+
+  <section class="donna-son-sec donna-son-sec-deep">
+    <div class="donna-son-inner">
+      <div class="donna-son-author">
+        <!-- В Тильде заменить на портрет Кати из assets, круг 72px -->
+        <div class="donna-son-portrait" aria-hidden="true"><span class="donna-son-portrait-mono">ЕД</span></div>
+        <div class="donna-son-author-body">
+          <div class="donna-son-author-name">Екатерина Донна</div>
+          <div class="donna-son-author-role">Гипнотерапевт, Женева</div>
+        </div>
+      </div>
+      <blockquote class="donna-son-quote">
+        <span class="donna-son-quote-text">«Мой голос будет с тобой ровно до того момента, пока он нужен.»</span>
+        <span class="donna-son-time-label">38:17</span>
+      </blockquote>
+    </div>
+  </section>
+
+  <section class="donna-son-sec">
+    <div class="donna-son-inner">
+      <div class="donna-son-eyebrow">Вопросы</div>
+      <h2 class="donna-son-h2">Прежде чем лечь</h2>
+      <div class="donna-son-faq">
+        <div class="donna-son-faq-item" data-faq>
+          <button type="button" class="donna-son-faq-q" aria-expanded="false" aria-controls="donna-son-faq-1">
+            <span class="donna-son-faq-q-text">Что, если я усну раньше конца?</span><span class="donna-son-faq-icon" aria-hidden="true">+</span>
+          </button>
+          <div class="donna-son-faq-a" id="donna-son-faq-1" hidden><p class="donna-son-text">Так и задумано. Практика не обижается, если её не дослушали.</p></div>
+        </div>
+        <div class="donna-son-faq-item" data-faq>
+          <button type="button" class="donna-son-faq-q" aria-expanded="false" aria-controls="donna-son-faq-2">
+            <span class="donna-son-faq-q-text">Нужны ли наушники?</span><span class="donna-son-faq-icon" aria-hidden="true">+</span>
+          </button>
+          <div class="donna-son-faq-a" id="donna-son-faq-2" hidden><p class="donna-son-text">Для объёмного звука да. Подойдут любые, в которых удобно лежать. Без них останутся голос и музыка.</p></div>
+        </div>
+        <div class="donna-son-faq-item" data-faq>
+          <button type="button" class="donna-son-faq-q" aria-expanded="false" aria-controls="donna-son-faq-3">
+            <span class="donna-son-faq-q-text">Сколько раз можно слушать?</span><span class="donna-son-faq-icon" aria-hidden="true">+</span>
+          </button>
+          <div class="donna-son-faq-a" id="donna-son-faq-3" hidden><p class="donna-son-text">Сколько захочется. Она рассчитана на то, чтобы включать её вечер за вечером, доступ бессрочный.</p></div>
+        </div>
+        <div class="donna-son-faq-item" data-faq>
+          <button type="button" class="donna-son-faq-q" aria-expanded="false" aria-controls="donna-son-faq-4">
+            <span class="donna-son-faq-q-text">Как я получу практику?</span><span class="donna-son-faq-icon" aria-hidden="true">+</span>
+          </button>
+          <div class="donna-son-faq-a" id="donna-son-faq-4" hidden><p class="donna-son-text">Сразу после оплаты на почту придёт ссылка. Практика открывается в браузере, ставить приложение не нужно.</p></div>
+        </div>
+        <div class="donna-son-faq-item" data-faq>
+          <button type="button" class="donna-son-faq-q" aria-expanded="false" aria-controls="donna-son-faq-5">
+            <span class="donna-son-faq-q-text">Это лечение?</span><span class="donna-son-faq-icon" aria-hidden="true">+</span>
+          </button>
+          <div class="donna-son-faq-a" id="donna-son-faq-5" hidden><p class="donna-son-text">Нет. Это практика расслабления перед сном. Если со сном трудно давно, стоит поговорить с врачом.</p></div>
+        </div>
+        <div class="donna-son-faq-item" data-faq>
+          <button type="button" class="donna-son-faq-q" aria-expanded="false" aria-controls="donna-son-faq-6">
+            <span class="donna-son-faq-q-text">Где её слушать нельзя?</span><span class="donna-son-faq-icon" aria-hidden="true">+</span>
+          </button>
+          <div class="donna-son-faq-a" id="donna-son-faq-6" hidden><p class="donna-son-text">За рулём и везде, где нужно внимание. Только лёжа и в спокойной обстановке.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="donna-son-sec donna-son-sec-deep donna-son-final">
+    <div class="donna-son-inner">
+      <h2 class="donna-son-h2">Фонарщик</h2>
+      <p class="donna-son-text donna-son-text-muted">Сессия самогипноза на ночь · 40 минут</p>
+      <div class="donna-son-buy">
+        <div class="donna-son-purchase">
+          <div class="donna-son-price">90 €</div>
+          <a class="donna-son-cta" href="#oplata" data-buy>
+            <span class="donna-son-cta-text">Получить практику</span>
+          </a>
+        </div>
+        <p class="donna-son-note">Бессрочный доступ. Ссылка придёт на почту сразу после оплаты.</p>
+        <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
+      </div>
+      <a class="donna-son-next" href="https://ekaterina-donnat.com/#pamyat-tela">
+        <span class="donna-son-eyebrow">Если откликнется мой голос</span>
+        <span class="donna-son-next-title">Память тела</span>
+        <span class="donna-son-next-text">Сессия самогипноза в объёмном звуке, около 27 минут, для вечера, когда никто не потревожит. 90 €.</span>
+        <span class="donna-son-next-more">Подробнее</span>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function () {
+  /* ---------- Настройки ---------- */
+  var STRIPE_LINK = 'https://buy.stripe.com/bJe5kCbF59ukbG74eMasg0p';  // «Фонарщик», 90 €, plink_1UcexdCQps4bJWCVZhEVy3sy
+  var TRACK_ENDPOINT = 'https://app.ekaterina-donnat.com/.netlify/functions/track-demo';
+
+  /* ---------- Метки: разбор query вручную, в старых WebView нет URLSearchParams ---------- */
+  function getParam(name) {
+    var q = window.location.search;
+    if (!q || q.length < 2) { return null; }
+    var pairs = q.substring(1).split('&');
+    for (var i = 0; i < pairs.length; i++) {
+      var eq = pairs[i].indexOf('=');
+      var key = eq === -1 ? pairs[i] : pairs[i].substring(0, eq);
+      if (decodeURIComponent(key) !== name) { continue; }
+      return eq === -1 ? '' : decodeURIComponent(pairs[i].substring(eq + 1).replace(/\+/g, ' '));
+    }
+    return null;
+  }
+  /* Инстаграм и фейсбук пишутся как paid, как на главной, в демо и подборе.
+     Незнакомое значение сервер сам сведёт к organic. */
+  var SOURCE_BUCKET_MAP = { instagram: 'paid', facebook: 'paid', fb: 'paid', ig: 'paid' };
+  function bucketedSource() {
+    var utm = getParam('utm_source');
+    if (!utm) { return 'direct'; }
+    return SOURCE_BUCKET_MAP[utm.toLowerCase()] || utm;
+  }
+  function getSessionId() {
+    var sid;
+    try {
+      sid = sessionStorage.getItem('donna_session_id');
+      if (!sid) {
+        sid = 'sid-' + new Date().getTime() + '-' + Math.random().toString(36).slice(2);
+        sessionStorage.setItem('donna_session_id', sid);
+      }
+    } catch (e) {
+      sid = 'sid-' + new Date().getTime() + '-' + Math.random().toString(36).slice(2);
+    }
+    return sid;
+  }
+  function track(eventName) {
+    try {
+      if (!window.fetch) { return; }
+      fetch(TRACK_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        keepalive: true,
+        body: JSON.stringify({
+          event: eventName,
+          source: bucketedSource(),
+          session_id: getSessionId(),
+          surface: 'site',
+          campaign: getParam('from')
+        })
+      })['catch'](function () {});
+    } catch (e) {}
+  }
+  /* Заход на страницу: без него в дашборде видны клики, но не заходы,
+     и конверсию страницы не посчитать. */
+  track('son_pageview');
+
+  function addClass(el, c) { if ((' ' + el.className + ' ').indexOf(' ' + c + ' ') === -1) { el.className += ' ' + c; } }
+  function removeClass(el, c) { el.className = (' ' + el.className + ' ').replace(' ' + c + ' ', ' ').replace(/^\s+|\s+$/g, ''); }
+
+  /* ---------- Кнопки оплаты ---------- */
+  /* Метка едет в client_reference_id и склеена дефисом, как на странице
+     «Памяти тела»: Stripe принимает здесь только [A-Za-z0-9_-], и в августе
+     вертикальная черта ломала покупку. Оба значения из адресной строки,
+     поэтому чистим их до того же набора. */
+  function refSafe(value, fallback) {
+    var clean = String(value || '').replace(/[^A-Za-z0-9_-]/g, '');
+    return clean ? clean.slice(0, 60) : fallback;
+  }
+  var ref = null;
+  (function () {
+    var utm = getParam('utm_source'), from = getParam('from');
+    if (utm || from) { ref = refSafe(from, 'site') + '-' + refSafe(bucketedSource(), 'direct'); }
+  })();
+  var buyLinks = document.querySelectorAll('.donna-son-cta[data-buy]');
+  for (var i = 0; i < buyLinks.length; i++) {
+    (function (link) {
+      if (STRIPE_LINK) {
+        var href = STRIPE_LINK;
+        if (ref) { href += (href.indexOf('?') === -1 ? '?' : '&') + 'client_reference_id=' + encodeURIComponent(ref); }
+        link.setAttribute('href', href);
+      }
+      link.addEventListener('click', function (e) {
+        track('son_cta_click');
+        /* Пиксель Тильда ставит с задержкой, поэтому проверяем, что он уже есть. */
+        try {
+          if (typeof window.fbq === 'function') {
+            window.fbq('track', 'InitiateCheckout', { value: 90, currency: 'EUR', content_name: 'Fonarshchik' });
+          }
+        } catch (err) {}
+        if (!STRIPE_LINK) {
+          e.preventDefault();
+          var box = link.parentNode ? link.parentNode.parentNode : null;
+          if (box) { addClass(box, 'is-nolink'); }
+        }
+      }, false);
+    })(buyLinks[i]);
+  }
+
+  /* ---------- Демо ---------- */
+  var demo = document.getElementById('donna-son-demo');
+  var btn = document.getElementById('donna-son-demo-btn');
+  var audio = document.getElementById('donna-son-demo-audio');
+  var timeEl = document.getElementById('donna-son-demo-time');
+  var DEMO_DUR = 57, lastSec = -1, tracked = false;
+  function fmt(s) { var m = Math.floor(s / 60), r = s % 60; return m + ':' + (r < 10 ? '0' : '') + r; }
+  if (demo && btn && audio) {
+    btn.addEventListener('click', function () {
+      if (demo.className.indexOf('is-playing') !== -1) { audio.pause(); return; }
+      if (demo.className.indexOf('is-started') === -1) { addClass(demo, 'is-started'); }
+      var p = audio.play();
+      if (p && p['catch']) { p['catch'](function () { removeClass(demo, 'is-playing'); }); }
+      if (!tracked) { tracked = true; track('son_preview_play'); }
+    }, false);
+    audio.addEventListener('playing', function () { addClass(demo, 'is-playing'); }, false);
+    audio.addEventListener('pause', function () { removeClass(demo, 'is-playing'); }, false);
+    audio.addEventListener('waiting', function () { removeClass(demo, 'is-playing'); }, false);
+    audio.addEventListener('timeupdate', function () {
+      var s = Math.floor(audio.currentTime || 0);
+      if (s === lastSec) { return; }
+      lastSec = s;
+      timeEl.textContent = fmt(s) + ' / ' + fmt(DEMO_DUR) + ' · лучше в наушниках';
+    }, false);
+    audio.addEventListener('ended', function () {
+      removeClass(demo, 'is-playing');
+      removeClass(demo, 'is-started');
+      lastSec = -1;
+      timeEl.textContent = '0:57 · лучше в наушниках';
+      try { audio.currentTime = 0; } catch (e) {}
+    }, false);
+  }
+
+  /* ---------- Вопросы: один обработчик на все ---------- */
+  var items = document.querySelectorAll('.donna-son-faq-item[data-faq]');
+  for (var k = 0; k < items.length; k++) {
+    (function (item) {
+      var q = item.querySelector('.donna-son-faq-q');
+      var id = q ? q.getAttribute('aria-controls') : null;
+      var a = id ? document.getElementById(id) : null;
+      if (!q || !a) { return; }
+      q.addEventListener('click', function () {
+        var open = q.getAttribute('aria-expanded') === 'true';
+        q.setAttribute('aria-expanded', open ? 'false' : 'true');
+        a.hidden = open;
+        if (open) { removeClass(item, 'open'); } else { addClass(item, 'open'); }
+      }, false);
+    })(items[k]);
+  }
+})();
+</script>
