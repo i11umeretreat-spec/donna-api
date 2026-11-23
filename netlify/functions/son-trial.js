@@ -1,14 +1,14 @@
 // netlify/functions/son-trial.js
 //
-// Запись на три пробные ночи «Первого погружения». Спека:
-// donna_spec_fonarshchik.md, часть Б, 17.11.
+// Запись на пробную ночь «Первого погружения». Спека:
+// donna_spec_fonarshchik.md, часть Б, 17.11; с 23.11 ночь одна.
 //
 // Катя полную практику бесплатно не отдаёт, поэтому за почту человек
-// получает двадцатиминутную версию на три ночи. Продавать практику для
+// получает двадцатиминутную версию на одну ночь. Продавать практику для
 // сна вечером бессмысленно: если она сработала, человек спит. Поэтому
-// разговор о покупке идёт утром, письмом от Кати, и ещё раз на третий
-// вечер. Оба письма ставятся в очередь Resend сразу при записи, своих
-// часов и планировщика у проекта нет.
+// разговор о покупке идёт утром, письмом от Кати. Письмо ставится
+// в очередь Resend сразу при записи, своих часов и планировщика
+// у проекта нет.
 //
 // Три правила файла.
 // Ответ наружу один и тот же для всех правильных запросов: новый адрес,
@@ -132,8 +132,8 @@ exports.handler = async (event) => {
     const existing = existingRes.data;
 
     if (existing) {
-        // Адрес занят старым лид-магнитом: строку не трогаем, пробные
-        // ночи ему не положены (одна строка на адрес, UNIQUE(email)).
+        // Адрес занят старым лид-магнитом: строку не трогаем, пробная
+        // ночь ему не положена (одна строка на адрес, UNIQUE(email)).
         if (existing.promo_track !== TRIAL_TRACK) return ok();
 
         if (guestAccess(existing, now).ok) {
@@ -173,8 +173,7 @@ exports.handler = async (event) => {
     const mayWrite = !contact.failed && !(contact.found && contact.contact.unsubscribed);
 
     if (mayWrite) {
-        await sendMail(email, mails.morning(token), schedule.morningAt);
-        await sendMail(email, mails.lastEvening(token), schedule.lastEveningAt);
+        await sendMail(email, mails.morning(), schedule.morningAt);
 
         const segmentId = process.env.RESEND_SEGMENT_SON;
         if (segmentId) {

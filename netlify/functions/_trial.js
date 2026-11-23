@@ -1,7 +1,8 @@
 // netlify/functions/_trial.js
 //
-// Три пробные ночи «Первого погружения». Спека: donna_spec_fonarshchik.md,
-// часть Б, 17.11.
+// Пробная ночь «Первого погружения». Спека: donna_spec_fonarshchik.md,
+// часть Б, 17.11. С 23.11 ночь одна, а не три: Катя боится, что после
+// трёх бесплатных ночей полную уже не купят.
 //
 // Здесь только арифметика сроков и решение «пускать или нет». Часы
 // и часовой пояс приходят аргументами: иначе проверить границы можно
@@ -12,21 +13,16 @@
 // Date.getTimezoneOffset(): UTC минус местное время, в минутах.
 // Женева зимой даёт -60, Бали -480.
 
-const NIGHTS = 3;
+const NIGHTS = 1;
 
 // Запись до пяти утра считается прошедшей ночью. Человек, который
-// в два часа не может уснуть и записывается, получает эту ночь и две
-// следующие, а не теряет сутки.
+// в два часа не может уснуть и записывается, слушает сейчас, а не ждёт
+// следующего вечера.
 const NIGHT_CUTOFF_HOUR = 5;
 
-// Доступ до десяти утра после третьей ночи: проснулся, дослушал
-// хвост, если надо, и только потом ссылка перестаёт открываться.
+// Доступ до десяти утра после ночи: проснулся, дослушал хвост, если
+// надо, и только потом ссылка перестаёт открываться.
 const EXPIRES_HOUR = 10;
-
-// «Как прошла ночь?» и «Сегодня последняя ночь».
-const MORNING_HOUR = 9;
-const MORNING_MINUTE = 30;
-const LAST_EVENING_HOUR = 19;
 
 // Браузер не прислал смещение или прислал мусор: считаем по Женеве,
 // это часовой пояс Кати и большей части её аудитории.
@@ -58,11 +54,15 @@ function trialSchedule(nowMs, offsetValue) {
     var p = localParts(nowMs, offset);
     var nightDay = p.h < NIGHT_CUTOFF_HOUR ? p.d - 1 : p.d;
 
+    var expiresAt = localToIso(p.y, p.mo, nightDay + NIGHTS, EXPIRES_HOUR, 0, offset);
+
+    // «Как прошла ночь?» уходит в момент закрытия доступа. Раньше нельзя:
+    // письмо разбудило бы того, кто ещё спит. Позже незачем: в письме уже
+    // нет ссылки на плеер, только на полную практику.
     return {
         offset: offset,
-        expiresAt:     localToIso(p.y, p.mo, nightDay + NIGHTS, EXPIRES_HOUR, 0, offset),
-        morningAt:     localToIso(p.y, p.mo, nightDay + 1, MORNING_HOUR, MORNING_MINUTE, offset),
-        lastEveningAt: localToIso(p.y, p.mo, nightDay + NIGHTS - 1, LAST_EVENING_HOUR, 0, offset),
+        expiresAt: expiresAt,
+        morningAt: expiresAt,
     };
 }
 

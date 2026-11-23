@@ -46,12 +46,17 @@ function schedule(ms, offset) {
     return mod.trialSchedule(ms, offset);
 }
 
-test('запись 17.11 в 23:00 по Женеве: доступ до 20.11 10:00, утро 18.11 9:30, последний вечер 19.11 19:00', function () {
+test('запись 17.11 в 23:00 по Женеве: одна ночь, доступ и утреннее письмо 18.11 в 10:00', function () {
     // Женева зимой UTC+1, getTimezoneOffset() даёт -60.
     const s = schedule(Date.UTC(2026, 10, 17, 22, 0), -60);
-    assert.strictEqual(s.expiresAt, '2026-11-20T09:00:00.000Z');
-    assert.strictEqual(s.morningAt, '2026-11-18T08:30:00.000Z');
-    assert.strictEqual(s.lastEveningAt, '2026-11-19T18:00:00.000Z');
+    assert.strictEqual(s.expiresAt, '2026-11-18T09:00:00.000Z');
+    assert.strictEqual(s.morningAt, '2026-11-18T09:00:00.000Z');
+    assert.strictEqual(s.lastEveningAt, undefined, 'последнего вечера при одной ночи нет');
+});
+
+test('запись днём: ночь сегодняшняя, а не вчерашняя', function () {
+    const s = schedule(Date.UTC(2026, 10, 17, 13, 0), -60); // 14:00 по Женеве
+    assert.strictEqual(s.expiresAt, '2026-11-18T09:00:00.000Z');
 });
 
 test('запись в 02:00 считается той же ночью, срок не сдвигается на день', function () {
@@ -62,25 +67,24 @@ test('запись в 02:00 считается той же ночью, срок 
 
 test('часовой пояс человека, а не сервера: Бали, UTC+8', function () {
     const s = schedule(Date.UTC(2026, 10, 17, 14, 0), -480); // 22:00 на Бали
-    assert.strictEqual(s.expiresAt, '2026-11-20T02:00:00.000Z');
-    assert.strictEqual(s.morningAt, '2026-11-18T01:30:00.000Z');
+    assert.strictEqual(s.expiresAt, '2026-11-18T02:00:00.000Z');
+    assert.strictEqual(s.morningAt, '2026-11-18T02:00:00.000Z');
 });
 
 test('мусор вместо смещения: берём Женеву, а не падаем', function () {
     const s = schedule(Date.UTC(2026, 10, 17, 22, 0), 'abc');
-    assert.strictEqual(s.expiresAt, '2026-11-20T09:00:00.000Z');
+    assert.strictEqual(s.expiresAt, '2026-11-18T09:00:00.000Z');
     assert.strictEqual(s.offset, -60);
 });
 
-test('оба письма уходят в будущее при записи в любой час суток', function () {
+test('при записи в любой час: доступ впереди, утреннее письмо в момент закрытия, не дальше полутора суток', function () {
     for (let h = 0; h < 24; h++) {
         const now = Date.UTC(2026, 10, 17, h, 17);
         const s = schedule(now, -60);
-        assert.ok(Date.parse(s.morningAt) > now, 'утро в прошлом при записи в ' + h);
-        assert.ok(Date.parse(s.lastEveningAt) > Date.parse(s.morningAt), 'вечер раньше утра при ' + h);
-        assert.ok(Date.parse(s.expiresAt) > Date.parse(s.lastEveningAt), 'срок раньше вечера при ' + h);
-        // Resend держит отложенные письма не дольше 72 часов.
-        assert.ok(Date.parse(s.lastEveningAt) - now < 72 * HOUR, 'вечер дальше 72 часов при ' + h);
+        assert.ok(Date.parse(s.expiresAt) > now, 'срок в прошлом при записи в ' + h);
+        assert.strictEqual(s.morningAt, s.expiresAt, 'утреннее письмо не в момент закрытия при ' + h);
+        // Одна ночь: самое длинное окно у записи сразу после пяти утра.
+        assert.ok(Date.parse(s.expiresAt) - now <= 30 * HOUR, 'больше одной ночи при записи в ' + h);
     }
 });
 
@@ -178,7 +182,7 @@ test('покупатель «Фонарщика» получает поток и
     assert.ok(body.tracks[0].downloadUrl, 'купившему скачивание положено');
 });
 
-// ── son-trial: запись на три ночи ──────────────────────────────────
+// ── son-trial: запись на пробную ночь ──────────────────────────────────
 
 function trialApp(opts) {
     opts = opts || {};
@@ -216,7 +220,7 @@ function emails(app) {
 
 const SIGNUP = Date.UTC(2026, 10, 17, 22, 0); // 23:00 по Женеве
 
-test('новый адрес: строка с son_trial и сроком, три письма, контакт в сегменте', async function () {
+test('новый адрес: строка с son_trial и сроком, два письма, контакт в сегменте', async function () {
     const app = trialApp();
     const res = await atAsync(SIGNUP, function () {
         return app.handler(trialRequest({ email: ' Anna@Example.com ', tz: -60, source: 'paid', campaign: 'ig_ad_son', sid: 's1' }));
@@ -228,16 +232,17 @@ test('новый адрес: строка с son_trial и сроком, три �
     assert.ok(row, 'строка не создана');
     assert.strictEqual(row.payload.email, 'anna@example.com');
     assert.strictEqual(row.payload.promo_track, 'son_trial');
-    assert.strictEqual(row.payload.expires_at, '2026-11-20T09:00:00.000Z');
+    assert.strictEqual(row.payload.expires_at, '2026-11-18T09:00:00.000Z');
     assert.strictEqual(row.payload.campaign, 'ig_ad_son');
     assert.strictEqual(row.payload.utm_source, 'paid');
 
     const sent = emails(app);
-    assert.strictEqual(sent.length, 3, 'должно быть три письма');
+    assert.strictEqual(sent.length, 2, 'должно быть два письма: ссылка сейчас и утро');
     assert.strictEqual(sent[0].body.scheduled_at, undefined, 'первое письмо уходит сразу');
     assert.ok(sent[0].body.html.indexOf(row.payload.token) !== -1, 'в первом письме ссылка с токеном');
-    assert.strictEqual(sent[1].body.scheduled_at, '2026-11-18T08:30:00.000Z');
-    assert.strictEqual(sent[2].body.scheduled_at, '2026-11-19T18:00:00.000Z');
+    assert.strictEqual(sent[1].body.scheduled_at, '2026-11-18T09:00:00.000Z');
+    // Утром доступ уже закрыт: ссылка на плеер в этом письме была бы битой.
+    assert.ok(sent[1].body.html.indexOf(row.payload.token) === -1, 'в утреннем письме не должно быть ссылки на плеер');
 
     const seg = app.fetched.filter(function (c) { return c.url.indexOf('/segments/seg_son/contacts') !== -1; });
     assert.strictEqual(seg.length, 1, 'контакт в сегмент кладётся один раз');
@@ -245,9 +250,9 @@ test('новый адрес: строка с son_trial и сроком, три �
 
 test('повторная запись в срок: ссылка ещё раз, срок прежний, новых отложенных писем нет', async function () {
     const app = trialApp({
-        existing: { token: 'tok-old', promo_track: 'son_trial', expires_at: '2026-11-20T09:00:00Z' },
+        existing: { token: 'tok-old', promo_track: 'son_trial', expires_at: '2026-11-18T09:00:00Z' },
     });
-    const res = await atAsync(SIGNUP + 20 * HOUR, function () {
+    const res = await atAsync(SIGNUP + 5 * HOUR, function () {
         return app.handler(trialRequest({ email: 'anna@example.com', tz: -60 }));
     });
     assert.strictEqual(res.statusCode, 200);
@@ -260,9 +265,9 @@ test('повторная запись в срок: ссылка ещё раз, �
 
 test('повторная запись после срока: ответ тот же, письмо про полную версию, доступ не открывается', async function () {
     const app = trialApp({
-        existing: { token: 'tok-old', promo_track: 'son_trial', expires_at: '2026-11-20T09:00:00Z' },
+        existing: { token: 'tok-old', promo_track: 'son_trial', expires_at: '2026-11-18T09:00:00Z' },
     });
-    const res = await atAsync(Date.UTC(2026, 10, 25, 12, 0), function () {
+    const res = await atAsync(Date.UTC(2026, 10, 18, 12, 0), function () {
         return app.handler(trialRequest({ email: 'anna@example.com', tz: -60 }));
     });
     assert.deepStrictEqual(JSON.parse(res.body), { ok: true }, 'ответ не должен выдавать, был ли адрес');
