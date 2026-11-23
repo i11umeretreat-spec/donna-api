@@ -5,7 +5,10 @@
   Шрифты: @import первой строкой в style, Fraunces 200, 300, 300 italic; Outfit 300, 400.
   Обложка с app.ekaterina-donnat.com/assets (immutable на год: замена только
   новым именем или новым ?v=), демо с audio.ekaterina-donnat.com/promo.
-  События в наш дашборд: son_pageview, son_preview_play, son_cta_click.
+  События в наш дашборд: son_pageview, son_preview_play, son_cta_click;
+  son_trial_signup пишет сама функция son-trial.
+  Форма пробной ночи выключена флагом TRIAL_ON, пока Катя не подписала
+  письма. Посмотреть её можно по адресу с ?trial=preview.
   Пиксель Meta подключает Тильда из настроек сайта; кнопка оплаты шлёт
   в него InitiateCheckout.
   Регистр «Вы» (решение 23.11), цитаты из записи остаются на «ты», как в практике.
@@ -237,6 +240,100 @@
 }
 .donna-son-buy.is-nolink .donna-son-nolink { display: block; }
 
+/* Пробная ночь. Скрыта, пока скрипт не поставит is-on: без скрипта
+   форма всё равно не отправится. Флаг TRIAL_ON в скрипте. */
+.donna-son-trial {
+  display: none;
+  position: relative;
+  margin: 36px 0 0;
+  padding: 24px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(13, 15, 35, 0.8);
+  box-sizing: border-box;
+}
+.donna-son-trial.is-on { display: block; }
+.donna-son-trial-form { display: flex; align-items: stretch; margin: 0; }
+.donna-son-trial-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  margin: 0;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: #0f1123;
+  color: rgba(248, 250, 252, 0.95);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 16px;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.3s ease;
+}
+.donna-son-trial-input::placeholder { color: rgba(248, 250, 252, 0.4); }
+.donna-son-trial-input:focus { outline: none; border-color: #d4af37; }
+.donna-son-trial-btn {
+  flex: none;
+  min-height: 52px;
+  margin: 0 0 0 12px;
+  padding: 0 22px;
+  border-radius: 12px;
+  border: 1px solid #d4af37;
+  background: transparent;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+}
+.donna-son-trial-btn:hover { background: rgba(212, 175, 55, 0.12); }
+@media (hover: none) {
+  .donna-son-trial-btn:hover { background: transparent; }
+}
+.donna-son-trial-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: 3px; }
+.donna-son-trial-btn[disabled] { opacity: 0.6; cursor: default; }
+.donna-son-trial-btn-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #d4af37;
+}
+.donna-son-trial-say {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #d4af37;
+  margin: 12px 0 0;
+}
+.donna-son-trial-say:empty { display: none; }
+.donna-son-trial-legal {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.4);
+  margin: 14px 0 0;
+}
+.donna-son-trial-legal a, .donna-son-trial-legal a:link, .donna-son-trial-legal a:visited,
+.donna-son-trial-legal a:hover, .donna-son-trial-legal a:active {
+  color: rgba(248, 250, 252, 0.6) !important;
+  text-decoration: underline !important;
+}
+.donna-son-trial.is-sent .donna-son-trial-form,
+.donna-son-trial.is-sent .donna-son-trial-legal { display: none; }
+.donna-son-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.donna-son-hp { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; opacity: 0; }
+
 /* Заголовки секций */
 .donna-son-h2 {
   font-family: 'Fraunces', serif;
@@ -416,9 +513,12 @@
   .donna-son-price { text-align: center; }
   .donna-son-cta, .donna-son-cta:link, .donna-son-cta:visited { max-width: none; margin-left: 0; margin-top: 14px; }
   .donna-son-hook-text { font-size: 20px; }
+  .donna-son-trial-form { flex-direction: column; }
+  .donna-son-trial-btn { margin: 12px 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .donna-son-cta, .donna-son-next, .donna-son-faq-icon, .donna-son-demo-btn { transition: none; }
+  .donna-son-cta, .donna-son-next, .donna-son-faq-icon, .donna-son-demo-btn,
+  .donna-son-trial-input, .donna-son-trial-btn { transition: none; }
   .donna-son-demo.is-started .donna-son-demo-fill { -webkit-animation: none; animation: none; -webkit-transform: none; transform: none; }
 }
 </style>
@@ -464,6 +564,21 @@
         </div>
         <p class="donna-son-note">Бессрочный доступ. Ссылка на практику придёт на почту сразу после оплаты.</p>
         <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
+      </div>
+
+      <div class="donna-son-trial" id="donna-son-trial">
+        <div class="donna-son-eyebrow">Первая ночь бесплатно</div>
+        <p class="donna-son-text">Двадцать минут, начало «Фонарщика», на одну ночь. Ссылка придёт на почту сразу, а утром я напишу и спрошу, как прошла ночь.</p>
+        <form class="donna-son-trial-form" id="donna-son-trial-form" novalidate>
+          <label class="donna-son-sr" for="donna-son-trial-email">Почта</label>
+          <input class="donna-son-trial-input" id="donna-son-trial-email" type="email" name="email"
+                 autocomplete="email" inputmode="email" placeholder="Ваша почта">
+          <input class="donna-son-hp" id="donna-son-trial-hp" type="text" name="company"
+                 tabindex="-1" autocomplete="off" aria-hidden="true">
+          <button class="donna-son-trial-btn" id="donna-son-trial-btn" type="submit"><span class="donna-son-trial-btn-text">Получить ссылку</span></button>
+        </form>
+        <p class="donna-son-trial-say" id="donna-son-trial-say" role="status" aria-live="polite"></p>
+        <p class="donna-son-trial-legal">Нажимая кнопку, Вы соглашаетесь с <a href="https://ekaterina-donnat.com/confidentiality">политикой конфиденциальности</a>. Отписаться можно ответом «стоп» на любое письмо.</p>
       </div>
     </div>
   </section>
@@ -759,6 +874,86 @@
       try { audio.currentTime = 0; } catch (e) {}
     }, false);
   }
+
+  /* ---------- Пробная ночь ---------- */
+  /* Своя попытка: падение формы не должно ронять демо и вопросы.
+     XMLHttpRequest, а не fetch, как в форме «Памяти тела»: без этого
+     запроса формы нет, а fetch в старом вебвью может отсутствовать.
+     Край хостинга при частых запросах отдаёт 429, поэтому до двух
+     повторов с паузой. Введённый адрес при отказе остаётся в поле. */
+  try {
+    var TRIAL_ON = false;
+    var TRIAL_ENDPOINT = 'https://app.ekaterina-donnat.com/.netlify/functions/son-trial';
+    var MSG_TYPO = 'Кажется, в адресе опечатка. Проверьте, пожалуйста.';
+    var MSG_FAIL = 'Не получилось отправить. Попробуйте ещё раз через минуту.';
+    var MSG_DONE = 'Готово, ссылка уже в пути. Если письма нет через пару минут, загляните в «Спам» или «Промоакции».';
+    var trial = document.getElementById('donna-son-trial');
+    var trialForm = document.getElementById('donna-son-trial-form');
+    var trialInput = document.getElementById('donna-son-trial-email');
+    var trialHp = document.getElementById('donna-son-trial-hp');
+    var trialBtn = document.getElementById('donna-son-trial-btn');
+    var trialSayEl = document.getElementById('donna-son-trial-say');
+    var trialSending = false;
+
+    var trialSay = function (text) { if (trialSayEl) { trialSayEl.textContent = text; } };
+    var trialRelease = function () {
+      trialSending = false;
+      trialBtn.removeAttribute('disabled');
+    };
+    var trialSend = function (email, attempt) {
+      var xhr = new XMLHttpRequest();
+      var retryOrFail = function () {
+        if (attempt < 2) {
+          setTimeout(function () { trialSend(email, attempt + 1); }, 1200 * (attempt + 1));
+          return;
+        }
+        trialRelease();
+        trialSay(MSG_FAIL);
+      };
+      xhr.open('POST', TRIAL_ENDPOINT, true);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          trialRelease();
+          addClass(trial, 'is-sent');
+          trialSay(MSG_DONE);
+          try {
+            if (typeof window.fbq === 'function') {
+              window.fbq('track', 'Lead', { content_name: 'Fonarshchik trial' });
+            }
+          } catch (err) {}
+          return;
+        }
+        if (xhr.status === 400) { trialRelease(); trialSay(MSG_TYPO); return; }
+        retryOrFail();
+      };
+      xhr.onerror = retryOrFail;
+      xhr.send(JSON.stringify({
+        email: email,
+        tz: new Date().getTimezoneOffset(),
+        source: bucketedSource(),
+        campaign: getParam('from'),
+        sid: getSessionId(),
+        hp: trialHp ? trialHp.value : ''
+      }));
+    };
+
+    if (trial && trialForm && trialInput && trialBtn) {
+      trialForm.addEventListener('submit', function (e) {
+        if (e && e.preventDefault) { e.preventDefault(); }
+        if (trialSending) { return; }
+        var email = String(trialInput.value || '').replace(/^\s+|\s+$/g, '');
+        var at = email.indexOf('@');
+        if (at < 1 || email.indexOf('.', at) === -1) { trialSay(MSG_TYPO); return; }
+        trialSending = true;
+        trialBtn.setAttribute('disabled', 'disabled');
+        trialSay('');
+        trialSend(email, 0);
+      }, false);
+      /* Класс, который показывает форму, ставится последним. */
+      if (TRIAL_ON || getParam('trial') === 'preview') { addClass(trial, 'is-on'); }
+    }
+  } catch (e) {}
 
   /* ---------- Вопросы: один обработчик на все ---------- */
   var items = document.querySelectorAll('.donna-son-faq-item[data-faq]');
