@@ -110,6 +110,23 @@
   status = 302
   force  = true
 
+# Шапка профиля в Инстаграме и описание Телеграм-канала, 23.11.
+# Адрес в профиле Кати не меняется никогда, меняется только цель здесь.
+# Пока страницы «Фонарщика» нет, ведём на главную; когда выйдет,
+# /ig и /tg переводятся на ekaterina-donnat.com/fonarshchik одной правкой.
+# utm_source=instagram и telegram пишутся как organic, метка from несёт канал.
+[[redirects]]
+  from   = "/ig"
+  to     = "https://ekaterina-donnat.com/?from=ig_bio&utm_source=instagram"
+  status = 302
+  force  = true
+
+[[redirects]]
+  from   = "/tg"
+  to     = "https://ekaterina-donnat.com/?from=tg_channel&utm_source=telegram"
+  status = 302
+  force  = true
+
 # Логотип не меняется, кэшируем надолго
 [[headers]]
   for = "/assets/*"
