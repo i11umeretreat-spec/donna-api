@@ -11,6 +11,9 @@
   письма. Посмотреть её можно по адресу с ?trial=preview.
   Пиксель Meta подключает Тильда из настроек сайта; кнопка оплаты шлёт
   в него InitiateCheckout.
+  Чёрная пятница: 60 € вместо 90 € до SALE_END (30.11, 23:59 по Женеве),
+  промокод BLACKFRIDAY подставляется в ссылку оплаты. Блок «Как проходит
+  практика» убран 23.11 по решению Кати.
   Регистр «Вы» (решение 23.11), цитаты из записи остаются на «ты», как в практике.
   Все цитаты сверены с расшифровкой, слова Кати не тронуты.
 -->
@@ -188,6 +191,29 @@
   font-size: 28px;
   color: #d4af37;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/* Акция: скрипт ставит is-sale на корень страницы, пока не прошёл
+   SALE_END. Без скрипта и после срока видна обычная цена. */
+.donna-son-price-old, .donna-son-price-sale, .donna-son-sale-note { display: none; }
+.donna-son.is-sale .donna-son-price-reg { display: none; }
+.donna-son.is-sale .donna-son-price-old, .donna-son.is-sale .donna-son-price-sale { display: inline; }
+.donna-son.is-sale .donna-son-sale-note { display: block; }
+.donna-son-price-old {
+  font-size: 18px;
+  color: rgba(248, 250, 252, 0.35);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  margin-right: 10px;
+}
+.donna-son-sale-note {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #d4af37;
+  margin: 14px 0 0;
+  text-align: center;
 }
 .donna-son-cta, .donna-son-cta:link, .donna-son-cta:visited, .donna-son-cta:hover, .donna-son-cta:active,
 .donna-son-next, .donna-son-next:link, .donna-son-next:visited, .donna-son-next:hover, .donna-son-next:active {
@@ -355,29 +381,6 @@
   font-size: 18px;
   line-height: 1.6;
   color: rgba(248, 250, 252, 0.95);
-}
-
-/* Ход практики по таймкодам */
-.donna-son-steps { margin: 8px 0 0; }
-.donna-son-step { display: flex; padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.06); }
-.donna-son-step:first-child { border-top: 0; padding-top: 0; }
-.donna-son-step-time {
-  flex: none;
-  width: 64px;
-  padding-top: 3px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 400;
-  font-size: 14px;
-  letter-spacing: 0.04em;
-  color: #d4af37;
-  font-variant-numeric: tabular-nums;
-}
-.donna-son-step-text {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 300;
-  font-size: 16px;
-  line-height: 1.6;
-  color: rgba(248, 250, 252, 0.85);
 }
 
 /* Автор */
@@ -558,11 +561,16 @@
 
       <div class="donna-son-buy">
         <div class="donna-son-purchase">
-          <div class="donna-son-price">90 €</div>
+          <div class="donna-son-price">
+            <span class="donna-son-price-old"><span class="donna-son-sr">Было </span>90 €</span>
+            <span class="donna-son-price-sale"><span class="donna-son-sr">сейчас </span>60 €</span>
+            <span class="donna-son-price-reg">90 €</span>
+          </div>
           <a class="donna-son-cta" href="#oplata" data-buy>
             <span class="donna-son-cta-text">Получить практику</span>
           </a>
         </div>
+        <p class="donna-son-sale-note">Цена Чёрной пятницы действует по 30 ноября.</p>
         <p class="donna-son-note">Бессрочный доступ. Ссылка на практику придёт на почту сразу после оплаты.</p>
         <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
       </div>
@@ -584,7 +592,7 @@
     </div>
   </section>
 
-  <section class="donna-son-sec">
+  <section class="donna-son-sec donna-son-sec-deep">
     <div class="donna-son-inner">
       <div class="donna-son-eyebrow">Когда голова не выключается</div>
       <h2 class="donna-son-h2">Свет выключен, а рабочий день всё идёт</h2>
@@ -598,47 +606,6 @@
         <span class="donna-son-time-label">1:00</span>
       </blockquote>
       <p class="donna-son-text">Вокруг этой мысли и собрана практика. Сорок минут Вам не нужно стараться и проверять, получается ли. Голос и звук берут это на себя.</p>
-    </div>
-  </section>
-
-  <section class="donna-son-sec donna-son-sec-deep">
-    <div class="donna-son-inner">
-      <div class="donna-son-eyebrow">Как проходит практика</div>
-      <h2 class="donna-son-h2">Сорок минут, и дальше тишина</h2>
-      <div class="donna-son-steps">
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">0:00</div>
-          <div class="donna-son-step-text">Я рассказываю, что будет происходить, и снимаю с Вас задачу. Здесь можно ничего не делать.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">4:13</div>
-          <div class="donna-son-step-text">Внимание опускается в ощущения: матрас, вес одеяла, вдох прохладнее, выдох теплее.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">6:48</div>
-          <div class="donna-son-step-text">Мысли становятся машинами на дальнем шоссе. Любой ночной звук за окном теперь только уводит глубже.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">10:28</div>
-          <div class="donna-son-step-text">Внимание проходит по телу, от пальцев до век.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">16:31</div>
-          <div class="donna-son-step-text">Появляется тёплая дорога под уклон.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">21:11</div>
-          <div class="donna-son-step-text">Маленькая площадь и человек, который гасит фонари. Кто он, узнаете сами, если не уснёте раньше.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">34:54</div>
-          <div class="donna-son-step-text">Короткий ритуал на каждую ночь. Его можно повторять и без записи.</div>
-        </div>
-        <div class="donna-son-step">
-          <div class="donna-son-step-time">36:30</div>
-          <div class="donna-son-step-text">Финал без пробуждения. Голос становится тише и уходит, музыка затихает сама.</div>
-        </div>
-      </div>
     </div>
   </section>
 
@@ -721,11 +688,16 @@
       <p class="donna-son-text donna-son-text-muted">Сессия самогипноза на ночь · 40 минут</p>
       <div class="donna-son-buy">
         <div class="donna-son-purchase">
-          <div class="donna-son-price">90 €</div>
+          <div class="donna-son-price">
+            <span class="donna-son-price-old"><span class="donna-son-sr">Было </span>90 €</span>
+            <span class="donna-son-price-sale"><span class="donna-son-sr">сейчас </span>60 €</span>
+            <span class="donna-son-price-reg">90 €</span>
+          </div>
           <a class="donna-son-cta" href="#oplata" data-buy>
             <span class="donna-son-cta-text">Получить практику</span>
           </a>
         </div>
+        <p class="donna-son-sale-note">Цена Чёрной пятницы действует по 30 ноября.</p>
         <p class="donna-son-note">Бессрочный доступ. Ссылка придёт на почту сразу после оплаты.</p>
         <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
       </div>
@@ -743,8 +715,16 @@
 <script>
 (function () {
   /* ---------- Настройки ---------- */
-  var STRIPE_LINK = 'https://buy.stripe.com/bJe5kCbF59ukbG74eMasg0p';  // «Фонарщик», 90 €, plink_1UcexdCQps4bJWCVZhEVy3sy
+  var STRIPE_LINK = 'https://buy.stripe.com/bJe5kCbF59ukbG74eMasg0p';  // «Фонарщик», цена в Stripe 90 €, plink_1UcexdCQps4bJWCVZhEVy3sy
   var TRACK_ENDPOINT = 'https://app.ekaterina-donnat.com/.netlify/functions/track-demo';
+  /* Чёрная пятница: 60 € вместо 90 € по 30.11 23:59 по Женеве. Скидку
+     даёт промокод в Stripe (купон −30 € только на «Фонарщика», срок тот же),
+     страница подставляет его в ссылку оплаты. После срока Stripe код
+     не примет, а страница сама вернётся к 90 €. */
+  var SALE_END = Date.UTC(2026, 10, 30, 22, 59);
+  var SALE_CODE = 'BLACKFRIDAY';
+  var onSale = new Date().getTime() < SALE_END;
+  var PRICE_NOW = onSale ? 60 : 90;
 
   /* ---------- Метки: разбор query вручную, в старых WebView нет URLSearchParams ---------- */
   function getParam(name) {
@@ -824,6 +804,7 @@
       if (STRIPE_LINK) {
         var href = STRIPE_LINK;
         if (ref) { href += (href.indexOf('?') === -1 ? '?' : '&') + 'client_reference_id=' + encodeURIComponent(ref); }
+        if (onSale) { href += (href.indexOf('?') === -1 ? '?' : '&') + 'prefilled_promo_code=' + SALE_CODE; }
         link.setAttribute('href', href);
       }
       link.addEventListener('click', function (e) {
@@ -831,7 +812,7 @@
         /* Пиксель Тильда ставит с задержкой, поэтому проверяем, что он уже есть. */
         try {
           if (typeof window.fbq === 'function') {
-            window.fbq('track', 'InitiateCheckout', { value: 90, currency: 'EUR', content_name: 'Fonarshchik' });
+            window.fbq('track', 'InitiateCheckout', { value: PRICE_NOW, currency: 'EUR', content_name: 'Fonarshchik' });
           }
         } catch (err) {}
         if (!STRIPE_LINK) {
@@ -954,6 +935,12 @@
       /* Класс, который показывает форму, ставится последним. */
       if (TRIAL_ON || getParam('trial') === 'preview') { addClass(trial, 'is-on'); }
     }
+  } catch (e) {}
+
+  /* ---------- Цена акции: класс ставится последним среди видимых ---------- */
+  try {
+    var root = document.getElementById('fonarshchik');
+    if (root && onSale) { addClass(root, 'is-sale'); }
   } catch (e) {}
 
   /* ---------- Вопросы: один обработчик на все ---------- */
