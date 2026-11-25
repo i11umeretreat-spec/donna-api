@@ -6,7 +6,8 @@
   Шрифты: @import первой строкой в style, Fraunces 200, 300, 300 italic; Outfit 300, 400.
   Обложка с app.ekaterina-donnat.com/assets (immutable на год: замена только
   новым именем или новым ?v=), демо с audio.ekaterina-donnat.com/promo.
-  События в наш дашборд: son_pageview, son_preview_play, son_cta_click;
+  События в наш дашборд: son_pageview, son_preview_play, son_cta_click,
+  son_trial_jump (строка «Сначала попробовать» под кнопкой оплаты);
   son_trial_signup пишет сама функция son-trial.
   Форма пробной ночи включается флагом TRIAL_ON (включена 26.11, реклама
   уже обещала первую ночь бесплатно). С false форму видно только с ?trial=preview.
@@ -277,12 +278,41 @@
   text-align: center;
 }
 .donna-son-buy.is-nolink .donna-son-nolink { display: block; }
+/* «Сначала попробовать»: видна только вместе с формой пробной ночи,
+   класс ставит скрипт. Высота ссылки 44 px за счёт отступов. */
+.donna-son-try {
+  display: none;
+  margin: 4px 0 0;
+  text-align: center;
+}
+.donna-son-try.is-on { display: block; }
+.donna-son-try-link, .donna-son-try-link:link, .donna-son-try-link:visited,
+.donna-son-try-link:hover, .donna-son-try-link:active {
+  display: inline-block;
+  padding: 12px 4px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 20px;
+  color: #d4af37 !important;
+  text-decoration-line: underline !important;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  text-decoration-color: rgba(212, 175, 55, 0.4);
+  transition: text-decoration-color 0.2s ease;
+}
+.donna-son-try-link:hover { text-decoration-color: #d4af37; }
+@media (hover: none) {
+  .donna-son-try-link:hover { text-decoration-color: rgba(212, 175, 55, 0.4); }
+}
+.donna-son-try-link:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
 
 /* Пробная ночь. Скрыта, пока скрипт не поставит is-on: без скрипта
    форма всё равно не отправится. Флаг TRIAL_ON в скрипте. */
 .donna-son-trial {
   display: none;
   position: relative;
+  scroll-margin-top: 16px;
   margin: 36px 0 0;
   padding: 24px 20px;
   border-radius: 20px;
@@ -534,7 +564,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .donna-son-cta, .donna-son-next, .donna-son-faq-icon, .donna-son-demo-btn,
-  .donna-son-trial-input, .donna-son-trial-btn { transition: none; }
+  .donna-son-trial-input, .donna-son-trial-btn, .donna-son-try-link { transition: none; }
   .donna-son-demo.is-started .donna-son-demo-fill { -webkit-animation: none; animation: none; -webkit-transform: none; transform: none; }
 }
 </style>
@@ -584,6 +614,7 @@
         </div>
         <p class="donna-son-sale-note">Цена Чёрной пятницы действует по 30 ноября.</p>
         <p class="donna-son-note">Бессрочный доступ. Ссылка на практику придёт на почту сразу после оплаты.</p>
+        <p class="donna-son-try"><a class="donna-son-try-link" href="#donna-son-trial">Сначала попробовать: первая ночь бесплатно</a></p>
         <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
       </div>
 
@@ -711,6 +742,7 @@
         </div>
         <p class="donna-son-sale-note">Цена Чёрной пятницы действует по 30 ноября.</p>
         <p class="donna-son-note">Бессрочный доступ. Ссылка придёт на почту сразу после оплаты.</p>
+        <p class="donna-son-try"><a class="donna-son-try-link" href="#donna-son-trial">Сначала попробовать: первая ночь бесплатно</a></p>
         <p class="donna-son-nolink">В макете оплаты ещё нет: ссылка появится, когда заведём продукт в Stripe.</p>
       </div>
       <a class="donna-son-next" href="https://ekaterina-donnat.com/#pamyat-tela">
@@ -944,8 +976,29 @@
         trialSay('');
         trialSend(email, 0);
       }, false);
+      /* «Сначала попробовать» под кнопками оплаты: прокрутка к форме.
+         Обработчик свой, чтобы скрипты Тильды не перехватили якорь. */
+      var tries = document.querySelectorAll('.donna-son-try');
+      var tryReduce = false;
+      try {
+        tryReduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      } catch (err) {}
+      var tryGo = function (e) {
+        if (e && e.preventDefault) { e.preventDefault(); }
+        if (e && e.stopPropagation) { e.stopPropagation(); }
+        track('son_trial_jump');
+        try {
+          trial.scrollIntoView(tryReduce ? true : { behavior: 'smooth', block: 'start' });
+        } catch (err) { trial.scrollIntoView(true); }
+      };
+      var showTrial = TRIAL_ON || getParam('trial') === 'preview';
+      for (var ti = 0; ti < tries.length; ti++) {
+        var tryLink = tries[ti].getElementsByTagName('a')[0];
+        if (tryLink) { tryLink.addEventListener('click', tryGo, false); }
+        if (showTrial) { addClass(tries[ti], 'is-on'); }
+      }
       /* Класс, который показывает форму, ставится последним. */
-      if (TRIAL_ON || getParam('trial') === 'preview') { addClass(trial, 'is-on'); }
+      if (showTrial) { addClass(trial, 'is-on'); }
     }
   } catch (e) {}
 
