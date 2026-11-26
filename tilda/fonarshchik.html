@@ -7,7 +7,8 @@
   Обложка с app.ekaterina-donnat.com/assets (immutable на год: замена только
   новым именем или новым ?v=), демо с audio.ekaterina-donnat.com/promo.
   События в наш дашборд: son_pageview, son_preview_play, son_cta_click,
-  son_trial_jump (строка «Сначала попробовать» под кнопкой оплаты);
+  son_trial_jump (строка «Сначала попробовать» под кнопкой оплаты),
+  son_trial_top (кнопка «Первая ночь бесплатно» на первом экране);
   son_trial_signup пишет сама функция son-trial.
   Форма пробной ночи включается флагом TRIAL_ON (включена 26.11, реклама
   уже обещала первую ночь бесплатно). С false форму видно только с ?trial=preview.
@@ -307,6 +308,27 @@
   .donna-son-try-link:hover { text-decoration-color: rgba(212, 175, 55, 0.4); }
 }
 .donna-son-try-link:focus-visible { outline: 2px solid #d4af37; outline-offset: 2px; }
+/* Кнопка на первом экране (26.11): реклама обещает бесплатную ночь,
+   а форма стояла на втором экране под ценой, и её не замечали. */
+.donna-son-try-top { margin: -8px 0 28px; text-align: left; }
+.donna-son-try-btn, .donna-son-try-btn:link, .donna-son-try-btn:visited,
+.donna-son-try-btn:hover, .donna-son-try-btn:active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 12px;
+  border: 1px solid #d4af37;
+  box-sizing: border-box;
+  text-decoration: none !important;
+  transition: background-color 0.3s ease;
+}
+.donna-son-try-btn:hover { background: rgba(212, 175, 55, 0.12); }
+@media (hover: none) {
+  .donna-son-try-btn:hover { background: transparent; }
+}
+.donna-son-try-btn:focus-visible { outline: 2px solid #d4af37; outline-offset: 3px; }
 
 /* Пробная ночь. Скрыта, пока скрипт не поставит is-on: без скрипта
    форма всё равно не отправится. Флаг TRIAL_ON в скрипте. */
@@ -562,10 +584,11 @@
   .donna-son-hook-text { font-size: 20px; }
   .donna-son-trial-form { flex-direction: column; }
   .donna-son-trial-btn { margin: 12px 0 0; }
+  .donna-son-try-btn, .donna-son-try-btn:link, .donna-son-try-btn:visited { display: flex; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .donna-son-cta, .donna-son-next, .donna-son-faq-icon, .donna-son-demo-btn,
-  .donna-son-trial-input, .donna-son-trial-btn, .donna-son-try-link { transition: none; }
+  .donna-son-trial-input, .donna-son-trial-btn, .donna-son-try-link, .donna-son-try-btn { transition: none; }
   .donna-son-demo.is-started .donna-son-demo-fill { -webkit-animation: none; animation: none; -webkit-transform: none; transform: none; }
 }
 </style>
@@ -577,6 +600,7 @@
       <div class="donna-son-eyebrow">Практика на ночь</div>
       <h1 class="donna-son-h1">Фонарщик<span class="donna-son-sr">. </span><span class="donna-son-h1-sub">Самогипноз, который гасит мысли</span></h1>
       <p class="donna-son-meta">40 минут · объёмный звук</p>
+      <p class="donna-son-try donna-son-try-top"><a class="donna-son-try-btn" href="#donna-son-trial" data-ev="son_trial_top"><span class="donna-son-trial-btn-text">Первая ночь бесплатно</span></a></p>
 
       <div class="donna-son-cover">
         <img class="donna-son-cover-img" src="https://app.ekaterina-donnat.com/assets/son_cover.jpg?v=2" width="941" height="575"
@@ -987,7 +1011,7 @@
       var tryGo = function (e) {
         if (e && e.preventDefault) { e.preventDefault(); }
         if (e && e.stopPropagation) { e.stopPropagation(); }
-        track('son_trial_jump');
+        track((this && this.getAttribute && this.getAttribute('data-ev')) || 'son_trial_jump');
         try {
           trial.scrollIntoView(tryReduce ? true : { behavior: 'smooth', block: 'start' });
         } catch (err) { trial.scrollIntoView(true); }
